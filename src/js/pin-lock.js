@@ -28,35 +28,49 @@ export function initPinLock() {
   updateDots();
   updateAttemptsDisplay();
 
-  // Keypad clicks
-  document.getElementById('pin-pad').addEventListener('click', (e) => {
+  const pad = document.getElementById('pin-pad');
+  const delBtn = document.getElementById('pin-del');
+
+  // Use touchstart for instant response on mobile, click as fallback
+  const tapEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
+
+  pad.addEventListener(tapEvent, (e) => {
+    if (blocked) return;
     const btn = e.target.closest('.pin-key');
-    if (!btn || blocked) return;
+    if (!btn) return;
+
+    // Prevent ghost click after touchstart
+    if (tapEvent === 'touchstart') e.preventDefault();
 
     const key = btn.dataset.key;
+    if (key === undefined) return;
 
-    if (key !== undefined) {
-      if (currentInput.length < 6) {
-        currentInput += key;
-        updateDots();
-        btn.classList.add('pressed');
-        setTimeout(() => btn.classList.remove('pressed'), 150);
+    if (currentInput.length < 6) {
+      currentInput += key;
+      updateDots();
 
-        if (currentInput.length === 6) {
-          setTimeout(checkPin, 200);
-        }
+      // Instant visual feedback
+      btn.classList.add('pressed');
+      requestAnimationFrame(() => {
+        setTimeout(() => btn.classList.remove('pressed'), 80);
+      });
+
+      if (currentInput.length === 6) {
+        // Check immediately, no artificial delay
+        requestAnimationFrame(checkPin);
       }
     }
-  });
+  }, { passive: false });
 
-  // Delete button
-  document.getElementById('pin-del').addEventListener('click', () => {
+  // Delete button — same approach
+  delBtn.addEventListener(tapEvent, (e) => {
     if (blocked) return;
+    if (tapEvent === 'touchstart') e.preventDefault();
     if (currentInput.length > 0) {
       currentInput = currentInput.slice(0, -1);
       updateDots();
     }
-  });
+  }, { passive: false });
 
   // Keyboard support
   document.addEventListener('keydown', (e) => {
@@ -64,7 +78,7 @@ export function initPinLock() {
     if (e.key >= '0' && e.key <= '9' && currentInput.length < 6) {
       currentInput += e.key;
       updateDots();
-      if (currentInput.length === 6) setTimeout(checkPin, 200);
+      if (currentInput.length === 6) requestAnimationFrame(checkPin);
     } else if (e.key === 'Backspace') {
       currentInput = currentInput.slice(0, -1);
       updateDots();
@@ -77,15 +91,15 @@ function checkPin() {
   const dotsContainer = document.getElementById('pin-dots');
 
   if (currentInput === CORRECT_PIN) {
-    // Success
+    // Success — fast unlock
     attempts = 0;
     localStorage.setItem(ATTEMPTS_KEY, '0');
     sessionStorage.setItem('pin_unlocked', 'true');
     dotsContainer.classList.add('success');
     setTimeout(() => {
       overlay.classList.add('fade-out');
-      setTimeout(() => overlay.remove(), 400);
-    }, 500);
+      setTimeout(() => overlay.remove(), 300);
+    }, 300);
   } else {
     // Wrong PIN
     attempts++;
@@ -104,7 +118,7 @@ function checkPin() {
       currentInput = '';
       updateDots();
       updateAttemptsDisplay();
-    }, 500);
+    }, 400);
   }
 }
 
