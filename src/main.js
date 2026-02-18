@@ -13,7 +13,7 @@ import { toISODate } from './js/date-utils.js';
 
 import {
   initFirebase, connectCloud, disconnectCloud, forceSyncFromCloud,
-  setUiCallback as setFirebaseUiCallback, syncToCloud
+  googleSignIn, setUiCallback as setFirebaseUiCallback, syncToCloud
 } from './js/firebase-service.js';
 
 import {
@@ -136,6 +136,7 @@ document.body.addEventListener('click', (e) => {
     case 'connectCloud': connectCloud(); break;
     case 'disconnectCloud': disconnectCloud(); break;
     case 'forceSyncFromCloud': forceSyncFromCloud(); break;
+    case 'googleSignIn': googleSignIn(); break;
 
     // Backup
     case 'downloadBackup': downloadBackup(); break;
