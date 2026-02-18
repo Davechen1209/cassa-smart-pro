@@ -39,13 +39,16 @@ export function parseFirebaseConfig(text) {
     let cleaned = text.trim();
     const match = cleaned.match(/\{[\s\S]*\}/);
     if (match) cleaned = match[0];
-    // Convert JS object literal to valid JSON
-    // Only quote keys at the start of a line or after { or ,
-    cleaned = cleaned.replace(/(?<=[\{,]\s*)(\w+)\s*:/g, '"$1":');
-    cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
-    cleaned = cleaned.replace(/'/g, '"');
-    const config = JSON.parse(cleaned);
-    if (config && config.apiKey && config.projectId) return config;
+    // Extract key-value pairs manually
+    const config = {};
+    const pairs = cleaned.match(/(\w+)\s*:\s*["']([^"']+)["']/g);
+    if (pairs) {
+      pairs.forEach(p => {
+        const m = p.match(/(\w+)\s*:\s*["']([^"']+)["']/);
+        if (m) config[m[1]] = m[2];
+      });
+    }
+    if (config.apiKey && config.projectId) return config;
     return null;
   } catch (e) {
     return null;
