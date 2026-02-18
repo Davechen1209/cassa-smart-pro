@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#007AFF">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/icon.svg">
+    <title>Cassa Smart Pro</title>
+</head>
+<body>
+
+<!-- PIN Lock Screen -->
+<div class="pin-overlay" id="pin-overlay">
+    <div class="pin-box">
+        <div class="pin-icon">🔒</div>
+        <div class="pin-title">Cassa Smart Pro</div>
+        <div class="pin-subtitle" id="pin-subtitle">Inserisci il PIN per accedere</div>
+        <div class="pin-dots" id="pin-dots">
+            <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+            <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+        </div>
+        <div class="pin-pad" id="pin-pad">
+            <button class="pin-key" data-key="1">1</button>
+            <button class="pin-key" data-key="2">2</button>
+            <button class="pin-key" data-key="3">3</button>
+            <button class="pin-key" data-key="4">4</button>
+            <button class="pin-key" data-key="5">5</button>
+            <button class="pin-key" data-key="6">6</button>
+            <button class="pin-key" data-key="7">7</button>
+            <button class="pin-key" data-key="8">8</button>
+            <button class="pin-key" data-key="9">9</button>
+            <button class="pin-key empty"></button>
+            <button class="pin-key" data-key="0">0</button>
+            <button class="pin-key del" id="pin-del">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+            </button>
+        </div>
+        <div class="pin-attempts" id="pin-attempts"></div>
+    </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+    <div>
+        <div class="header-title">Cassa Smart Pro <span class="sync-dot" id="sync-dot" title="Cloud non connesso"></span></div>
+        <div class="header-date" id="header-date"></div>
+    </div>
+    <button class="header-btn" data-action="toggleSettings" id="gear-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+    </button>
+</div>
+
+<!-- Settings Panel -->
+<div class="content" style="padding-bottom:0;">
+    <div class="settings-panel" id="settings-panel">
+        <div class="card">
+            <div class="section-title" style="margin-bottom:12px;">Impostazioni</div>
+            <div class="input-group">
+                <label>Saldo manuale</label>
+                <input type="number" class="input-field" id="set-saldo" placeholder="Imposta saldo..." inputmode="decimal">
+            </div>
+            <div class="settings-row" style="margin-top:4px;">
+                <button class="btn-sm blue" data-action="manualSaldo">Aggiorna Saldo</button>
+                <button class="btn-sm red" data-action="confirmReset">Reset Dati</button>
+            </div>
+
+            <!-- Cloud Sync -->
+            <div class="cloud-section">
+                <div class="cloud-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px;color:var(--blue);"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                    Sincronizzazione Cloud
+                </div>
+
+                <!-- Connected state -->
+                <div id="cloud-connected-ui" style="display:none;">
+                    <div class="cloud-connected">
+                        <div class="cloud-connected-dot"></div>
+                        <div class="cloud-connected-text">Cloud connesso</div>
+                    </div>
+                    <div class="cloud-last-sync" id="cloud-last-sync">Ultimo sync: --</div>
+                    <div class="cloud-info">I tuoi dati vengono salvati automaticamente nel cloud Firebase ad ogni modifica.</div>
+                    <div class="cloud-actions">
+                        <button class="btn-sm blue" data-action="forceSyncFromCloud">Ricarica dal Cloud</button>
+                        <button class="btn-sm red" data-action="disconnectCloud">Disconnetti</button>
+                    </div>
+                </div>
+
+                <!-- Disconnected state: Setup wizard -->
+                <div id="cloud-setup-ui">
+                    <div class="cloud-disconnected">
+                        <div class="cloud-disconnected-dot"></div>
+                        <div class="cloud-disconnected-text">Cloud non configurato</div>
+                    </div>
+                    <div class="cloud-info">Configura Firebase per salvare i dati nel cloud in modo automatico e sicuro. Servono 5 minuti (una sola volta).</div>
+
+                    <div class="setup-steps">
+                        <div class="setup-step">
+                            <div class="step-num">1</div>
+                            <div>Vai su <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> e crea un nuovo progetto (nome a piacere, disattiva Google Analytics).</div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">2</div>
+                            <div>Nel progetto, clicca <b>"Crea"</b> > <b>"Firestore Database"</b> nel menu a sinistra. Scegli <b>"Avvia in modalita' test"</b> e seleziona la region piu' vicina.</div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">3</div>
+                            <div>Nel menu <b>"Creazione"</b> > <b>"Authentication"</b>, clicca <b>"Inizia"</b>, poi abilita il provider <b>"Anonimo"</b>.</div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">4</div>
+                            <div>Vai in <b>Impostazioni progetto</b> (icona ingranaggio in alto) > scorri fino a <b>"Le tue app"</b> > clicca <b>"Web"</b> (icona &lt;/&gt;). Dai un nome e clicca Registra. Copia il blocco <code>firebaseConfig</code> e incollalo qui sotto.</div>
+                        </div>
+                    </div>
+
+                    <textarea class="config-textarea" id="firebase-config-input" placeholder="Incolla qui il tuo firebaseConfig, ad esempio:
+
+{
+  apiKey: &quot;AIza...&quot;,
+  authDomain: &quot;mio-progetto.firebaseapp.com&quot;,
+  projectId: &quot;mio-progetto&quot;,
+  storageBucket: &quot;mio-progetto.appspot.com&quot;,
+  messagingSenderId: &quot;123456&quot;,
+  appId: &quot;1:123:web:abc&quot;
+}"></textarea>
+
+                    <div class="cloud-actions">
+                        <button class="btn-sm blue" data-action="connectCloud" style="flex:1;">Connetti al Cloud</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Backup -->
+            <div class="cloud-divider">oppure backup manuale</div>
+            <div class="backup-actions">
+                <button class="btn-backup download" data-action="downloadBackup">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Scarica
+                </button>
+                <button class="btn-backup upload" data-action="triggerImportFile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Ripristina
+                </button>
+                <input type="file" id="import-file" accept=".json" style="display:none;">
+            </div>
+
+            <div class="cloud-divider">importa dati da Excel</div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-sm gray" data-action="downloadTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    1. Scarica Template
+                </button>
+                <button class="btn-sm blue" data-action="triggerExcelFile" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    2. Carica File
+                </button>
+            </div>
+            <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
+            <div style="font-size:11px; color:var(--gray); margin-top:8px; text-align:center; line-height:1.4;">Scarica il template, compilalo con i tuoi dati, poi caricalo</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="content" id="main-content">
+
+    <!-- Saldo Card -->
+    <div class="card saldo-card">
+        <div class="saldo-label">SALDO TOTALE CASSA</div>
+        <div class="saldo-value" id="main-saldo">€ 0,00</div>
+        <div class="saldo-trend" id="saldo-trend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5m0 0-7 7m7-7 7 7"/></svg>
+            <span id="trend-text">--</span>
+        </div>
+    </div>
+
+    <!-- TAB 1: REGISTRA -->
+    <div class="section active" id="s1">
+        <div class="card">
+            <!-- DATE PICKER -->
+            <div class="date-picker-row">
+                <button class="date-nav" data-action="shiftDate" data-days="-1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button class="date-display" data-action="openDatePicker">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px;opacity:0.5;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <span id="date-display-text"></span>
+                    <span class="date-badge" id="date-badge"></span>
+                </button>
+                <input type="date" id="date-input-hidden" style="position:absolute;opacity:0;width:0;height:0;">
+                <button class="date-nav" data-action="shiftDate" data-days="1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+
+            <!-- DAY SUMMARY -->
+            <div id="day-summary" style="display:none;"></div>
+
+            <!-- REGISTRATION FORM -->
+            <div id="registration-form">
+                <!-- INCASSI -->
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <div class="subsection-icon green">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20m5-15H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"/></svg>
+                        </div>
+                        Incassi
+                    </div>
+                    <div id="casse-container"></div>
+                    <button class="add-expense-btn" data-action="addCassa" style="margin-top:8px; border-color:var(--green); color:var(--green);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
+                        Aggiungi Cassa
+                    </button>
+                </div>
+
+                <div style="height:1px; background:var(--separator); margin:4px 0 20px;"></div>
+
+                <!-- USCITE -->
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <div class="subsection-icon red">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 11V3M7 21v-8m10 0-5 5-5-5"/></svg>
+                        </div>
+                        Uscite
+                    </div>
+
+                    <div id="pending-list"></div>
+
+                    <button class="add-expense-btn" data-action="openExpenseSheet">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
+                        Aggiungi Spesa
+                    </button>
+                </div>
+
+                <button class="btn-main" id="btn-registra" data-action="registra" style="margin-top:16px;">
+                    Registra Chiusura
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: RUBRICHE -->
+    <div class="section" id="s2">
+        <div class="card" style="padding: 12px 20px;">
+            <div class="rubrica-section" id="rub-fornitori">
+                <div class="rubrica-header" data-action="toggleRubrica" data-cat="fornitori">
+                    <div class="rubrica-header-left">
+                        <div class="rubrica-icon fornitori">F</div>
+                        <div>
+                            <div class="rubrica-cat-name">Fornitori</div>
+                            <div class="rubrica-count" id="rub-count-fornitori">0 voci</div>
+                        </div>
+                    </div>
+                    <svg class="rubrica-chevron" id="chev-fornitori" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+                </div>
+                <div class="rubrica-items" id="rub-items-fornitori"></div>
+            </div>
+            <div class="rubrica-section" id="rub-stipendi">
+                <div class="rubrica-header" data-action="toggleRubrica" data-cat="stipendi">
+                    <div class="rubrica-header-left">
+                        <div class="rubrica-icon stipendi">S</div>
+                        <div>
+                            <div class="rubrica-cat-name">Stipendi</div>
+                            <div class="rubrica-count" id="rub-count-stipendi">0 voci</div>
+                        </div>
+                    </div>
+                    <svg class="rubrica-chevron" id="chev-stipendi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+                </div>
+                <div class="rubrica-items" id="rub-items-stipendi"></div>
+            </div>
+            <div class="rubrica-section" id="rub-abit">
+                <div class="rubrica-header" data-action="toggleRubrica" data-cat="abit">
+                    <div class="rubrica-header-left">
+                        <div class="rubrica-icon abit">A</div>
+                        <div>
+                            <div class="rubrica-cat-name">Abitudinarie</div>
+                            <div class="rubrica-count" id="rub-count-abit">0 voci</div>
+                        </div>
+                    </div>
+                    <svg class="rubrica-chevron" id="chev-abit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+                </div>
+                <div class="rubrica-items" id="rub-items-abit"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: STORICO -->
+    <div class="section" id="s3">
+        <div class="card">
+            <div id="history"></div>
+        </div>
+    </div>
+
+    <!-- TAB 4: FATTURE -->
+    <div class="section" id="s4">
+        <div style="display:flex; gap:10px; margin-bottom:16px;">
+            <div class="card" style="flex:1; text-align:center; padding:14px; margin-bottom:0;">
+                <div style="font-size:11px; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:0.3px;">Da pagare</div>
+                <div id="fatt-da-pagare" style="font-size:20px; font-weight:800; margin-top:4px;">€ 0</div>
+            </div>
+            <div class="card" style="flex:1; text-align:center; padding:14px; margin-bottom:0;">
+                <div style="font-size:11px; font-weight:600; color:var(--orange); text-transform:uppercase; letter-spacing:0.3px;">In scadenza</div>
+                <div id="fatt-scadenza-count" style="font-size:20px; font-weight:800; margin-top:4px;">0</div>
+            </div>
+        </div>
+
+        <div class="segment-control" id="fatt-filter" style="margin-bottom:16px;">
+            <button class="segment-btn active" data-action="filterFatture" data-filter="tutte">Tutte</button>
+            <button class="segment-btn" data-action="filterFatture" data-filter="aperte">Da pagare</button>
+            <button class="segment-btn" data-action="filterFatture" data-filter="pagate">Pagate</button>
+            <button class="segment-btn" data-action="filterFatture" data-filter="scadute">Scadute</button>
+        </div>
+
+        <div class="card" style="padding:12px 16px;">
+            <div id="fatture-list"></div>
+        </div>
+
+        <button class="add-expense-btn" data-action="openFatturaSheet" style="margin-top:16px; border-color:var(--blue); color:var(--blue);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
+            Nuova Fattura
+        </button>
+    </div>
+</div>
+
+<!-- Bottom Tab Bar -->
+<div class="tab-bar">
+    <button class="tab-btn active" data-action="tab" data-tab="1" id="tab1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>Registra</span>
+    </button>
+    <button class="tab-btn" data-action="tab" data-tab="2" id="tab2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Rubriche</span>
+    </button>
+    <button class="tab-btn" data-action="tab" data-tab="3" id="tab3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Storico</span>
+    </button>
+    <button class="tab-btn" data-action="tab" data-tab="4" id="tab4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Fatture</span>
+    </button>
+</div>
+
+<!-- Expense Bottom Sheet -->
+<div class="expense-overlay" id="expense-overlay">
+    <div class="expense-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Aggiungi Spesa</div>
+
+        <div class="amount-display">
+            <div class="amount-currency">EUR</div>
+            <input type="number" class="amount-big-input" id="exp-amount" placeholder="0,00" inputmode="decimal">
+        </div>
+
+        <div class="quick-amounts">
+            <button class="quick-amt" data-action="setQuickAmount" data-amount="5">5€</button>
+            <button class="quick-amt" data-action="setQuickAmount" data-amount="10">10€</button>
+            <button class="quick-amt" data-action="setQuickAmount" data-amount="20">20€</button>
+            <button class="quick-amt" data-action="setQuickAmount" data-amount="50">50€</button>
+            <button class="quick-amt" data-action="setQuickAmount" data-amount="100">100€</button>
+            <button class="quick-amt" data-action="setQuickAmount" data-amount="200">200€</button>
+            <button class="quick-amt" style="background:var(--blue);color:white;" data-action="customAmount">Altro</button>
+        </div>
+
+        <div class="voice-label">Tipologia</div>
+        <div class="segment-control" id="exp-segments">
+            <button class="segment-btn active" data-action="switchExpCat" data-cat="fornitori">Fornitori</button>
+            <button class="segment-btn" data-action="switchExpCat" data-cat="stipendi">Stipendi</button>
+            <button class="segment-btn" data-action="switchExpCat" data-cat="abit">Abitudinarie</button>
+            <button class="segment-btn" data-action="switchExpCat" data-cat="libera">Libera</button>
+        </div>
+
+        <div class="voice-section" id="exp-voices-section">
+            <div class="voice-label">Seleziona voce</div>
+            <div class="voice-chips" id="exp-voices"></div>
+        </div>
+
+        <div class="free-name-wrap" id="free-name-wrap">
+            <div class="input-group" style="margin-bottom:0;">
+                <label>Descrizione</label>
+                <input type="text" class="input-field" id="exp-free-name" placeholder="Nome della spesa...">
+            </div>
+        </div>
+
+        <div class="input-group" id="exp-fattura-wrap" style="margin-bottom:12px; display:none;">
+            <label>N° Fattura</label>
+            <input type="text" class="input-field" id="exp-fattura-num" placeholder="Numero fattura...">
+        </div>
+
+        <div class="input-group" style="margin-bottom:12px;">
+            <label>Note (opzionale)</label>
+            <input type="text" class="input-field" id="exp-note" placeholder="Aggiungi una nota...">
+        </div>
+
+        <div class="sheet-actions">
+            <button class="btn-sm gray" data-action="closeExpenseSheet">Annulla</button>
+            <button class="btn-sm blue" data-action="addExpense">Aggiungi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Generic Modal (rubrica edit) -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title" id="modal-title">Aggiungi</div>
+        <div class="input-group">
+            <label>Nome</label>
+            <input type="text" class="input-field" id="modal-input" placeholder="Inserisci nome...">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-sm gray" data-action="modalCancel">Annulla</button>
+            <button class="btn-sm blue" data-action="modalConfirm">Aggiungi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+        <div class="confirm-title" id="confirm-title">Conferma</div>
+        <div class="confirm-msg" id="confirm-msg">Sei sicuro?</div>
+        <div class="confirm-actions">
+            <button class="btn-sm gray" data-action="closeConfirm">Annulla</button>
+            <button class="btn-sm red" id="confirm-yes">Elimina</button>
+        </div>
+    </div>
+</div>
+
+<!-- Excel Import Modal -->
+<div class="excel-overlay" id="excel-overlay">
+    <div class="excel-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Anteprima Importazione</div>
+        <div id="import-preview"></div>
+        <div class="excel-summary" id="import-summary" style="display:none;"></div>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button class="btn-sm gray" data-action="closeExcelImport" style="flex:1; text-align:center;">Annulla</button>
+            <button class="btn-sm blue" data-action="confirmFileImport" style="flex:1; text-align:center;">Importa Tutto</button>
+        </div>
+    </div>
+</div>
+
+<!-- Fattura Bottom Sheet -->
+<div class="fattura-overlay" id="fattura-overlay">
+    <div class="fattura-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="fattura-sheet-title">Nuova Fattura</div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Data arrivo</label>
+                <input type="date" class="input-field" id="fatt-data-arrivo">
+            </div>
+            <div class="input-group">
+                <label>N° Fattura</label>
+                <input type="text" class="input-field" id="fatt-numero" placeholder="N° fattura">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Azienda / Fornitore</label>
+            <input type="text" class="input-field" id="fatt-azienda" placeholder="Nome azienda" list="fatt-azienda-list" autocomplete="off">
+            <datalist id="fatt-azienda-list"></datalist>
+        </div>
+
+        <div class="input-group">
+            <label>Importo totale</label>
+            <input type="number" class="input-field" id="fatt-importo" placeholder="0,00" inputmode="decimal" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label>Bonifico/Assegno</label>
+            <input type="number" class="input-field" id="fatt-bonifico" placeholder="0,00" inputmode="decimal" step="0.01">
+        </div>
+        <div style="font-size:12px; color:var(--text3); margin:-8px 0 12px; padding:0 2px;">
+            I pagamenti in contanti vengono calcolati automaticamente dalle spese giornaliere registrate per questo fornitore.
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Ciclo pagamento</label>
+                <select class="input-field" id="fatt-ciclo">
+                    <option value="">Seleziona...</option>
+                    <option value="30">30 giorni</option>
+                    <option value="60">60 giorni</option>
+                    <option value="90">90 giorni</option>
+                    <option value="120">120 giorni</option>
+                    <option value="custom">Personalizzato</option>
+                </select>
+            </div>
+            <div class="input-group" id="fatt-scadenza-group">
+                <label>Scadenza</label>
+                <input type="date" class="input-field" id="fatt-scadenza">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Note</label>
+            <input type="text" class="input-field" id="fatt-note" placeholder="Note opzionali...">
+        </div>
+
+        <div class="sheet-actions">
+            <button class="btn-sm gray" data-action="closeFatturaSheet">Annulla</button>
+            <button class="btn-sm blue" id="fatt-save-btn" data-action="saveFattura">Salva</button>
+        </div>
+    </div>
+</div>
+
+<!-- Fattura Detail Sheet -->
+<div class="fattura-detail-overlay" id="fattura-detail-overlay">
+    <div class="fattura-detail-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="fattura-detail-title">Dettaglio Fattura</div>
+        <div id="fattura-detail-content"></div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <span class="toast-icon" id="toast-icon"></span>
+    <span id="toast-text"></span>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
