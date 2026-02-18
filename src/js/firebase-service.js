@@ -40,7 +40,8 @@ export function parseFirebaseConfig(text) {
     const match = cleaned.match(/\{[\s\S]*\}/);
     if (match) cleaned = match[0];
     // Convert JS object literal to valid JSON
-    cleaned = cleaned.replace(/(\w+)\s*:/g, '"$1":');
+    // Only quote keys at the start of a line or after { or ,
+    cleaned = cleaned.replace(/(?<=[\{,]\s*)(\w+)\s*:/g, '"$1":');
     cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
     cleaned = cleaned.replace(/'/g, '"');
     const config = JSON.parse(cleaned);
