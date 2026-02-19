@@ -175,9 +175,19 @@ document.getElementById('date-input-hidden').addEventListener('change', function
   }
 });
 
-// Fattura: toggle assegno group + photo input
+// Fattura: toggle assegno group + photo input + ciclo auto-calc
 document.getElementById('fatt-tipo-pagamento').addEventListener('change', toggleAssegnoGroup);
 document.getElementById('fatt-photo-input').addEventListener('change', handleFatturaPhoto);
+document.getElementById('fatt-ciclo').addEventListener('change', function () {
+  if (this.value && this.value !== 'custom') {
+    const arrivo = document.getElementById('fatt-data-arrivo').value;
+    if (arrivo) {
+      const dt = new Date(arrivo);
+      dt.setDate(dt.getDate() + parseInt(this.value));
+      document.getElementById('fatt-scadenza').value = toISODate(dt);
+    }
+  }
+});
 
 // File inputs
 document.getElementById('import-file').addEventListener('change', importBackup);

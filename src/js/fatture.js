@@ -198,6 +198,9 @@ export function openFatturaSheet(id) {
     document.getElementById('fatt-importo').value = f.importo || '';
     document.getElementById('fatt-tipo-pagamento').value = f.tipoPagamento || '';
     document.getElementById('fatt-numero-assegno').value = f.numeroAssegno || '';
+    document.getElementById('fatt-ciclo').value = f.ciclo || '';
+    document.getElementById('fatt-scadenza').value = f.scadenza || '';
+    document.getElementById('fatt-note').value = f.note || '';
     toggleAssegnoGroup();
 
     // Photo
@@ -217,6 +220,9 @@ export function openFatturaSheet(id) {
     document.getElementById('fatt-importo').value = '';
     document.getElementById('fatt-tipo-pagamento').value = '';
     document.getElementById('fatt-numero-assegno').value = '';
+    document.getElementById('fatt-ciclo').value = '';
+    document.getElementById('fatt-scadenza').value = '';
+    document.getElementById('fatt-note').value = '';
     document.getElementById('fatt-assegno-group').style.display = 'none';
     removeFatturaPhoto();
   }
@@ -254,6 +260,9 @@ export function saveFattura() {
     importo: importo,
     tipoPagamento: tipoPagamento,
     numeroAssegno: tipoPagamento === 'assegno' ? numeroAssegno : '',
+    ciclo: document.getElementById('fatt-ciclo').value,
+    scadenza: document.getElementById('fatt-scadenza').value,
+    note: document.getElementById('fatt-note').value.trim(),
     foto: pendingPhoto || null
   };
 
@@ -386,6 +395,14 @@ export function openFatturaDetail(id) {
     rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Pag. contanti <span style="font-size:10px;color:var(--gray2);">(auto)</span></span><span class="fattura-detail-value">\u20AC ${(f.pagCash || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
     rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Bonifico/Assegno</span><span class="fattura-detail-value">\u20AC ${(f.pagBonifico || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
     rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Non pagato</span><span class="fattura-detail-value" style="color:${f.nonPagato > 0 ? 'var(--red)' : 'var(--green)'}">\u20AC ${(f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
+  }
+
+  const cicloStr = f.ciclo && f.ciclo !== 'custom' ? f.ciclo + ' giorni' : (f.ciclo === 'custom' ? 'Personalizzato' : '-');
+  const scadenzaStr = f.scadenza ? new Date(f.scadenza).toLocaleDateString('it-IT') : '-';
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Ciclo pagamento</span><span class="fattura-detail-value">${cicloStr}</span></div>`;
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Scadenza</span><span class="fattura-detail-value">${scadenzaStr}</span></div>`;
+  if (f.note) {
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Note</span><span class="fattura-detail-value">${escapeHtml(f.note)}</span></div>`;
   }
 
   if (f.foto) {
