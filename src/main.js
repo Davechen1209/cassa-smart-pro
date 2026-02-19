@@ -42,7 +42,8 @@ import {
   openFatturaSheet, closeFatturaSheet, closeFatturaOutside,
   saveFattura, deleteFattura, filterFatture,
   openFatturaDetail, closeFatturaDetail, closeFatturaDetailOutside,
-  registerPayment
+  triggerFatturaPhoto, handleFatturaPhoto, removeFatturaPhoto,
+  toggleAssegnoGroup
 } from './js/fatture.js';
 
 import {
@@ -130,7 +131,8 @@ document.body.addEventListener('click', (e) => {
       openFatturaSheet(Number(btn.dataset.id));
       closeFatturaDetail();
       break;
-    case 'registerPayment': registerPayment(Number(btn.dataset.id)); break;
+    case 'triggerFatturaPhoto': triggerFatturaPhoto(); break;
+    case 'removeFatturaPhoto': removeFatturaPhoto(); break;
 
     // Cloud
     case 'connectCloud': connectCloud(); break;
@@ -173,17 +175,9 @@ document.getElementById('date-input-hidden').addEventListener('change', function
   }
 });
 
-// Fattura ciclo auto-calc
-document.getElementById('fatt-ciclo').addEventListener('change', function () {
-  if (this.value && this.value !== 'custom') {
-    const arrivo = document.getElementById('fatt-data-arrivo').value;
-    if (arrivo) {
-      const dt = new Date(arrivo);
-      dt.setDate(dt.getDate() + parseInt(this.value));
-      document.getElementById('fatt-scadenza').value = toISODate(dt);
-    }
-  }
-});
+// Fattura: toggle assegno group + photo input
+document.getElementById('fatt-tipo-pagamento').addEventListener('change', toggleAssegnoGroup);
+document.getElementById('fatt-photo-input').addEventListener('change', handleFatturaPhoto);
 
 // File inputs
 document.getElementById('import-file').addEventListener('change', importBackup);

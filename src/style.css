@@ -969,6 +969,26 @@ body {
 .fattura-sheet .input-row { display: flex; gap: 10px; }
 .fattura-sheet .input-row .input-group { flex: 1; }
 
+.photo-upload { display: flex; flex-direction: column; gap: 8px; }
+.photo-preview {
+    position: relative; border-radius: var(--radius-sm);
+    overflow: hidden; max-width: 200px;
+}
+.photo-preview img {
+    width: 100%; display: block; border-radius: var(--radius-sm);
+}
+.photo-remove {
+    position: absolute; top: 6px; right: 6px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: white;
+    border: none; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.fattura-detail-photo {
+    width: 100%; max-width: 280px; border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
 /* ═══════════════════════════════════════════════════
    PIN LOCK SCREEN
    ═══════════════════════════════════════════════════ */
