@@ -7,6 +7,7 @@ import {
 import { showToast } from './modals.js';
 import { autoCreateFatturaIfNeeded } from './fatture.js';
 import { renderPendingList } from './expense.js';
+import { t } from './i18n.js';
 
 export function renderCasse() {
   const container = document.getElementById('casse-container');
@@ -15,7 +16,7 @@ export function renderCasse() {
       <div class="cassa-header">
         <div class="cassa-label">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-          Cassa ${i + 1}
+          ${t('incassi.cassa')} ${i + 1}
         </div>
         ${casseList.length > 1 ? `
           <button class="cassa-remove" data-action="removeCassa" data-id="${c.id}">
@@ -25,11 +26,11 @@ export function renderCasse() {
       </div>
       <div class="input-row">
         <div class="input-group">
-          <label>Totale Z</label>
+          <label>${t('incassi.totaleZ')}</label>
           <input type="number" class="input-field" id="z-${c.id}" placeholder="0,00" inputmode="decimal">
         </div>
         <div class="input-group">
-          <label>POS</label>
+          <label>${t('incassi.pos')}</label>
           <input type="number" class="input-field" id="pos-${c.id}" placeholder="0,00" inputmode="decimal">
         </div>
       </div>
@@ -52,7 +53,7 @@ export function getCasseData() {
   return casseList.map((c, i) => {
     const z = parseFloat(document.getElementById('z-' + c.id)?.value) || 0;
     const pos = parseFloat(document.getElementById('pos-' + c.id)?.value) || 0;
-    return { name: 'Cassa ' + (i + 1), z, pos, cash: z - pos };
+    return { name: t('incassi.cassa') + ' ' + (i + 1), z, pos, cash: z - pos };
   }).filter(c => c.z > 0);
 }
 
@@ -61,7 +62,7 @@ export function registra() {
   const oggi = selectedDate.toLocaleDateString('it-IT');
 
   if (casse.length === 0 && pendingExpenses.length === 0) {
-    showToast('Inserisci incassi o aggiungi spese', 'warn');
+    showToast(t('uscite.noData'), 'warn');
     return;
   }
 
@@ -70,7 +71,7 @@ export function registra() {
   casse.forEach(c => {
     d.saldo += c.cash;
     const label = casseList.length > 1 ? c.name + ' ' : '';
-    d.log.push({ d: oggi, v: label + 'Incasso Cash (Z:' + c.z + ' POS:' + c.pos + ')', a: c.cash });
+    d.log.push({ d: oggi, v: label + t('fatt.incassoCash') + ' (Z:' + c.z + ' POS:' + c.pos + ')', a: c.cash });
     messages.push(label + '+' + c.cash.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC');
   });
 
@@ -88,7 +89,7 @@ export function registra() {
 
   if (pendingExpenses.length > 0) {
     const totalExp = pendingExpenses.reduce((s, e) => s + e.amount, 0);
-    messages.push(pendingExpenses.length + ' uscite: -' + totalExp.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC');
+    messages.push(pendingExpenses.length + ' ' + t('uscite.expenses') + ': -' + totalExp.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC');
   }
 
   setCasseList([{ id: 1 }]);
@@ -99,10 +100,10 @@ export function registra() {
 
   const btn = document.getElementById('btn-registra');
   btn.classList.add('success');
-  btn.textContent = '\u2713 Registrato!';
+  btn.textContent = t('uscite.registered');
   setTimeout(() => {
     btn.classList.remove('success');
-    btn.textContent = 'Registra Chiusura';
+    btn.textContent = t('uscite.registra');
   }, 1500);
 
   fullSave();

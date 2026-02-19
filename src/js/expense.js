@@ -6,6 +6,7 @@ import {
   setModalCat, setEditingItem
 } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
+import { t } from './i18n.js';
 
 export function openExpenseSheet() {
   setExpCat('fornitori');
@@ -76,7 +77,7 @@ export function renderExpVoices() {
     const sel = expSelectedVoice === n ? ' selected' : '';
     return `<button class="voice-chip${sel}" data-action="selectExpVoice" data-name="${escapeHtml(n)}">${escapeHtml(n)}</button>`;
   }).join('') +
-  `<button class="voice-chip new-voice" data-action="addNewVoiceFromSheet">+ Nuova</button>`;
+  `<button class="voice-chip new-voice" data-action="addNewVoiceFromSheet">${t('exp.newVoice')}</button>`;
 }
 
 export function selectExpVoice(name) {
@@ -87,8 +88,8 @@ export function selectExpVoice(name) {
 export function addNewVoiceFromSheet() {
   setModalCat(expCat);
   setEditingItem(null);
-  const labels = { fornitori: 'Fornitore', stipendi: 'Stipendio', abit: 'Voce Abitudinaria' };
-  document.getElementById('modal-title').textContent = 'Nuovo ' + (labels[expCat] || '');
+  const labels = { fornitori: t('rub.newFornitore'), stipendi: t('rub.newStipendio'), abit: t('rub.newVoce') };
+  document.getElementById('modal-title').textContent = labels[expCat] || '';
   document.getElementById('modal-input').value = '';
   document.getElementById('modal-overlay').classList.add('show');
   setTimeout(() => document.getElementById('modal-input').focus(), 350);
@@ -97,41 +98,41 @@ export function addNewVoiceFromSheet() {
 export function addExpense() {
   const amount = parseFloat(document.getElementById('exp-amount').value);
   if (!amount || amount <= 0) {
-    showToast('Inserisci un importo valido', 'warn');
+    showToast(t('exp.invalidAmount'), 'warn');
     return;
   }
 
   let name, type;
 
   if (expCat === 'libera') {
-    name = document.getElementById('exp-free-name').value.trim() || 'Spesa generica';
-    type = 'Spesa';
+    name = document.getElementById('exp-free-name').value.trim() || t('exp.genericExpense');
+    type = t('exp.expense');
   } else if (expSelectedVoice) {
     name = expSelectedVoice;
-    type = expCat === 'fornitori' ? 'Fornitore' : (expCat === 'stipendi' ? 'Stipendio' : 'Spesa');
+    type = expCat === 'fornitori' ? t('exp.fornitore') : (expCat === 'stipendi' ? t('exp.stipendio') : t('exp.expense'));
   } else {
-    showToast('Seleziona una voce o usa "Libera"', 'warn');
+    showToast(t('exp.selectOrFree'), 'warn');
     return;
   }
 
   const note = document.getElementById('exp-note').value.trim();
   const fatturaNum = expCat === 'fornitori' ? document.getElementById('exp-fattura-num').value.trim() : '';
   if (expCat === 'fornitori' && !fatturaNum) {
-    showToast('Inserisci il numero fattura', 'warn');
+    showToast(t('exp.enterFattNum'), 'warn');
     document.getElementById('exp-fattura-num').focus();
     return;
   }
   pendingExpenses.push({ name, cat: expCat, type, amount, note, fatturaNum });
   closeExpenseSheet();
   renderPendingList();
-  showToast(name + ' - ' + amount.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC aggiunta', 'check');
+  showToast(name + ' - ' + amount.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC' + t('exp.added'), 'check');
 }
 
 export function renderPendingList() {
   const el = document.getElementById('pending-list');
 
   if (pendingExpenses.length === 0) {
-    el.innerHTML = '<div class="pending-empty">Nessuna spesa aggiunta</div>';
+    el.innerHTML = '<div class="pending-empty">' + t('exp.noPending') + '</div>';
     return;
   }
 
@@ -145,7 +146,7 @@ export function renderPendingList() {
         <div class="pending-icon ${e.cat}">${iconLetters[e.cat] || '?'}</div>
         <div class="pending-info">
           <div class="pending-name">${escapeHtml(e.name)}</div>
-          <div class="pending-cat">${escapeHtml(e.type)}${e.fatturaNum ? ' \u00B7 Fatt. ' + escapeHtml(e.fatturaNum) : ''}${e.note ? ' \u00B7 ' + escapeHtml(e.note) : ''}</div>
+          <div class="pending-cat">${escapeHtml(e.type)}${e.fatturaNum ? ' \u00B7 ' + t('exp.fatt') + escapeHtml(e.fatturaNum) : ''}${e.note ? ' \u00B7 ' + escapeHtml(e.note) : ''}</div>
         </div>
         <div class="pending-amount">-${e.amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</div>
         <button class="pending-remove" data-action="removePending" data-index="${i}">
@@ -156,7 +157,7 @@ export function renderPendingList() {
   });
   html += `
     <div class="pending-total">
-      <span>Totale uscite</span>
+      <span>${t('exp.totalExpenses')}</span>
       <span class="pending-total-amount">-${total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span>
     </div>
   </div>`;
@@ -166,5 +167,5 @@ export function renderPendingList() {
 export function removePending(index) {
   const removed = pendingExpenses.splice(index, 1)[0];
   renderPendingList();
-  showToast('"' + removed.name + '" rimossa', 'trash');
+  showToast('"' + removed.name + '"' + t('exp.removed'), 'trash');
 }

@@ -2,6 +2,7 @@
 
 import './style.css';
 import { initPinLock } from './js/pin-lock.js';
+import { setLang, applyLanguage, getLang } from './js/i18n.js';
 
 import {
   selectedDate, setSelectedDate, setEditingDay, setOnSaveCallback
@@ -71,6 +72,7 @@ document.body.addEventListener('click', (e) => {
     case 'toggleSettings': toggleSettings(); break;
     case 'manualSaldo': manualSaldo(); break;
     case 'confirmReset': confirmReset(); break;
+    case 'setLang': setLang(btn.dataset.lang); updateHeaderDate(); updateDateDisplay(); renderCasse(); ui(); break;
 
     // Date
     case 'shiftDate':
@@ -195,6 +197,7 @@ document.getElementById('excel-file').addEventListener('change', importExcel);
 
 // ─── Init ───
 initPinLock();
+applyLanguage();
 updateHeaderDate();
 updateDateDisplay();
 renderCasse();

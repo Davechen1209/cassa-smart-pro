@@ -6,6 +6,7 @@ import {
 } from './state.js';
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { toISODate } from './date-utils.js';
+import { t } from './i18n.js';
 
 let pendingPhoto = null;
 
@@ -190,8 +191,8 @@ export function openFatturaSheet(id) {
   if (id) {
     const f = d.fatture.find(x => x.id === id);
     if (!f) return;
-    title.textContent = 'Modifica Fattura';
-    btn.textContent = 'Aggiorna';
+    title.textContent = t('fatt.edit');
+    btn.textContent = t('fatt.update');
     document.getElementById('fatt-data-arrivo').value = f.dataArrivo || '';
     document.getElementById('fatt-numero').value = f.numero || '';
     document.getElementById('fatt-azienda').value = f.azienda || '';
@@ -212,8 +213,8 @@ export function openFatturaSheet(id) {
       removeFatturaPhoto();
     }
   } else {
-    title.textContent = 'Nuova Fattura';
-    btn.textContent = 'Salva';
+    title.textContent = t('fatt.new');
+    btn.textContent = t('fatt.save');
     document.getElementById('fatt-data-arrivo').value = toISODate(new Date());
     document.getElementById('fatt-numero').value = '';
     document.getElementById('fatt-azienda').value = '';
@@ -247,10 +248,10 @@ export function saveFattura() {
   const tipoPagamento = document.getElementById('fatt-tipo-pagamento').value;
   const numeroAssegno = document.getElementById('fatt-numero-assegno').value.trim();
 
-  if (!azienda) { showToast('Inserisci il fornitore', 'warn'); return; }
-  if (importo <= 0) { showToast('Inserisci un importo valido', 'warn'); return; }
-  if (!tipoPagamento) { showToast('Seleziona il tipo di pagamento', 'warn'); return; }
-  if (tipoPagamento === 'assegno' && !numeroAssegno) { showToast('Inserisci il numero assegno', 'warn'); return; }
+  if (!azienda) { showToast(t('fatt.enterFornitore'), 'warn'); return; }
+  if (importo <= 0) { showToast(t('fatt.invalidAmount'), 'warn'); return; }
+  if (!tipoPagamento) { showToast(t('fatt.selectTipo'), 'warn'); return; }
+  if (tipoPagamento === 'assegno' && !numeroAssegno) { showToast(t('fatt.enterAssegno'), 'warn'); return; }
 
   const fattura = {
     id: editingFatturaId || Date.now(),
@@ -275,17 +276,17 @@ export function saveFattura() {
 
   fullSave();
   closeFatturaSheet();
-  showToast(editingFatturaId ? 'Fattura aggiornata' : 'Fattura aggiunta', 'check');
+  showToast(editingFatturaId ? t('fatt.updated') : t('fatt.added'), 'check');
 }
 
 // ─── Delete ───
 
 export function deleteFattura(id) {
-  showConfirm('Elimina Fattura', 'Vuoi eliminare questa fattura?', () => {
+  showConfirm(t('fatt.deleteTitle'), t('fatt.deleteMsg'), () => {
     d.fatture = d.fatture.filter(x => x.id !== id);
     fullSave();
     closeFatturaDetail();
-    showToast('Fattura eliminata', 'check');
+    showToast(t('fatt.deleted'), 'check');
   });
 }
 
@@ -299,9 +300,9 @@ export function filterFatture(filter, targetBtn) {
 }
 
 function tipoPagamentoLabel(tipo) {
-  if (tipo === 'contanti') return 'Contanti';
-  if (tipo === 'bonifico') return 'Bonifico';
-  if (tipo === 'assegno') return 'Assegno';
+  if (tipo === 'contanti') return t('fatt.contanti');
+  if (tipo === 'bonifico') return t('fatt.bonifico');
+  if (tipo === 'assegno') return t('fatt.assegno');
   return '-';
 }
 
@@ -310,7 +311,7 @@ export function renderFatture() {
   updateFattureAziendaList();
   const container = document.getElementById('fatture-list');
   if (!d.fatture || d.fatture.length === 0) {
-    container.innerHTML = '<div class="fattura-empty">Nessuna fattura registrata</div>';
+    container.innerHTML = '<div class="fattura-empty">' + t('fatt.empty') + '</div>';
     document.getElementById('fatt-da-pagare').textContent = '\u20AC 0';
     document.getElementById('fatt-scadenza-count').textContent = '0';
     return;
@@ -336,7 +337,7 @@ export function renderFatture() {
   document.getElementById('fatt-scadenza-count').textContent = expiringCount;
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div class="fattura-empty">Nessuna fattura in questa categoria</div>';
+    container.innerHTML = '<div class="fattura-empty">' + t('fatt.emptyFilter') + '</div>';
     return;
   }
 
@@ -352,7 +353,7 @@ export function renderFatture() {
     // For old fatture show "da pagare" info
     const rightText = f.tipoPagamento
       ? tipoPagamentoLabel(f.tipoPagamento)
-      : (f.nonPagato > 0 ? 'Da pagare: \u20AC ' + (f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 }) : 'Pagata');
+      : (f.nonPagato > 0 ? t('fatt.unpaid') + '\u20AC ' + (f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 }) : t('fatt.paid'));
 
     return `<div class="fattura-item" data-action="openFatturaDetail" data-id="${f.id}">
       <div class="fattura-status-dot ${dotClass}"></div>
@@ -381,40 +382,40 @@ export function openFatturaDetail(id) {
   document.getElementById('fattura-detail-title').innerHTML = escapeHtml(f.azienda);
 
   let rows = '';
-  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">N\u00B0 Fattura</span><span class="fattura-detail-value">${escapeHtml(f.numero || '-')}</span></div>`;
-  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Data</span><span class="fattura-detail-value">${arrivoStr}</span></div>`;
-  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Importo</span><span class="fattura-detail-value">\u20AC ${f.importo.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.numero')}</span><span class="fattura-detail-value">${escapeHtml(f.numero || '-')}</span></div>`;
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.data')}</span><span class="fattura-detail-value">${arrivoStr}</span></div>`;
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.importo')}</span><span class="fattura-detail-value">\u20AC ${f.importo.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
 
   if (f.tipoPagamento) {
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Tipo pagamento</span><span class="fattura-detail-value">${tipoPagamentoLabel(f.tipoPagamento)}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.tipoPagamento')}</span><span class="fattura-detail-value">${tipoPagamentoLabel(f.tipoPagamento)}</span></div>`;
     if (f.tipoPagamento === 'assegno' && f.numeroAssegno) {
-      rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">N\u00B0 Assegno</span><span class="fattura-detail-value">${escapeHtml(f.numeroAssegno)}</span></div>`;
+      rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.numAssegno')}</span><span class="fattura-detail-value">${escapeHtml(f.numeroAssegno)}</span></div>`;
     }
   } else {
     // Old schema: show legacy payment info
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Pag. contanti <span style="font-size:10px;color:var(--gray2);">(auto)</span></span><span class="fattura-detail-value">\u20AC ${(f.pagCash || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Bonifico/Assegno</span><span class="fattura-detail-value">\u20AC ${(f.pagBonifico || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Non pagato</span><span class="fattura-detail-value" style="color:${f.nonPagato > 0 ? 'var(--red)' : 'var(--green)'}">\u20AC ${(f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyCash')} <span style="font-size:10px;color:var(--gray2);">${t('fatt.legacyAuto')}</span></span><span class="fattura-detail-value">\u20AC ${(f.pagCash || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyBonifico')}</span><span class="fattura-detail-value">\u20AC ${(f.pagBonifico || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyUnpaid')}</span><span class="fattura-detail-value" style="color:${f.nonPagato > 0 ? 'var(--red)' : 'var(--green)'}">\u20AC ${(f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
   }
 
-  const cicloStr = f.ciclo && f.ciclo !== 'custom' ? f.ciclo + ' giorni' : (f.ciclo === 'custom' ? 'Personalizzato' : '-');
+  const cicloStr = f.ciclo && f.ciclo !== 'custom' ? f.ciclo + t('fatt.days') : (f.ciclo === 'custom' ? t('fatt.custom') : '-');
   const scadenzaStr = f.scadenza ? new Date(f.scadenza).toLocaleDateString('it-IT') : '-';
-  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Ciclo pagamento</span><span class="fattura-detail-value">${cicloStr}</span></div>`;
-  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Scadenza</span><span class="fattura-detail-value">${scadenzaStr}</span></div>`;
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.cicloPagamento')}</span><span class="fattura-detail-value">${cicloStr}</span></div>`;
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.scadenza')}</span><span class="fattura-detail-value">${scadenzaStr}</span></div>`;
   if (f.note) {
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">Note</span><span class="fattura-detail-value">${escapeHtml(f.note)}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.note')}</span><span class="fattura-detail-value">${escapeHtml(f.note)}</span></div>`;
   }
 
   if (f.foto) {
     rows += `<div class="fattura-detail-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
-      <span class="fattura-detail-label">Foto</span>
+      <span class="fattura-detail-label">${t('fatt.fotoLabel')}</span>
       <img src="${f.foto}" alt="Foto fattura" class="fattura-detail-photo" onclick="window.open(this.src)">
     </div>`;
   }
 
   rows += `<div class="fattura-actions-row">
-    <button class="btn-sm blue" data-action="editFattura" data-id="${f.id}">Modifica</button>
-    <button class="btn-sm red" data-action="deleteFattura" data-id="${f.id}">Elimina</button>
+    <button class="btn-sm blue" data-action="editFattura" data-id="${f.id}">${t('fatt.modifica')}</button>
+    <button class="btn-sm red" data-action="deleteFattura" data-id="${f.id}">${t('fatt.elimina')}</button>
   </div>`;
 
   document.getElementById('fattura-detail-content').innerHTML = rows;

@@ -1,0 +1,579 @@
+// ─── Internationalization (IT / ZH) ───
+
+const translations = {
+  it: {
+    // App
+    'app.title': 'Cassa Smart Pro',
+    'app.cloudDisconnected': 'Cloud non connesso',
+
+    // PIN
+    'pin.title': 'Cassa Smart Pro',
+    'pin.subtitle': 'Inserisci il PIN per accedere',
+    'pin.blocked': 'Accesso bloccato permanentemente',
+    'pin.tooMany': 'Troppi tentativi errati',
+    'pin.remaining_one': 'tentativo rimanente',
+    'pin.remaining_other': 'tentativi rimanenti',
+
+    // Tabs
+    'tab.registra': 'Registra',
+    'tab.rubriche': 'Rubriche',
+    'tab.storico': 'Storico',
+    'tab.fatture': 'Fatture',
+
+    // Saldo
+    'saldo.title': 'SALDO TOTALE CASSA',
+    'saldo.updated': 'Saldo aggiornato',
+
+    // Settings
+    'settings.title': 'Impostazioni',
+    'settings.lang': 'Lingua',
+    'settings.saldo': 'Saldo manuale',
+    'settings.saldoPlaceholder': 'Imposta saldo...',
+    'settings.update': 'Aggiorna Saldo',
+    'settings.reset': 'Reset Dati',
+    'settings.resetTitle': 'Reset Dati',
+    'settings.resetMsg': 'Tutti i movimenti e le rubriche verranno eliminati. Continuare?',
+    'settings.resetDone': 'Dati resettati',
+
+    // Cloud
+    'cloud.title': 'Sincronizzazione Cloud',
+    'cloud.connected': 'Cloud connesso',
+    'cloud.lastSync': 'Ultimo sync:',
+    'cloud.autoSave': 'I tuoi dati vengono salvati automaticamente nel cloud Firebase ad ogni modifica.',
+    'cloud.reload': 'Ricarica dal Cloud',
+    'cloud.disconnect': 'Disconnetti',
+    'cloud.notConfigured': 'Cloud non configurato',
+    'cloud.setupInfo': 'Configura Firebase per salvare i dati nel cloud in modo automatico e sicuro. Servono 5 minuti (una sola volta).',
+    'cloud.step1': 'Vai su console.firebase.google.com e crea un nuovo progetto (nome a piacere, disattiva Google Analytics).',
+    'cloud.step2': 'Nel progetto, clicca "Crea" > "Firestore Database" nel menu a sinistra. Scegli "Avvia in modalita\' test" e seleziona la region piu\' vicina.',
+    'cloud.step3': 'Nel menu "Creazione" > "Authentication", clicca "Inizia", poi abilita il provider "Google".',
+    'cloud.step4': 'Vai in Impostazioni progetto (icona ingranaggio in alto) > scorri fino a "Le tue app" > clicca "Web" (icona </>) > Dai un nome e clicca Registra. Copia il blocco firebaseConfig e incollalo qui sotto.',
+    'cloud.connect': 'Connetti al Cloud',
+    'cloud.synced': 'Cloud sincronizzato',
+    'cloud.syncing': 'Sincronizzazione in corso...',
+    'cloud.syncError': 'Errore di sincronizzazione',
+    'cloud.reloaded': 'Dati ricaricati dal cloud',
+    'cloud.noData': 'Nessun dato trovato nel cloud',
+    'cloud.loginToSync': 'Accedi per sincronizzare',
+    'cloud.loginInfo': 'Accedi con il tuo account Google per sincronizzare i dati tra tutti i tuoi dispositivi.',
+    'cloud.loginGoogle': 'Accedi con Google',
+    'cloud.or': 'oppure',
+    'cloud.removeConfig': 'Rimuovi configurazione',
+    'cloud.connError': 'Errore connessione cloud: ',
+    'cloud.connectedAs': 'Connesso come ',
+    'cloud.loginError': 'Errore accesso: ',
+    'cloud.invalidConfig': 'Configurazione non valida. Controlla il formato.',
+    'cloud.connecting': 'Connessione al cloud in corso...',
+    'cloud.disconnectTitle': 'Disconnetti Cloud',
+    'cloud.disconnectMsg': 'I dati locali rimarranno salvati. Vuoi disconnettere la sincronizzazione cloud?',
+    'cloud.disconnected': 'Cloud disconnesso',
+
+    // Backup
+    'backup.title': 'oppure backup manuale',
+    'backup.download': 'Scarica',
+    'backup.restore': 'Ripristina',
+    'backup.excelTitle': 'importa dati da Excel',
+    'backup.downloadTemplate': '1. Scarica Template',
+    'backup.uploadFile': '2. Carica File',
+    'backup.excelHelp': 'Scarica il template, compilalo con i tuoi dati, poi caricalo',
+    'backup.templateDone': 'Template scaricato! Compilalo e ricaricalo',
+    'backup.fileEmpty': 'File vuoto',
+    'backup.noValidData': 'Nessun dato valido trovato',
+    'backup.fileError': 'Errore lettura file: ',
+    'backup.moreItems': '...e altri {n} movimenti',
+    'backup.totalItems': '{n} movimenti totali',
+    'backup.imported': '{n} movimenti importati!',
+    'backup.downloaded': 'Backup scaricato! Salvalo in un posto sicuro',
+    'backup.invalidFile': 'File non valido: non e\' un backup di Cassa Smart Pro',
+    'backup.restoreTitle': 'Ripristina Backup',
+    'backup.restoreMsg': 'Backup del {date} con {n} movimenti. I dati attuali verranno sostituiti. Continuare?',
+    'backup.restoreDone': 'Dati ripristinati! {n} movimenti caricati',
+    'backup.readError': 'Errore nella lettura del file',
+
+    // Excel import preview
+    'excel.previewTitle': 'Anteprima Importazione',
+    'excel.cancel': 'Annulla',
+    'excel.importAll': 'Importa Tutto',
+    'excel.colDate': 'Data',
+    'excel.colDesc': 'Descrizione',
+    'excel.colAmount': 'Importo',
+    'excel.incomes': 'Incassi',
+    'excel.expenses': 'Uscite',
+    'excel.net': 'Netto',
+
+    // Incassi
+    'incassi.title': 'Incassi',
+    'incassi.add': 'Aggiungi Cassa',
+    'incassi.cassa': 'Cassa',
+    'incassi.totaleZ': 'Totale Z',
+    'incassi.pos': 'POS',
+
+    // Uscite
+    'uscite.title': 'Uscite',
+    'uscite.add': 'Aggiungi Spesa',
+    'uscite.registra': 'Registra Chiusura',
+    'uscite.registered': '\u2713 Registrato!',
+    'uscite.noData': 'Inserisci incassi o aggiungi spese',
+    'uscite.expenses': 'uscite',
+
+    // Expense sheet
+    'exp.title': 'Aggiungi Spesa',
+    'exp.currency': 'EUR',
+    'exp.other': 'Altro',
+    'exp.type': 'Tipologia',
+    'exp.fornitori': 'Fornitori',
+    'exp.stipendi': 'Stipendi',
+    'exp.abitudinarie': 'Abitudinarie',
+    'exp.libera': 'Libera',
+    'exp.selectVoice': 'Seleziona voce',
+    'exp.description': 'Descrizione',
+    'exp.descPlaceholder': 'Nome della spesa...',
+    'exp.fattura': 'N\u00B0 Fattura',
+    'exp.fatturaPlaceholder': 'Numero fattura...',
+    'exp.note': 'Note (opzionale)',
+    'exp.notePlaceholder': 'Aggiungi una nota...',
+    'exp.cancel': 'Annulla',
+    'exp.add': 'Aggiungi',
+    'exp.invalidAmount': 'Inserisci un importo valido',
+    'exp.selectOrFree': 'Seleziona una voce o usa "Libera"',
+    'exp.enterFattNum': 'Inserisci il numero fattura',
+    'exp.added': ' aggiunta',
+    'exp.noPending': 'Nessuna spesa aggiunta',
+    'exp.fatt': 'Fatt. ',
+    'exp.totalExpenses': 'Totale uscite',
+    'exp.removed': ' rimossa',
+    'exp.newVoice': '+ Nuova',
+    'exp.genericExpense': 'Spesa generica',
+    'exp.expense': 'Spesa',
+    'exp.fornitore': 'Fornitore',
+    'exp.stipendio': 'Stipendio',
+
+    // Rubrica
+    'rub.fornitori': 'Fornitori',
+    'rub.stipendi': 'Stipendi',
+    'rub.abitudinarie': 'Abitudinarie',
+    'rub.voce_one': 'voce',
+    'rub.voce_other': 'voci',
+    'rub.addFornitore': 'Aggiungi fornitore',
+    'rub.addStipendio': 'Aggiungi stipendio',
+    'rub.addVoce': 'Aggiungi voce',
+    'rub.deleteTitle': 'Elimina',
+    'rub.deleteMsg': 'Rimuovere "{name}" dalla rubrica?',
+    'rub.deleted': '"{name}" eliminato',
+    'rub.rename': 'Rinomina',
+    'rub.newFornitore': 'Nuovo Fornitore',
+    'rub.newStipendio': 'Nuovo Stipendio',
+    'rub.newVoce': 'Nuova Voce Abitudinaria',
+    'rub.renamed': '"{old}" rinominato in "{new}"',
+    'rub.added': '"{name}" aggiunto',
+
+    // Modal
+    'modal.add': 'Aggiungi',
+    'modal.name': 'Nome',
+    'modal.namePlaceholder': 'Inserisci nome...',
+    'modal.cancel': 'Annulla',
+
+    // Confirm
+    'confirm.title': 'Conferma',
+    'confirm.msg': 'Sei sicuro?',
+    'confirm.cancel': 'Annulla',
+    'confirm.delete': 'Elimina',
+
+    // Date
+    'date.past': 'Passata',
+    'date.future': 'Futura',
+
+    // Day summary
+    'day.noMovement': 'Nessun movimento il ',
+    'day.endBalance': 'Saldo a fine giornata',
+    'day.registeredOn': 'Registrato il ',
+    'day.total': 'Totale giorno',
+    'day.closeEdit': 'Chiudi Modifica',
+    'day.editDay': 'Modifica Giornata',
+    'day.share': 'Condividi Giornata',
+    'day.shareTitle': 'Cassa del ',
+    'day.copied': 'Copiato negli appunti!',
+    'day.deleteTitle': 'Elimina Movimento',
+    'day.deleteMsg': 'Rimuovere "{name}"? Il saldo verra\' ricalcolato.',
+    'day.deleted': 'Movimento eliminato',
+    'day.cashBalance': 'Saldo cassa',
+    'day.dayTotal': 'Totale giorno',
+
+    // History
+    'history.empty': 'Nessun movimento registrato',
+    'history.deleteTitle': 'Elimina Movimento',
+    'history.deleteMsg': 'Rimuovere "{name}" dallo storico? Il saldo verr\u00E0 ricalcolato.',
+    'history.deleted': 'Movimento eliminato',
+
+    // Fatture
+    'fatt.new': 'Nuova Fattura',
+    'fatt.edit': 'Modifica Fattura',
+    'fatt.save': 'Salva',
+    'fatt.update': 'Aggiorna',
+    'fatt.data': 'Data',
+    'fatt.numero': 'N\u00B0 Fattura',
+    'fatt.numeroPlaceholder': 'N\u00B0 fattura',
+    'fatt.fornitore': 'Fornitore',
+    'fatt.fornitorePlaceholder': 'Nome fornitore',
+    'fatt.importo': 'Importo',
+    'fatt.tipo': 'Tipo di pagamento',
+    'fatt.select': 'Seleziona...',
+    'fatt.contanti': 'Contanti',
+    'fatt.bonifico': 'Bonifico',
+    'fatt.assegno': 'Assegno',
+    'fatt.numAssegno': 'Numero assegno',
+    'fatt.numAssegnoPlaceholder': 'N\u00B0 assegno',
+    'fatt.ciclo': 'Ciclo pagamento',
+    'fatt.30days': '30 giorni',
+    'fatt.60days': '60 giorni',
+    'fatt.90days': '90 giorni',
+    'fatt.120days': '120 giorni',
+    'fatt.custom': 'Personalizzato',
+    'fatt.scadenza': 'Scadenza',
+    'fatt.note': 'Note',
+    'fatt.notePlaceholder': 'Note opzionali...',
+    'fatt.foto': 'Foto fattura',
+    'fatt.attachPhoto': '\uD83D\uDCF7 Allega foto',
+    'fatt.cancel': 'Annulla',
+    'fatt.detail': 'Dettaglio Fattura',
+    'fatt.modifica': 'Modifica',
+    'fatt.elimina': 'Elimina',
+    'fatt.deleteTitle': 'Elimina Fattura',
+    'fatt.deleteMsg': 'Vuoi eliminare questa fattura?',
+    'fatt.deleted': 'Fattura eliminata',
+    'fatt.updated': 'Fattura aggiornata',
+    'fatt.added': 'Fattura aggiunta',
+    'fatt.enterFornitore': 'Inserisci il fornitore',
+    'fatt.invalidAmount': 'Inserisci un importo valido',
+    'fatt.selectTipo': 'Seleziona il tipo di pagamento',
+    'fatt.enterAssegno': 'Inserisci il numero assegno',
+    'fatt.empty': 'Nessuna fattura registrata',
+    'fatt.emptyFilter': 'Nessuna fattura in questa categoria',
+    'fatt.daPagare': 'Da pagare',
+    'fatt.inScadenza': 'In scadenza',
+    'fatt.filterAll': 'Tutte',
+    'fatt.filterOpen': 'Da pagare',
+    'fatt.filterPaid': 'Pagate',
+    'fatt.filterExpired': 'Scadute',
+    'fatt.paid': 'Pagata',
+    'fatt.unpaid': 'Da pagare: ',
+    'fatt.tipoPagamento': 'Tipo pagamento',
+    'fatt.cicloPagamento': 'Ciclo pagamento',
+    'fatt.days': ' giorni',
+    'fatt.fotoLabel': 'Foto',
+    'fatt.legacyCash': 'Pag. contanti',
+    'fatt.legacyAuto': '(auto)',
+    'fatt.legacyBonifico': 'Bonifico/Assegno',
+    'fatt.legacyUnpaid': 'Non pagato',
+    'fatt.incassoCash': 'Incasso Cash',
+  },
+
+  zh: {
+    // App
+    'app.title': '智能收银专业版',
+    'app.cloudDisconnected': '云未连接',
+
+    // PIN
+    'pin.title': '智能收银专业版',
+    'pin.subtitle': '请输入PIN码',
+    'pin.blocked': '访问已被永久锁定',
+    'pin.tooMany': '错误尝试次数过多',
+    'pin.remaining_one': '次剩余尝试',
+    'pin.remaining_other': '次剩余尝试',
+
+    // Tabs
+    'tab.registra': '记账',
+    'tab.rubriche': '通讯录',
+    'tab.storico': '历史',
+    'tab.fatture': '发票',
+
+    // Saldo
+    'saldo.title': '总收银余额',
+    'saldo.updated': '余额已更新',
+
+    // Settings
+    'settings.title': '设置',
+    'settings.lang': '语言',
+    'settings.saldo': '手动余额',
+    'settings.saldoPlaceholder': '设置余额...',
+    'settings.update': '更新余额',
+    'settings.reset': '重置数据',
+    'settings.resetTitle': '重置数据',
+    'settings.resetMsg': '所有交易记录和通讯录将被删除。是否继续？',
+    'settings.resetDone': '数据已重置',
+
+    // Cloud
+    'cloud.title': '云同步',
+    'cloud.connected': '云已连接',
+    'cloud.lastSync': '上次同步:',
+    'cloud.autoSave': '您的数据会在每次修改时自动保存到Firebase云端。',
+    'cloud.reload': '从云端重新加载',
+    'cloud.disconnect': '断开连接',
+    'cloud.notConfigured': '云未配置',
+    'cloud.setupInfo': '配置Firebase以自动安全地将数据保存到云端。只需5分钟（仅一次）。',
+    'cloud.step1': '前往 console.firebase.google.com 创建新项目（任意名称，关闭Google Analytics）。',
+    'cloud.step2': '在项目中，点击左侧菜单的"构建" > "Firestore Database"。选择"以测试模式启动"并选择最近的区域。',
+    'cloud.step3': '在"构建" > "Authentication"菜单中，点击"开始"，然后启用"Google"提供商。',
+    'cloud.step4': '前往项目设置（顶部齿轮图标）> 滚动到"您的应用" > 点击"Web"（</>图标）> 命名并点击注册。复制firebaseConfig代码块并粘贴到下方。',
+    'cloud.connect': '连接云端',
+    'cloud.synced': '云已同步',
+    'cloud.syncing': '正在同步...',
+    'cloud.syncError': '同步错误',
+    'cloud.reloaded': '数据已从云端重新加载',
+    'cloud.noData': '云端未找到数据',
+    'cloud.loginToSync': '登录以同步',
+    'cloud.loginInfo': '使用您的Google账号登录，在所有设备间同步数据。',
+    'cloud.loginGoogle': '使用Google登录',
+    'cloud.or': '或者',
+    'cloud.removeConfig': '移除配置',
+    'cloud.connError': '云连接错误: ',
+    'cloud.connectedAs': '已连接: ',
+    'cloud.loginError': '登录错误: ',
+    'cloud.invalidConfig': '配置无效。请检查格式。',
+    'cloud.connecting': '正在连接云端...',
+    'cloud.disconnectTitle': '断开云连接',
+    'cloud.disconnectMsg': '本地数据将保留。是否断开云同步？',
+    'cloud.disconnected': '云已断开',
+
+    // Backup
+    'backup.title': '或手动备份',
+    'backup.download': '下载',
+    'backup.restore': '恢复',
+    'backup.excelTitle': '从Excel导入数据',
+    'backup.downloadTemplate': '1. 下载模板',
+    'backup.uploadFile': '2. 上传文件',
+    'backup.excelHelp': '下载模板，填写数据，然后上传',
+    'backup.templateDone': '模板已下载！填写后重新上传',
+    'backup.fileEmpty': '文件为空',
+    'backup.noValidData': '未找到有效数据',
+    'backup.fileError': '文件读取错误: ',
+    'backup.moreItems': '...还有 {n} 条记录',
+    'backup.totalItems': '共 {n} 条记录',
+    'backup.imported': '已导入 {n} 条记录！',
+    'backup.downloaded': '备份已下载！请保存到安全位置',
+    'backup.invalidFile': '无效文件：不是Cassa Smart Pro的备份',
+    'backup.restoreTitle': '恢复备份',
+    'backup.restoreMsg': '{date} 的备份，含 {n} 条记录。当前数据将被替换。是否继续？',
+    'backup.restoreDone': '数据已恢复！已加载 {n} 条记录',
+    'backup.readError': '文件读取错误',
+
+    // Excel
+    'excel.previewTitle': '导入预览',
+    'excel.cancel': '取消',
+    'excel.importAll': '全部导入',
+    'excel.colDate': '日期',
+    'excel.colDesc': '描述',
+    'excel.colAmount': '金额',
+    'excel.incomes': '收入',
+    'excel.expenses': '支出',
+    'excel.net': '净额',
+
+    // Incassi
+    'incassi.title': '收入',
+    'incassi.add': '添加收银机',
+    'incassi.cassa': '收银机',
+    'incassi.totaleZ': 'Z总额',
+    'incassi.pos': 'POS',
+
+    // Uscite
+    'uscite.title': '支出',
+    'uscite.add': '添加支出',
+    'uscite.registra': '登记结算',
+    'uscite.registered': '\u2713 已登记！',
+    'uscite.noData': '请输入收入或添加支出',
+    'uscite.expenses': '笔支出',
+
+    // Expense sheet
+    'exp.title': '添加支出',
+    'exp.currency': 'EUR',
+    'exp.other': '其他',
+    'exp.type': '类型',
+    'exp.fornitori': '供应商',
+    'exp.stipendi': '工资',
+    'exp.abitudinarie': '日常开支',
+    'exp.libera': '自由',
+    'exp.selectVoice': '选择项目',
+    'exp.description': '描述',
+    'exp.descPlaceholder': '支出名称...',
+    'exp.fattura': '发票号',
+    'exp.fatturaPlaceholder': '发票号码...',
+    'exp.note': '备注（可选）',
+    'exp.notePlaceholder': '添加备注...',
+    'exp.cancel': '取消',
+    'exp.add': '添加',
+    'exp.invalidAmount': '请输入有效金额',
+    'exp.selectOrFree': '请选择项目或使用"自由"',
+    'exp.enterFattNum': '请输入发票号',
+    'exp.added': ' 已添加',
+    'exp.noPending': '未添加支出',
+    'exp.fatt': '发票 ',
+    'exp.totalExpenses': '支出总计',
+    'exp.removed': ' 已移除',
+    'exp.newVoice': '+ 新建',
+    'exp.genericExpense': '一般支出',
+    'exp.expense': '支出',
+    'exp.fornitore': '供应商',
+    'exp.stipendio': '工资',
+
+    // Rubrica
+    'rub.fornitori': '供应商',
+    'rub.stipendi': '工资',
+    'rub.abitudinarie': '日常开支',
+    'rub.voce_one': '条',
+    'rub.voce_other': '条',
+    'rub.addFornitore': '添加供应商',
+    'rub.addStipendio': '添加工资',
+    'rub.addVoce': '添加项目',
+    'rub.deleteTitle': '删除',
+    'rub.deleteMsg': '从通讯录中移除"{name}"？',
+    'rub.deleted': '"{name}" 已删除',
+    'rub.rename': '重命名',
+    'rub.newFornitore': '新供应商',
+    'rub.newStipendio': '新工资',
+    'rub.newVoce': '新日常开支',
+    'rub.renamed': '"{old}" 已重命名为 "{new}"',
+    'rub.added': '"{name}" 已添加',
+
+    // Modal
+    'modal.add': '添加',
+    'modal.name': '名称',
+    'modal.namePlaceholder': '输入名称...',
+    'modal.cancel': '取消',
+
+    // Confirm
+    'confirm.title': '确认',
+    'confirm.msg': '确定吗？',
+    'confirm.cancel': '取消',
+    'confirm.delete': '删除',
+
+    // Date
+    'date.past': '已过',
+    'date.future': '未来',
+
+    // Day summary
+    'day.noMovement': '无交易记录 ',
+    'day.endBalance': '当日结余',
+    'day.registeredOn': '登记于 ',
+    'day.total': '当日总计',
+    'day.closeEdit': '关闭编辑',
+    'day.editDay': '编辑当日',
+    'day.share': '分享当日',
+    'day.shareTitle': '收银记录 ',
+    'day.copied': '已复制到剪贴板！',
+    'day.deleteTitle': '删除交易',
+    'day.deleteMsg': '移除"{name}"？余额将重新计算。',
+    'day.deleted': '交易已删除',
+    'day.cashBalance': '收银余额',
+    'day.dayTotal': '当日总计',
+
+    // History
+    'history.empty': '暂无交易记录',
+    'history.deleteTitle': '删除交易',
+    'history.deleteMsg': '从历史记录中移除"{name}"？余额将重新计算。',
+    'history.deleted': '交易已删除',
+
+    // Fatture
+    'fatt.new': '新发票',
+    'fatt.edit': '编辑发票',
+    'fatt.save': '保存',
+    'fatt.update': '更新',
+    'fatt.data': '日期',
+    'fatt.numero': '发票号',
+    'fatt.numeroPlaceholder': '发票号',
+    'fatt.fornitore': '供应商',
+    'fatt.fornitorePlaceholder': '供应商名称',
+    'fatt.importo': '金额',
+    'fatt.tipo': '付款方式',
+    'fatt.select': '选择...',
+    'fatt.contanti': '现金',
+    'fatt.bonifico': '银行转账',
+    'fatt.assegno': '支票',
+    'fatt.numAssegno': '支票号',
+    'fatt.numAssegnoPlaceholder': '支票号',
+    'fatt.ciclo': '付款周期',
+    'fatt.30days': '30天',
+    'fatt.60days': '60天',
+    'fatt.90days': '90天',
+    'fatt.120days': '120天',
+    'fatt.custom': '自定义',
+    'fatt.scadenza': '到期日',
+    'fatt.note': '备注',
+    'fatt.notePlaceholder': '可选备注...',
+    'fatt.foto': '发票照片',
+    'fatt.attachPhoto': '\uD83D\uDCF7 附加照片',
+    'fatt.cancel': '取消',
+    'fatt.detail': '发票详情',
+    'fatt.modifica': '编辑',
+    'fatt.elimina': '删除',
+    'fatt.deleteTitle': '删除发票',
+    'fatt.deleteMsg': '确定要删除此发票？',
+    'fatt.deleted': '发票已删除',
+    'fatt.updated': '发票已更新',
+    'fatt.added': '发票已添加',
+    'fatt.enterFornitore': '请输入供应商',
+    'fatt.invalidAmount': '请输入有效金额',
+    'fatt.selectTipo': '请选择付款方式',
+    'fatt.enterAssegno': '请输入支票号',
+    'fatt.empty': '暂无发票',
+    'fatt.emptyFilter': '此分类暂无发票',
+    'fatt.daPagare': '待付款',
+    'fatt.inScadenza': '即将到期',
+    'fatt.filterAll': '全部',
+    'fatt.filterOpen': '待付款',
+    'fatt.filterPaid': '已付款',
+    'fatt.filterExpired': '已过期',
+    'fatt.paid': '已付款',
+    'fatt.unpaid': '待付: ',
+    'fatt.tipoPagamento': '付款方式',
+    'fatt.cicloPagamento': '付款周期',
+    'fatt.days': '天',
+    'fatt.fotoLabel': '照片',
+    'fatt.legacyCash': '现金支付',
+    'fatt.legacyAuto': '(自动)',
+    'fatt.legacyBonifico': '转账/支票',
+    'fatt.legacyUnpaid': '未付款',
+    'fatt.incassoCash': '现金收入',
+  }
+};
+
+let currentLang = localStorage.getItem('cassa_lang') || 'it';
+
+export function t(key, params) {
+  let text = translations[currentLang]?.[key] || translations.it[key] || key;
+  if (params) {
+    Object.keys(params).forEach(k => {
+      text = text.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+    });
+  }
+  return text;
+}
+
+export function getLang() { return currentLang; }
+
+export function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('cassa_lang', lang);
+  applyLanguage();
+}
+
+export function applyLanguage() {
+  // Update textContent for data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+  // Update placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.placeholder = t(key);
+  });
+  // Update title attributes
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (key) el.title = t(key);
+  });
+  // Update lang toggle buttons
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+}

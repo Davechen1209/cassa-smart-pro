@@ -8,6 +8,7 @@ import {
 } from './state.js';
 import { showToast, showConfirm, closeModal, escapeHtml } from './modals.js';
 import { renderExpVoices } from './expense.js';
+import { t } from './i18n.js';
 
 export function toggleRubrica(cat) {
   openRubriche[cat] = !openRubriche[cat];
@@ -17,7 +18,7 @@ export function toggleRubrica(cat) {
 export function renderRubriche() {
   ['fornitori', 'stipendi', 'abit'].forEach(cat => {
     const list = d[cat];
-    document.getElementById('rub-count-' + cat).textContent = list.length + (list.length === 1 ? ' voce' : ' voci');
+    document.getElementById('rub-count-' + cat).textContent = list.length + ' ' + (list.length === 1 ? t('rub.voce_one') : t('rub.voce_other'));
 
     const isOpen = openRubriche[cat];
     const itemsEl = document.getElementById('rub-items-' + cat);
@@ -27,7 +28,7 @@ export function renderRubriche() {
     itemsEl.classList.toggle('open', !!isOpen);
 
     if (isOpen) {
-      const catLabel = cat === 'fornitori' ? 'fornitore' : (cat === 'stipendi' ? 'stipendio' : 'voce');
+      const catLabel = cat === 'fornitori' ? t('rub.addFornitore') : (cat === 'stipendi' ? t('rub.addStipendio') : t('rub.addVoce'));
       itemsEl.innerHTML = list.map((n, i) => `
         <div class="rubrica-item">
           <span class="rubrica-item-name">${escapeHtml(n)}</span>
@@ -43,7 +44,7 @@ export function renderRubriche() {
       `).join('') + `
         <div class="rubrica-add-row" data-action="openModalRubrica" data-cat="${cat}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
-          Aggiungi ${catLabel}
+          ${catLabel}
         </div>
       `;
     }
@@ -51,17 +52,17 @@ export function renderRubriche() {
 }
 
 export function deleteItem(cat, index, name) {
-  showConfirm('Elimina', `Rimuovere "${name}" dalla rubrica?`, () => {
+  showConfirm(t('rub.deleteTitle'), t('rub.deleteMsg', { name }), () => {
     d[cat].splice(index, 1);
     fullSave();
-    showToast('"' + name + '" eliminato', 'trash');
+    showToast(t('rub.deleted', { name }), 'trash');
   });
 }
 
 export function editItem(cat, index) {
   setEditingItem({ cat, index });
   setModalCat(null);
-  document.getElementById('modal-title').textContent = 'Rinomina';
+  document.getElementById('modal-title').textContent = t('rub.rename');
   document.getElementById('modal-input').value = d[cat][index];
   document.getElementById('modal-overlay').classList.add('show');
   setTimeout(() => {
@@ -73,8 +74,8 @@ export function editItem(cat, index) {
 export function openModalRubrica(cat) {
   setModalCat(cat);
   setEditingItem(null);
-  const labels = { fornitori: 'Fornitore', stipendi: 'Stipendio', abit: 'Voce Abitudinaria' };
-  document.getElementById('modal-title').textContent = 'Nuovo ' + (labels[cat] || '');
+  const labels = { fornitori: t('rub.newFornitore'), stipendi: t('rub.newStipendio'), abit: t('rub.newVoce') };
+  document.getElementById('modal-title').textContent = labels[cat] || '';
   document.getElementById('modal-input').value = '';
   document.getElementById('modal-overlay').classList.add('show');
   setTimeout(() => document.getElementById('modal-input').focus(), 350);
@@ -88,7 +89,7 @@ export function modalConfirm() {
   if (editingItem) {
     const old = d[editingItem.cat][editingItem.index];
     d[editingItem.cat][editingItem.index] = val;
-    showToast('"' + old + '" rinominato in "' + val + '"', 'check');
+    showToast(t('rub.renamed', { old, 'new': val }), 'check');
     setEditingItem(null);
   } else if (modalCat) {
     d[modalCat].push(val);
@@ -96,7 +97,7 @@ export function modalConfirm() {
       setExpSelectedVoice(val);
       renderExpVoices();
     }
-    showToast('"' + val + '" aggiunto', 'check');
+    showToast(t('rub.added', { name: val }), 'check');
   }
   closeModal();
   fullSave();

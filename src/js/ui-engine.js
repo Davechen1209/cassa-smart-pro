@@ -9,6 +9,7 @@ import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './da
 import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
 import { renderFatture } from './fatture.js';
+import { t, getLang } from './i18n.js';
 
 export function updateDateDisplay() {
   document.getElementById('date-display-text').textContent = formatDateDisplay(selectedDate);
@@ -17,8 +18,8 @@ export function updateDateDisplay() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const sel = new Date(selectedDate); sel.setHours(0, 0, 0, 0);
   badge.className = 'date-badge';
-  if (sel < today) { badge.classList.add('past'); badge.textContent = 'Passata'; }
-  else if (sel > today) { badge.classList.add('future'); badge.textContent = 'Futura'; }
+  if (sel < today) { badge.classList.add('past'); badge.textContent = t('date.past'); }
+  else if (sel > today) { badge.classList.add('future'); badge.textContent = t('date.future'); }
   else { badge.classList.add('today'); }
   renderDaySummary();
 }
@@ -38,9 +39,9 @@ export function renderDaySummary() {
       el.style.display = 'block';
       el.innerHTML = `
         <div class="day-summary-card">
-          <div class="day-summary-title">Nessun movimento il ${escapeHtml(dateStr)}</div>
+          <div class="day-summary-title">${t('day.noMovement') + escapeHtml(dateStr)}</div>
           <div class="day-summary-saldo">
-            <span>Saldo a fine giornata</span>
+            <span>${t('day.endBalance')}</span>
             <span style="font-weight:800; font-size:17px; color:${saldoCum >= 0 ? 'var(--blue)' : 'var(--red)'}">
               \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
             </span>
@@ -83,34 +84,34 @@ export function renderDaySummary() {
 
   const editBtn = editingDay
     ? `<button class="btn-sm gray" data-action="stopEditDay" style="width:100%; margin-top:12px; text-align:center;">
-        Chiudi Modifica
+        ${t('day.closeEdit')}
        </button>`
     : `<button class="btn-sm blue" data-action="startEditDay" style="width:100%; margin-top:12px; text-align:center;">
         <span style="display:flex; align-items:center; justify-content:center; gap:6px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-          Modifica Giornata
+          ${t('day.editDay')}
         </span>
        </button>`;
 
   const shareBtn = `<button class="btn-sm gray" data-action="shareDay" style="width:100%; margin-top:8px; text-align:center;">
     <span style="display:flex; align-items:center; justify-content:center; gap:6px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      Condividi Giornata
+      ${t('day.share')}
     </span>
   </button>`;
 
   el.innerHTML = `
     <div class="day-summary-card">
-      <div class="day-summary-title">Registrato il ${escapeHtml(dateStr)}</div>
+      <div class="day-summary-title">${t('day.registeredOn') + escapeHtml(dateStr)}</div>
       ${rows}
       <div class="day-summary-total">
-        <span>Totale giorno</span>
+        <span>${t('day.total')}</span>
         <span style="color: ${total >= 0 ? 'var(--green)' : 'var(--red)'}">
           ${total >= 0 ? '+' : ''}${total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC
         </span>
       </div>
       <div class="day-summary-saldo">
-        <span>Saldo a fine giornata</span>
+        <span>${t('day.endBalance')}</span>
         <span style="font-weight:800; font-size:17px; color:${saldoCum >= 0 ? 'var(--blue)' : 'var(--red)'}">
           \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
         </span>
@@ -137,17 +138,17 @@ export function shareDay() {
   });
 
   const totalSign = total >= 0 ? '+' : '';
-  const text = `\uD83D\uDCCA Cassa del ${dateStr}\n\n` +
+  const text = `\uD83D\uDCCA ` + t('day.shareTitle') + `${dateStr}\n\n` +
     lines.join('\n') +
     `\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-    `Totale giorno: ${totalSign}${total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC\n` +
-    `Saldo cassa: \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+    t('day.dayTotal') + `: ${totalSign}${total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC\n` +
+    t('day.cashBalance') + `: \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
 
   if (navigator.share) {
-    navigator.share({ title: 'Cassa del ' + dateStr, text }).catch(() => {});
+    navigator.share({ title: t('day.shareTitle') + dateStr, text }).catch(() => {});
   } else {
     navigator.clipboard.writeText(text).then(() => {
-      showToast('Copiato negli appunti!', 'check');
+      showToast(t('day.copied'), 'check');
     });
   }
 }
@@ -166,19 +167,19 @@ export function stopEditDay() {
 
 export function deleteDayLog(index) {
   const entry = d.log[index];
-  showConfirm('Elimina Movimento', `Rimuovere "${escapeHtml(entry.v)}"? Il saldo verra' ricalcolato.`, () => {
+  showConfirm(t('day.deleteTitle'), t('day.deleteMsg', { name: escapeHtml(entry.v) }), () => {
     d.saldo -= entry.a;
     d.log.splice(index, 1);
     fullSave();
     ui();
-    showToast('Movimento eliminato', 'trash');
+    showToast(t('day.deleted'), 'trash');
   });
 }
 
 export function renderHistory() {
   const el = document.getElementById('history');
   if (d.log.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">\uD83D\uDCCB</div><div class="empty-state-text">Nessun movimento registrato</div></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">\uD83D\uDCCB</div><div class="empty-state-text">' + t('history.empty') + '</div></div>';
     return;
   }
 
@@ -217,13 +218,13 @@ export function renderHistory() {
 }
 
 export function deleteLog(index, name) {
-  showConfirm('Elimina Movimento', `Rimuovere "${name}" dallo storico? Il saldo verrà ricalcolato.`, () => {
+  showConfirm(t('history.deleteTitle'), t('history.deleteMsg', { name }), () => {
     const amount = d.log[index].a;
     d.saldo -= amount;
     d.log.splice(index, 1);
     fullSave();
     ui();
-    showToast('Movimento eliminato', 'trash');
+    showToast(t('history.deleted'), 'trash');
   });
 }
 
@@ -246,12 +247,12 @@ export function manualSaldo() {
     ui();
     document.getElementById('set-saldo').value = '';
     document.getElementById('settings-panel').classList.remove('open');
-    showToast('Saldo aggiornato', 'check');
+    showToast(t('saldo.updated'), 'check');
   }
 }
 
 export function confirmReset() {
-  showConfirm('Reset Dati', 'Tutti i movimenti e le rubriche verranno eliminati. Continuare?', () => {
+  showConfirm(t('settings.resetTitle'), t('settings.resetMsg'), () => {
     d.saldo = 0;
     d.fornitori = [];
     d.stipendi = [];
@@ -260,7 +261,7 @@ export function confirmReset() {
     d.fatture = [];
     fullSave();
     ui();
-    showToast('Dati resettati', 'check');
+    showToast(t('settings.resetDone'), 'check');
   });
 }
 
@@ -291,6 +292,7 @@ export function ui() {
 export function updateHeaderDate() {
   const now = new Date();
   const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-  const formatted = now.toLocaleDateString('it-IT', opts);
+  const locale = getLang() === 'zh' ? 'zh-CN' : 'it-IT';
+  const formatted = now.toLocaleDateString(locale, opts);
   document.getElementById('header-date').textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }

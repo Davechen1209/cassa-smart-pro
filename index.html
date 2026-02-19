@@ -16,8 +16,8 @@
 <div class="pin-overlay" id="pin-overlay">
     <div class="pin-box">
         <div class="pin-icon">🔒</div>
-        <div class="pin-title">Cassa Smart Pro</div>
-        <div class="pin-subtitle" id="pin-subtitle">Inserisci il PIN per accedere</div>
+        <div class="pin-title" data-i18n="pin.title">Cassa Smart Pro</div>
+        <div class="pin-subtitle" id="pin-subtitle" data-i18n="pin.subtitle">Inserisci il PIN per accedere</div>
         <div class="pin-dots" id="pin-dots">
             <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
             <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
@@ -45,7 +45,7 @@
 <!-- Header -->
 <div class="header">
     <div>
-        <div class="header-title">Cassa Smart Pro <span class="sync-dot" id="sync-dot" title="Cloud non connesso"></span></div>
+        <div class="header-title"><span data-i18n="app.title">Cassa Smart Pro</span> <span class="sync-dot" id="sync-dot" data-i18n-title="app.cloudDisconnected" title="Cloud non connesso"></span></div>
         <div class="header-date" id="header-date"></div>
     </div>
     <button class="header-btn" data-action="toggleSettings" id="gear-btn">
@@ -59,34 +59,44 @@
 <div class="content" style="padding-bottom:0;">
     <div class="settings-panel" id="settings-panel">
         <div class="card">
-            <div class="section-title" style="margin-bottom:12px;">Impostazioni</div>
+            <div class="section-title" style="margin-bottom:12px;" data-i18n="settings.title">Impostazioni</div>
+
+            <!-- Language Toggle -->
+            <div class="lang-section">
+                <div class="lang-label" data-i18n="settings.lang">Lingua</div>
+                <div class="lang-toggle">
+                    <button class="lang-btn active" data-action="setLang" data-lang="it">Italiano</button>
+                    <button class="lang-btn" data-action="setLang" data-lang="zh">中文</button>
+                </div>
+            </div>
+
             <div class="input-group">
-                <label>Saldo manuale</label>
-                <input type="number" class="input-field" id="set-saldo" placeholder="Imposta saldo..." inputmode="decimal">
+                <label data-i18n="settings.saldo">Saldo manuale</label>
+                <input type="number" class="input-field" id="set-saldo" data-i18n-placeholder="settings.saldoPlaceholder" placeholder="Imposta saldo..." inputmode="decimal">
             </div>
             <div class="settings-row" style="margin-top:4px;">
-                <button class="btn-sm blue" data-action="manualSaldo">Aggiorna Saldo</button>
-                <button class="btn-sm red" data-action="confirmReset">Reset Dati</button>
+                <button class="btn-sm blue" data-action="manualSaldo" data-i18n="settings.update">Aggiorna Saldo</button>
+                <button class="btn-sm red" data-action="confirmReset" data-i18n="settings.reset">Reset Dati</button>
             </div>
 
             <!-- Cloud Sync -->
             <div class="cloud-section">
                 <div class="cloud-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px;color:var(--blue);"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                    Sincronizzazione Cloud
+                    <span data-i18n="cloud.title">Sincronizzazione Cloud</span>
                 </div>
 
                 <!-- Connected state -->
                 <div id="cloud-connected-ui" style="display:none;">
                     <div class="cloud-connected">
                         <div class="cloud-connected-dot"></div>
-                        <div class="cloud-connected-text">Cloud connesso</div>
+                        <div class="cloud-connected-text" data-i18n="cloud.connected">Cloud connesso</div>
                     </div>
-                    <div class="cloud-last-sync" id="cloud-last-sync">Ultimo sync: --</div>
-                    <div class="cloud-info">I tuoi dati vengono salvati automaticamente nel cloud Firebase ad ogni modifica.</div>
+                    <div class="cloud-last-sync" id="cloud-last-sync" data-i18n="cloud.lastSync">Ultimo sync: --</div>
+                    <div class="cloud-info" data-i18n="cloud.autoSave">I tuoi dati vengono salvati automaticamente nel cloud Firebase ad ogni modifica.</div>
                     <div class="cloud-actions">
-                        <button class="btn-sm blue" data-action="forceSyncFromCloud">Ricarica dal Cloud</button>
-                        <button class="btn-sm red" data-action="disconnectCloud">Disconnetti</button>
+                        <button class="btn-sm blue" data-action="forceSyncFromCloud" data-i18n="cloud.reload">Ricarica dal Cloud</button>
+                        <button class="btn-sm red" data-action="disconnectCloud" data-i18n="cloud.disconnect">Disconnetti</button>
                     </div>
                 </div>
 
@@ -94,9 +104,9 @@
                 <div id="cloud-setup-ui">
                     <div class="cloud-disconnected">
                         <div class="cloud-disconnected-dot"></div>
-                        <div class="cloud-disconnected-text">Cloud non configurato</div>
+                        <div class="cloud-disconnected-text" data-i18n="cloud.notConfigured">Cloud non configurato</div>
                     </div>
-                    <div class="cloud-info">Configura Firebase per salvare i dati nel cloud in modo automatico e sicuro. Servono 5 minuti (una sola volta).</div>
+                    <div class="cloud-info" data-i18n="cloud.setupInfo">Configura Firebase per salvare i dati nel cloud in modo automatico e sicuro. Servono 5 minuti (una sola volta).</div>
 
                     <div class="setup-steps">
                         <div class="setup-step">
@@ -129,38 +139,38 @@
 }"></textarea>
 
                     <div class="cloud-actions">
-                        <button class="btn-sm blue" data-action="connectCloud" style="flex:1;">Connetti al Cloud</button>
+                        <button class="btn-sm blue" data-action="connectCloud" style="flex:1;" data-i18n="cloud.connect">Connetti al Cloud</button>
                     </div>
                 </div>
             </div>
 
             <!-- Manual Backup -->
-            <div class="cloud-divider">oppure backup manuale</div>
+            <div class="cloud-divider" data-i18n="backup.title">oppure backup manuale</div>
             <div class="backup-actions">
                 <button class="btn-backup download" data-action="downloadBackup">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Scarica
+                    <span data-i18n="backup.download">Scarica</span>
                 </button>
                 <button class="btn-backup upload" data-action="triggerImportFile">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Ripristina
+                    <span data-i18n="backup.restore">Ripristina</span>
                 </button>
                 <input type="file" id="import-file" accept=".json" style="display:none;">
             </div>
 
-            <div class="cloud-divider">importa dati da Excel</div>
+            <div class="cloud-divider" data-i18n="backup.excelTitle">importa dati da Excel</div>
             <div style="display:flex; gap:8px;">
                 <button class="btn-sm gray" data-action="downloadTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    1. Scarica Template
+                    <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
                 </button>
                 <button class="btn-sm blue" data-action="triggerExcelFile" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    2. Carica File
+                    <span data-i18n="backup.uploadFile">2. Carica File</span>
                 </button>
             </div>
             <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
-            <div style="font-size:11px; color:var(--gray); margin-top:8px; text-align:center; line-height:1.4;">Scarica il template, compilalo con i tuoi dati, poi caricalo</div>
+            <div style="font-size:11px; color:var(--gray); margin-top:8px; text-align:center; line-height:1.4;" data-i18n="backup.excelHelp">Scarica il template, compilalo con i tuoi dati, poi caricalo</div>
         </div>
     </div>
 </div>
@@ -170,7 +180,7 @@
 
     <!-- Saldo Card -->
     <div class="card saldo-card">
-        <div class="saldo-label">SALDO TOTALE CASSA</div>
+        <div class="saldo-label" data-i18n="saldo.title">SALDO TOTALE CASSA</div>
         <div class="saldo-value" id="main-saldo">€ 0,00</div>
         <div class="saldo-trend" id="saldo-trend">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5m0 0-7 7m7-7 7 7"/></svg>
@@ -208,12 +218,12 @@
                         <div class="subsection-icon green">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20m5-15H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"/></svg>
                         </div>
-                        Incassi
+                        <span data-i18n="incassi.title">Incassi</span>
                     </div>
                     <div id="casse-container"></div>
                     <button class="add-expense-btn" data-action="addCassa" style="margin-top:8px; border-color:var(--green); color:var(--green);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
-                        Aggiungi Cassa
+                        <span data-i18n="incassi.add">Aggiungi Cassa</span>
                     </button>
                 </div>
 
@@ -225,18 +235,18 @@
                         <div class="subsection-icon red">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 11V3M7 21v-8m10 0-5 5-5-5"/></svg>
                         </div>
-                        Uscite
+                        <span data-i18n="uscite.title">Uscite</span>
                     </div>
 
                     <div id="pending-list"></div>
 
                     <button class="add-expense-btn" data-action="openExpenseSheet">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
-                        Aggiungi Spesa
+                        <span data-i18n="uscite.add">Aggiungi Spesa</span>
                     </button>
                 </div>
 
-                <button class="btn-main" id="btn-registra" data-action="registra" style="margin-top:16px;">
+                <button class="btn-main" id="btn-registra" data-action="registra" style="margin-top:16px;" data-i18n="uscite.registra">
                     Registra Chiusura
                 </button>
             </div>
@@ -251,7 +261,7 @@
                     <div class="rubrica-header-left">
                         <div class="rubrica-icon fornitori">F</div>
                         <div>
-                            <div class="rubrica-cat-name">Fornitori</div>
+                            <div class="rubrica-cat-name" data-i18n="rub.fornitori">Fornitori</div>
                             <div class="rubrica-count" id="rub-count-fornitori">0 voci</div>
                         </div>
                     </div>
@@ -264,7 +274,7 @@
                     <div class="rubrica-header-left">
                         <div class="rubrica-icon stipendi">S</div>
                         <div>
-                            <div class="rubrica-cat-name">Stipendi</div>
+                            <div class="rubrica-cat-name" data-i18n="rub.stipendi">Stipendi</div>
                             <div class="rubrica-count" id="rub-count-stipendi">0 voci</div>
                         </div>
                     </div>
@@ -277,7 +287,7 @@
                     <div class="rubrica-header-left">
                         <div class="rubrica-icon abit">A</div>
                         <div>
-                            <div class="rubrica-cat-name">Abitudinarie</div>
+                            <div class="rubrica-cat-name" data-i18n="rub.abitudinarie">Abitudinarie</div>
                             <div class="rubrica-count" id="rub-count-abit">0 voci</div>
                         </div>
                     </div>
@@ -299,20 +309,20 @@
     <div class="section" id="s4">
         <div style="display:flex; gap:10px; margin-bottom:16px;">
             <div class="card" style="flex:1; text-align:center; padding:14px; margin-bottom:0;">
-                <div style="font-size:11px; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:0.3px;">Da pagare</div>
+                <div style="font-size:11px; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:0.3px;" data-i18n="fatt.daPagare">Da pagare</div>
                 <div id="fatt-da-pagare" style="font-size:20px; font-weight:800; margin-top:4px;">€ 0</div>
             </div>
             <div class="card" style="flex:1; text-align:center; padding:14px; margin-bottom:0;">
-                <div style="font-size:11px; font-weight:600; color:var(--orange); text-transform:uppercase; letter-spacing:0.3px;">In scadenza</div>
+                <div style="font-size:11px; font-weight:600; color:var(--orange); text-transform:uppercase; letter-spacing:0.3px;" data-i18n="fatt.inScadenza">In scadenza</div>
                 <div id="fatt-scadenza-count" style="font-size:20px; font-weight:800; margin-top:4px;">0</div>
             </div>
         </div>
 
         <div class="segment-control" id="fatt-filter" style="margin-bottom:16px;">
-            <button class="segment-btn active" data-action="filterFatture" data-filter="tutte">Tutte</button>
-            <button class="segment-btn" data-action="filterFatture" data-filter="aperte">Da pagare</button>
-            <button class="segment-btn" data-action="filterFatture" data-filter="pagate">Pagate</button>
-            <button class="segment-btn" data-action="filterFatture" data-filter="scadute">Scadute</button>
+            <button class="segment-btn active" data-action="filterFatture" data-filter="tutte" data-i18n="fatt.filterAll">Tutte</button>
+            <button class="segment-btn" data-action="filterFatture" data-filter="aperte" data-i18n="fatt.filterOpen">Da pagare</button>
+            <button class="segment-btn" data-action="filterFatture" data-filter="pagate" data-i18n="fatt.filterPaid">Pagate</button>
+            <button class="segment-btn" data-action="filterFatture" data-filter="scadute" data-i18n="fatt.filterExpired">Scadute</button>
         </div>
 
         <div class="card" style="padding:12px 16px;">
@@ -321,7 +331,7 @@
 
         <button class="add-expense-btn" data-action="openFatturaSheet" style="margin-top:16px; border-color:var(--blue); color:var(--blue);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
-            Nuova Fattura
+            <span data-i18n="fatt.new">Nuova Fattura</span>
         </button>
     </div>
 </div>
@@ -330,19 +340,19 @@
 <div class="tab-bar">
     <button class="tab-btn active" data-action="tab" data-tab="1" id="tab1">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-        <span>Registra</span>
+        <span data-i18n="tab.registra">Registra</span>
     </button>
     <button class="tab-btn" data-action="tab" data-tab="2" id="tab2">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span>Rubriche</span>
+        <span data-i18n="tab.rubriche">Rubriche</span>
     </button>
     <button class="tab-btn" data-action="tab" data-tab="3" id="tab3">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>Storico</span>
+        <span data-i18n="tab.storico">Storico</span>
     </button>
     <button class="tab-btn" data-action="tab" data-tab="4" id="tab4">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <span>Fatture</span>
+        <span data-i18n="tab.fatture">Fatture</span>
     </button>
 </div>
 
@@ -350,10 +360,10 @@
 <div class="expense-overlay" id="expense-overlay">
     <div class="expense-sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-title">Aggiungi Spesa</div>
+        <div class="sheet-title" data-i18n="exp.title">Aggiungi Spesa</div>
 
         <div class="amount-display">
-            <div class="amount-currency">EUR</div>
+            <div class="amount-currency" data-i18n="exp.currency">EUR</div>
             <input type="number" class="amount-big-input" id="exp-amount" placeholder="0,00" inputmode="decimal">
         </div>
 
@@ -364,42 +374,42 @@
             <button class="quick-amt" data-action="setQuickAmount" data-amount="50">50€</button>
             <button class="quick-amt" data-action="setQuickAmount" data-amount="100">100€</button>
             <button class="quick-amt" data-action="setQuickAmount" data-amount="200">200€</button>
-            <button class="quick-amt" style="background:var(--blue);color:white;" data-action="customAmount">Altro</button>
+            <button class="quick-amt" style="background:var(--blue);color:white;" data-action="customAmount" data-i18n="exp.other">Altro</button>
         </div>
 
-        <div class="voice-label">Tipologia</div>
+        <div class="voice-label" data-i18n="exp.type">Tipologia</div>
         <div class="segment-control" id="exp-segments">
-            <button class="segment-btn active" data-action="switchExpCat" data-cat="fornitori">Fornitori</button>
-            <button class="segment-btn" data-action="switchExpCat" data-cat="stipendi">Stipendi</button>
-            <button class="segment-btn" data-action="switchExpCat" data-cat="abit">Abitudinarie</button>
-            <button class="segment-btn" data-action="switchExpCat" data-cat="libera">Libera</button>
+            <button class="segment-btn active" data-action="switchExpCat" data-cat="fornitori" data-i18n="exp.fornitori">Fornitori</button>
+            <button class="segment-btn" data-action="switchExpCat" data-cat="stipendi" data-i18n="exp.stipendi">Stipendi</button>
+            <button class="segment-btn" data-action="switchExpCat" data-cat="abit" data-i18n="exp.abitudinarie">Abitudinarie</button>
+            <button class="segment-btn" data-action="switchExpCat" data-cat="libera" data-i18n="exp.libera">Libera</button>
         </div>
 
         <div class="voice-section" id="exp-voices-section">
-            <div class="voice-label">Seleziona voce</div>
+            <div class="voice-label" data-i18n="exp.selectVoice">Seleziona voce</div>
             <div class="voice-chips" id="exp-voices"></div>
         </div>
 
         <div class="free-name-wrap" id="free-name-wrap">
             <div class="input-group" style="margin-bottom:0;">
-                <label>Descrizione</label>
-                <input type="text" class="input-field" id="exp-free-name" placeholder="Nome della spesa...">
+                <label data-i18n="exp.description">Descrizione</label>
+                <input type="text" class="input-field" id="exp-free-name" data-i18n-placeholder="exp.descPlaceholder" placeholder="Nome della spesa...">
             </div>
         </div>
 
         <div class="input-group" id="exp-fattura-wrap" style="margin-bottom:12px; display:none;">
-            <label>N° Fattura</label>
-            <input type="text" class="input-field" id="exp-fattura-num" placeholder="Numero fattura...">
+            <label data-i18n="exp.fattura">N° Fattura</label>
+            <input type="text" class="input-field" id="exp-fattura-num" data-i18n-placeholder="exp.fatturaPlaceholder" placeholder="Numero fattura...">
         </div>
 
         <div class="input-group" style="margin-bottom:12px;">
-            <label>Note (opzionale)</label>
-            <input type="text" class="input-field" id="exp-note" placeholder="Aggiungi una nota...">
+            <label data-i18n="exp.note">Note (opzionale)</label>
+            <input type="text" class="input-field" id="exp-note" data-i18n-placeholder="exp.notePlaceholder" placeholder="Aggiungi una nota...">
         </div>
 
         <div class="sheet-actions">
-            <button class="btn-sm gray" data-action="closeExpenseSheet">Annulla</button>
-            <button class="btn-sm blue" data-action="addExpense">Aggiungi</button>
+            <button class="btn-sm gray" data-action="closeExpenseSheet" data-i18n="exp.cancel">Annulla</button>
+            <button class="btn-sm blue" data-action="addExpense" data-i18n="exp.add">Aggiungi</button>
         </div>
     </div>
 </div>
@@ -408,14 +418,14 @@
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
         <div class="modal-handle"></div>
-        <div class="modal-title" id="modal-title">Aggiungi</div>
+        <div class="modal-title" id="modal-title" data-i18n="modal.add">Aggiungi</div>
         <div class="input-group">
-            <label>Nome</label>
-            <input type="text" class="input-field" id="modal-input" placeholder="Inserisci nome...">
+            <label data-i18n="modal.name">Nome</label>
+            <input type="text" class="input-field" id="modal-input" data-i18n-placeholder="modal.namePlaceholder" placeholder="Inserisci nome...">
         </div>
         <div class="modal-actions">
-            <button class="btn-sm gray" data-action="modalCancel">Annulla</button>
-            <button class="btn-sm blue" data-action="modalConfirm">Aggiungi</button>
+            <button class="btn-sm gray" data-action="modalCancel" data-i18n="modal.cancel">Annulla</button>
+            <button class="btn-sm blue" data-action="modalConfirm" data-i18n="modal.add">Aggiungi</button>
         </div>
     </div>
 </div>
@@ -423,11 +433,11 @@
 <!-- Confirm Dialog -->
 <div class="confirm-overlay" id="confirm-overlay">
     <div class="confirm-box">
-        <div class="confirm-title" id="confirm-title">Conferma</div>
-        <div class="confirm-msg" id="confirm-msg">Sei sicuro?</div>
+        <div class="confirm-title" id="confirm-title" data-i18n="confirm.title">Conferma</div>
+        <div class="confirm-msg" id="confirm-msg" data-i18n="confirm.msg">Sei sicuro?</div>
         <div class="confirm-actions">
-            <button class="btn-sm gray" data-action="closeConfirm">Annulla</button>
-            <button class="btn-sm red" id="confirm-yes">Elimina</button>
+            <button class="btn-sm gray" data-action="closeConfirm" data-i18n="confirm.cancel">Annulla</button>
+            <button class="btn-sm red" id="confirm-yes" data-i18n="confirm.delete">Elimina</button>
         </div>
     </div>
 </div>
@@ -436,12 +446,12 @@
 <div class="excel-overlay" id="excel-overlay">
     <div class="excel-sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-title">Anteprima Importazione</div>
+        <div class="sheet-title" data-i18n="excel.previewTitle">Anteprima Importazione</div>
         <div id="import-preview"></div>
         <div class="excel-summary" id="import-summary" style="display:none;"></div>
         <div style="display:flex; gap:10px; margin-top:16px;">
-            <button class="btn-sm gray" data-action="closeExcelImport" style="flex:1; text-align:center;">Annulla</button>
-            <button class="btn-sm blue" data-action="confirmFileImport" style="flex:1; text-align:center;">Importa Tutto</button>
+            <button class="btn-sm gray" data-action="closeExcelImport" style="flex:1; text-align:center;" data-i18n="excel.cancel">Annulla</button>
+            <button class="btn-sm blue" data-action="confirmFileImport" style="flex:1; text-align:center;" data-i18n="excel.importAll">Importa Tutto</button>
         </div>
     </div>
 </div>
@@ -450,73 +460,73 @@
 <div class="fattura-overlay" id="fattura-overlay">
     <div class="fattura-sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-title" id="fattura-sheet-title">Nuova Fattura</div>
+        <div class="sheet-title" id="fattura-sheet-title" data-i18n="fatt.new">Nuova Fattura</div>
 
         <div class="input-row">
             <div class="input-group">
-                <label>Data</label>
+                <label data-i18n="fatt.data">Data</label>
                 <input type="date" class="input-field" id="fatt-data-arrivo">
             </div>
             <div class="input-group">
-                <label>N° Fattura</label>
-                <input type="text" class="input-field" id="fatt-numero" placeholder="N° fattura">
+                <label data-i18n="fatt.numero">N° Fattura</label>
+                <input type="text" class="input-field" id="fatt-numero" data-i18n-placeholder="fatt.numeroPlaceholder" placeholder="N° fattura">
             </div>
         </div>
 
         <div class="input-group">
-            <label>Fornitore</label>
-            <input type="text" class="input-field" id="fatt-azienda" placeholder="Nome fornitore" list="fatt-azienda-list" autocomplete="off">
+            <label data-i18n="fatt.fornitore">Fornitore</label>
+            <input type="text" class="input-field" id="fatt-azienda" data-i18n-placeholder="fatt.fornitorePlaceholder" placeholder="Nome fornitore" list="fatt-azienda-list" autocomplete="off">
             <datalist id="fatt-azienda-list"></datalist>
         </div>
 
         <div class="input-group">
-            <label>Importo</label>
+            <label data-i18n="fatt.importo">Importo</label>
             <input type="number" class="input-field" id="fatt-importo" placeholder="0,00" inputmode="decimal" step="0.01">
         </div>
 
         <div class="input-group">
-            <label>Tipo di pagamento</label>
+            <label data-i18n="fatt.tipo">Tipo di pagamento</label>
             <select class="input-field" id="fatt-tipo-pagamento">
-                <option value="">Seleziona...</option>
-                <option value="contanti">Contanti</option>
-                <option value="bonifico">Bonifico</option>
-                <option value="assegno">Assegno</option>
+                <option value="" data-i18n="fatt.select">Seleziona...</option>
+                <option value="contanti" data-i18n="fatt.contanti">Contanti</option>
+                <option value="bonifico" data-i18n="fatt.bonifico">Bonifico</option>
+                <option value="assegno" data-i18n="fatt.assegno">Assegno</option>
             </select>
         </div>
 
         <div class="input-group" id="fatt-assegno-group" style="display:none;">
-            <label>Numero assegno</label>
-            <input type="text" class="input-field" id="fatt-numero-assegno" placeholder="N° assegno">
+            <label data-i18n="fatt.numAssegno">Numero assegno</label>
+            <input type="text" class="input-field" id="fatt-numero-assegno" data-i18n-placeholder="fatt.numAssegnoPlaceholder" placeholder="N° assegno">
         </div>
 
         <div class="input-row">
             <div class="input-group">
-                <label>Ciclo pagamento</label>
+                <label data-i18n="fatt.ciclo">Ciclo pagamento</label>
                 <select class="input-field" id="fatt-ciclo">
-                    <option value="">Seleziona...</option>
-                    <option value="30">30 giorni</option>
-                    <option value="60">60 giorni</option>
-                    <option value="90">90 giorni</option>
-                    <option value="120">120 giorni</option>
-                    <option value="custom">Personalizzato</option>
+                    <option value="" data-i18n="fatt.select">Seleziona...</option>
+                    <option value="30" data-i18n="fatt.30days">30 giorni</option>
+                    <option value="60" data-i18n="fatt.60days">60 giorni</option>
+                    <option value="90" data-i18n="fatt.90days">90 giorni</option>
+                    <option value="120" data-i18n="fatt.120days">120 giorni</option>
+                    <option value="custom" data-i18n="fatt.custom">Personalizzato</option>
                 </select>
             </div>
             <div class="input-group">
-                <label>Scadenza</label>
+                <label data-i18n="fatt.scadenza">Scadenza</label>
                 <input type="date" class="input-field" id="fatt-scadenza">
             </div>
         </div>
 
         <div class="input-group">
-            <label>Note</label>
-            <input type="text" class="input-field" id="fatt-note" placeholder="Note opzionali...">
+            <label data-i18n="fatt.note">Note</label>
+            <input type="text" class="input-field" id="fatt-note" data-i18n-placeholder="fatt.notePlaceholder" placeholder="Note opzionali...">
         </div>
 
         <div class="input-group">
-            <label>Foto fattura</label>
+            <label data-i18n="fatt.foto">Foto fattura</label>
             <div class="photo-upload">
                 <input type="file" accept="image/*" capture="environment" id="fatt-photo-input" style="display:none;">
-                <button type="button" class="btn-sm gray" data-action="triggerFatturaPhoto">📷 Allega foto</button>
+                <button type="button" class="btn-sm gray" data-action="triggerFatturaPhoto" data-i18n="fatt.attachPhoto">📷 Allega foto</button>
                 <div class="photo-preview" id="fatt-photo-preview" style="display:none;">
                     <img id="fatt-photo-img" src="" alt="Anteprima">
                     <button type="button" class="photo-remove" data-action="removeFatturaPhoto">✕</button>
@@ -525,8 +535,8 @@
         </div>
 
         <div class="sheet-actions">
-            <button class="btn-sm gray" data-action="closeFatturaSheet">Annulla</button>
-            <button class="btn-sm blue" id="fatt-save-btn" data-action="saveFattura">Salva</button>
+            <button class="btn-sm gray" data-action="closeFatturaSheet" data-i18n="fatt.cancel">Annulla</button>
+            <button class="btn-sm blue" id="fatt-save-btn" data-action="saveFattura" data-i18n="fatt.save">Salva</button>
         </div>
     </div>
 </div>
@@ -535,7 +545,7 @@
 <div class="fattura-detail-overlay" id="fattura-detail-overlay">
     <div class="fattura-detail-sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-title" id="fattura-detail-title">Dettaglio Fattura</div>
+        <div class="sheet-title" id="fattura-detail-title" data-i18n="fatt.detail">Dettaglio Fattura</div>
         <div id="fattura-detail-content"></div>
     </div>
 </div>

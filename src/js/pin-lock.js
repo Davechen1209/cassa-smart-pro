@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 // ─── PIN Lock ───
 
 const CORRECT_PIN = '141219';
@@ -126,11 +128,11 @@ function showBlocked() {
   const overlay = document.getElementById('pin-overlay');
   overlay.classList.add('show');
   document.getElementById('pin-title')?.remove();
-  document.getElementById('pin-subtitle').textContent = 'Accesso bloccato permanentemente';
+  document.getElementById('pin-subtitle').textContent = t('pin.blocked');
   document.getElementById('pin-subtitle').classList.add('blocked');
   document.getElementById('pin-dots').style.display = 'none';
   document.getElementById('pin-pad').style.display = 'none';
-  document.getElementById('pin-attempts').textContent = 'Troppi tentativi errati';
+  document.getElementById('pin-attempts').textContent = t('pin.tooMany');
   document.getElementById('pin-attempts').classList.add('blocked');
   document.querySelector('.pin-icon').textContent = '⛔';
 }
@@ -146,6 +148,6 @@ function updateAttemptsDisplay() {
   const el = document.getElementById('pin-attempts');
   if (attempts > 0 && attempts < MAX_ATTEMPTS) {
     const remaining = MAX_ATTEMPTS - attempts;
-    el.textContent = `${remaining} tentatv${remaining === 1 ? 'o' : 'i'} rimanent${remaining === 1 ? 'e' : 'i'}`;
+    el.textContent = remaining + ' ' + (remaining === 1 ? t('pin.remaining_one') : t('pin.remaining_other'));
   }
 }

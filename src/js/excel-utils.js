@@ -7,6 +7,7 @@ import {
 } from './state.js';
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { parseFlexDate } from './date-utils.js';
+import { t } from './i18n.js';
 
 export function downloadTemplate() {
   const ws_data = [
@@ -20,7 +21,7 @@ export function downloadTemplate() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Movimenti');
   XLSX.writeFile(wb, 'template-cassa.xlsx');
-  showToast('Template scaricato! Compilalo e ricaricalo', 'check');
+  showToast(t('backup.templateDone'), 'check');
 }
 
 function findCol(headers, keywords) {
@@ -71,7 +72,7 @@ export function importExcel(event) {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-      if (rows.length === 0) { showToast('File vuoto', 'warn'); return; }
+      if (rows.length === 0) { showToast(t('backup.fileEmpty'), 'warn'); return; }
 
       const headers = Object.keys(rows[0]);
       const newData = [];
@@ -136,13 +137,13 @@ export function importExcel(event) {
       setParsedImportData(newData);
 
       if (newData.length === 0) {
-        showToast('Nessun dato valido trovato', 'warn');
+        showToast(t('backup.noValidData'), 'warn');
         return;
       }
 
       showImportPreview();
     } catch (err) {
-      showToast('Errore lettura file: ' + err.message, 'warn');
+      showToast(t('backup.fileError') + err.message, 'warn');
     }
   };
   reader.readAsArrayBuffer(file);
@@ -158,7 +159,7 @@ export function showImportPreview() {
   const net = totalIncome + totalExpense;
 
   let html = '<div style="overflow-x:auto;"><table class="edit-table" style="margin-bottom:8px;"><thead><tr>';
-  html += '<th>Data</th><th>Descrizione</th><th style="text-align:right;">Importo</th></tr></thead><tbody>';
+  html += `<th>${t('excel.colDate')}</th><th>${t('excel.colDesc')}</th><th style="text-align:right;">${t('excel.colAmount')}</th></tr></thead><tbody>`;
 
   const showRows = parsedImportData.slice(0, 8);
   showRows.forEach(r => {
@@ -173,18 +174,18 @@ export function showImportPreview() {
   html += '</tbody></table></div>';
 
   if (parsedImportData.length > 8) {
-    html += `<div style="text-align:center; font-size:12px; color:var(--gray); margin-bottom:8px;">...e altri ${parsedImportData.length - 8} movimenti</div>`;
+    html += `<div style="text-align:center; font-size:12px; color:var(--gray); margin-bottom:8px;">${t('backup.moreItems', { n: parsedImportData.length - 8 })}</div>`;
   }
 
   preview.innerHTML = html;
 
   summary.style.display = 'block';
   summary.innerHTML = `
-    <div>${parsedImportData.length} movimenti totali</div>
+    <div>${t('backup.totalItems', { n: parsedImportData.length })}</div>
     <div style="font-size:13px; margin-top:4px; color:var(--text3);">
-      Incassi: <span style="color:var(--green);">+${totalIncome.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span> |
-      Uscite: <span style="color:var(--red);">${totalExpense.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span> |
-      Netto: <span style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${net >= 0 ? '+' : ''}${net.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span>
+      ${t('excel.incomes') + ':'} <span style="color:var(--green);">+${totalIncome.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span> |
+      ${t('excel.expenses') + ':'} <span style="color:var(--red);">${totalExpense.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span> |
+      ${t('excel.net') + ':'} <span style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${net >= 0 ? '+' : ''}${net.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span>
     </div>
   `;
 
@@ -207,7 +208,7 @@ export function confirmFileImport() {
   const count = parsedImportData.length;
   fullSave();
   closeExcelImport();
-  showToast(count + ' movimenti importati!', 'check');
+  showToast(t('backup.imported', { n: count }), 'check');
 }
 
 export function downloadBackup() {
@@ -232,7 +233,7 @@ export function downloadBackup() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('Backup scaricato! Salvalo in un posto sicuro', 'check');
+  showToast(t('backup.downloaded'), 'check');
 }
 
 export function importBackup(event) {
@@ -245,7 +246,7 @@ export function importBackup(event) {
       const backup = JSON.parse(e.target.result);
 
       if (!backup._app || backup._app !== 'CassaSmartPro') {
-        showToast('File non valido: non e\' un backup di Cassa Smart Pro', 'warn');
+        showToast(t('backup.invalidFile'), 'warn');
         return;
       }
 
@@ -253,8 +254,8 @@ export function importBackup(event) {
       const dateStr = backup._date ? new Date(backup._date).toLocaleDateString('it-IT') : '?';
 
       showConfirm(
-        'Ripristina Backup',
-        'Backup del ' + dateStr + ' con ' + movCount + ' movimenti. I dati attuali verranno sostituiti. Continuare?',
+        t('backup.restoreTitle'),
+        t('backup.restoreMsg', { date: dateStr, n: movCount }),
         () => {
           d.saldo = backup.saldo ?? 0;
           d.fornitori = backup.fornitori || [];
@@ -264,11 +265,11 @@ export function importBackup(event) {
           d.fatture = backup.fatture || [];
           pendingExpenses.length = 0;
           fullSave();
-          showToast('Dati ripristinati! ' + movCount + ' movimenti caricati', 'check');
+          showToast(t('backup.restoreDone', { n: movCount }), 'check');
         }
       );
     } catch (err) {
-      showToast('Errore nella lettura del file', 'warn');
+      showToast(t('backup.readError'), 'warn');
     }
   };
   reader.readAsText(file);
