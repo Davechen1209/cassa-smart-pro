@@ -9,6 +9,7 @@ import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './da
 import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
 import { renderFatture } from './fatture.js';
+import { renderAnticipi } from './anticipi.js';
 import { t, getLang } from './i18n.js';
 
 export function updateDateDisplay() {
@@ -425,6 +426,7 @@ export function confirmReset() {
       d.abit = [];
       d.log = [];
       d.fatture = [];
+      d.anticipi = [];
       fullSave();
       ui();
       showToast(t('settings.resetDone'), 'check');
@@ -454,6 +456,7 @@ export function ui() {
   renderHistory();
   renderDaySummary();
   renderFatture();
+  renderAnticipi();
 }
 
 export function updateHeaderDate() {

@@ -1163,3 +1163,59 @@ body {
 .lang-btn.active {
     background: var(--blue); color: #fff;
 }
+
+/* ─── Anticipi ─── */
+.anticipo-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--separator);
+}
+.anticipo-row:last-child { border-bottom: none; }
+.anticipo-row.repaid { opacity: 0.5; }
+
+.anticipo-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.anticipo-dot.open { background: var(--orange); }
+.anticipo-dot.repaid { background: var(--green); }
+
+.anticipo-info { flex: 1; min-width: 0; }
+.anticipo-name {
+    font-size: 15px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.anticipo-meta {
+    font-size: 12px; color: var(--gray); margin-top: 2px;
+}
+.anticipo-amount {
+    font-size: 15px; font-weight: 700; color: var(--orange);
+    white-space: nowrap;
+}
+.anticipo-row.repaid .anticipo-amount { color: var(--gray); }
+
+.anticipo-repay {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--green); color: white; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; transition: transform 0.15s ease;
+}
+.anticipo-repay:active { transform: scale(0.9); }
+.anticipo-repay svg { width: 16px; height: 16px; }
+
+.anticipo-badge {
+    background: var(--orange); color: white;
+    font-size: 11px; font-weight: 700; min-width: 20px; height: 20px;
+    border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 6px; margin-left: auto;
+}
+
+.pending-icon.anticipo {
+    background: rgba(255,149,0,0.15); color: var(--orange);
+}
+
+/* Anticipi warning in expense sheet */
+.anticipi-warn {
+    font-size: 13px; font-weight: 600; color: var(--orange);
+    background: rgba(255,149,0,0.1);
+    border-radius: 8px; padding: 8px 12px; margin-top: 8px;
+}

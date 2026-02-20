@@ -278,6 +278,37 @@ const translations = {
     'fatt.legacyBonifico': 'Bonifico/Assegno',
     'fatt.legacyUnpaid': 'Non pagato',
     'fatt.incassoCash': 'Incasso Cash',
+
+    // Anticipi
+    'tab.anticipi': 'Anticipi',
+    'ant.title': 'Anticipi',
+    'ant.totalOpen': 'Totale anticipi aperti',
+    'ant.count': 'anticipi aperti',
+    'ant.filterAll': 'Tutti',
+    'ant.filterOpen': 'Aperti',
+    'ant.filterRepaid': 'Rimborsati',
+    'ant.titleOpen': 'Anticipi Aperti',
+    'ant.empty': 'Nessun anticipo',
+    'ant.new': 'Nuovo Anticipo',
+    'ant.sheetTitle': 'Nuovo Anticipo',
+    'ant.amount': 'Importo',
+    'ant.recipient': 'Destinatario',
+    'ant.freeNamePlaceholder': 'Nome socio...',
+    'ant.note': 'Note (opzionale)',
+    'ant.notePlaceholder': 'Aggiungi una nota...',
+    'ant.cancel': 'Annulla',
+    'ant.save': 'Registra Anticipo',
+    'ant.selectName': 'Inserisci il nome del destinatario',
+    'ant.logAdvance': 'Anticipo',
+    'ant.logRepay': 'Rimborso anticipo',
+    'ant.added': 'Anticipo a {name}: {amount}\u20AC registrato',
+    'ant.repayTitle': 'Conferma Rimborso',
+    'ant.repayMsg': 'Segnare come rimborsato l\'anticipo di {name} ({amount}\u20AC)?',
+    'ant.repaid': 'Anticipo di {name} rimborsato',
+    'ant.hasOpen': '\u26A0 {name} ha anticipi aperti per \u20AC{amount}',
+
+    // Rubriche page
+    'rub.pageTitle': 'Rubriche',
   },
 
   zh: {
@@ -557,6 +588,37 @@ const translations = {
     'fatt.legacyBonifico': '转账/支票',
     'fatt.legacyUnpaid': '未付款',
     'fatt.incassoCash': '现金收入',
+
+    // Anticipi
+    'tab.anticipi': '预支',
+    'ant.title': '预支',
+    'ant.totalOpen': '未还预支总额',
+    'ant.count': '笔未还预支',
+    'ant.filterAll': '全部',
+    'ant.filterOpen': '未还',
+    'ant.filterRepaid': '已还',
+    'ant.titleOpen': '未还预支',
+    'ant.empty': '暂无预支',
+    'ant.new': '新预支',
+    'ant.sheetTitle': '新预支',
+    'ant.amount': '金额',
+    'ant.recipient': '收款人',
+    'ant.freeNamePlaceholder': '合伙人姓名...',
+    'ant.note': '备注（可选）',
+    'ant.notePlaceholder': '添加备注...',
+    'ant.cancel': '取消',
+    'ant.save': '登记预支',
+    'ant.selectName': '请输入收款人姓名',
+    'ant.logAdvance': '预支',
+    'ant.logRepay': '预支归还',
+    'ant.added': '已登记对{name}的预支: {amount}\u20AC',
+    'ant.repayTitle': '确认归还',
+    'ant.repayMsg': '将{name}的预支({amount}\u20AC)标记为已归还？',
+    'ant.repaid': '{name}的预支已归还',
+    'ant.hasOpen': '\u26A0 {name}有未还预支 \u20AC{amount}',
+
+    // Rubriche page
+    'rub.pageTitle': '通讯录',
   }
 };
 

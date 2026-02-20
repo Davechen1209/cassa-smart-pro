@@ -2,7 +2,8 @@
 
 import {
   d, fullSave, casseList, casseNextId, pendingExpenses, selectedDate,
-  setCasseList, setCasseNextId
+  setCasseList, setCasseNextId,
+  anticipiNextId, setAnticipiNextId
 } from './state.js';
 import { showToast } from './modals.js';
 import { autoCreateFatturaIfNeeded } from './fatture.js';
@@ -84,6 +85,18 @@ export function registra() {
 
     if (e.cat === 'fornitori' && e.name) {
       autoCreateFatturaIfNeeded(e.name, e.amount, oggi, e.fatturaNum);
+    }
+
+    if (e.cat === 'anticipo' && e.name) {
+      d.anticipi.push({
+        id: anticipiNextId,
+        nome: e.name,
+        importo: e.amount,
+        data: oggi,
+        note: e.note || '',
+        restituito: false
+      });
+      setAnticipiNextId(anticipiNextId + 1);
     }
   });
 

@@ -10,6 +10,10 @@ import { showToast, showConfirm, closeModal, escapeHtml } from './modals.js';
 import { renderExpVoices } from './expense.js';
 import { t } from './i18n.js';
 
+export function toggleRubricaPage() {
+  document.getElementById('rubrica-page').classList.toggle('open');
+}
+
 export function toggleRubrica(cat) {
   openRubriche[cat] = !openRubriche[cat];
   renderRubriche();

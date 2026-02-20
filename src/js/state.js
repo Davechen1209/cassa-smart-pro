@@ -6,6 +6,7 @@ let d = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   saldo: 0, fornitori: [], stipendi: [], abit: ['Pranzo', 'Treno'], log: [], fatture: []
 };
 if (!d.fatture) d.fatture = [];
+if (!d.anticipi) d.anticipi = [];
 
 let casseList = [{ id: 1 }];
 let casseNextId = 2;
@@ -20,6 +21,8 @@ let selectedDate = new Date();
 let editingDay = false;
 let fattureFilter = 'tutte';
 let editingFatturaId = null;
+let anticipiFilter = 'aperti';
+let anticipiNextId = d.anticipi.length > 0 ? Math.max(...d.anticipi.map(a => a.id)) + 1 : 1;
 let parsedImportData = [];
 
 // Firebase state
@@ -47,6 +50,7 @@ function resetData() {
   d.abit = [];
   d.log = [];
   d.fatture = [];
+  d.anticipi = [];
   pendingExpenses = [];
   save();
 }
@@ -61,6 +65,7 @@ export {
   editingItem, modalCat,
   selectedDate, editingDay,
   fattureFilter, editingFatturaId,
+  anticipiFilter, anticipiNextId,
   parsedImportData,
   firebaseDb, firebaseUser, cloudSyncEnabled, syncDebounceTimer
 };
@@ -78,6 +83,8 @@ export function setSelectedDate(val) { selectedDate = val; }
 export function setEditingDay(val) { editingDay = val; }
 export function setFattureFilter(val) { fattureFilter = val; }
 export function setEditingFatturaId(val) { editingFatturaId = val; }
+export function setAnticipiFilter(val) { anticipiFilter = val; }
+export function setAnticipiNextId(val) { anticipiNextId = val; }
 export function setParsedImportData(val) { parsedImportData = val; }
 export function setFirebaseDb(val) { firebaseDb = val; }
 export function setFirebaseUser(val) { firebaseUser = val; }

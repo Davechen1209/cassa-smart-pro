@@ -29,15 +29,19 @@ import {
 } from './js/casse.js';
 
 import {
-  openExpenseSheet, closeExpenseSheet, closeExpenseOutside,
+  openExpenseSheet, openExpenseAnticipo, closeExpenseSheet, closeExpenseOutside,
   setQuickAmount, customAmount, switchExpCat,
   selectExpVoice, addNewVoiceFromSheet, addExpense,
   renderPendingList, removePending
 } from './js/expense.js';
 
 import {
-  toggleRubrica, deleteItem, editItem, openModalRubrica, modalConfirm
+  toggleRubrica, toggleRubricaPage, deleteItem, editItem, openModalRubrica, modalConfirm
 } from './js/rubrica.js';
+
+import {
+  repayAnticipo, filterAnticipi
+} from './js/anticipi.js';
 
 import {
   openFatturaSheet, closeFatturaSheet, closeFatturaOutside,
@@ -91,6 +95,7 @@ document.body.addEventListener('click', (e) => {
 
     // Expenses
     case 'openExpenseSheet': openExpenseSheet(); break;
+    case 'openExpenseAnticipo': openExpenseAnticipo(); break;
     case 'closeExpenseSheet': closeExpenseSheet(); break;
     case 'setQuickAmount': setQuickAmount(Number(btn.dataset.amount)); break;
     case 'customAmount': customAmount(); break;
@@ -101,6 +106,7 @@ document.body.addEventListener('click', (e) => {
     case 'removePending': removePending(Number(btn.dataset.index)); break;
 
     // Rubriche
+    case 'toggleRubricaPage': toggleRubricaPage(); break;
     case 'toggleRubrica': toggleRubrica(btn.dataset.cat); break;
     case 'editItem': editItem(btn.dataset.cat, Number(btn.dataset.index)); break;
     case 'deleteItem': deleteItem(btn.dataset.cat, Number(btn.dataset.index), btn.dataset.name); break;
@@ -135,6 +141,10 @@ document.body.addEventListener('click', (e) => {
       break;
     case 'triggerFatturaPhoto': triggerFatturaPhoto(); break;
     case 'removeFatturaPhoto': removeFatturaPhoto(); break;
+
+    // Anticipi
+    case 'repayAnticipo': repayAnticipo(Number(btn.dataset.id)); break;
+    case 'filterAnticipi': filterAnticipi(btn.dataset.filter, btn); break;
 
     // Cloud
     case 'connectCloud': connectCloud(); break;

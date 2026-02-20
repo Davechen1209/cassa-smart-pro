@@ -221,7 +221,8 @@ export function downloadBackup() {
     stipendi: d.stipendi,
     abit: d.abit,
     log: d.log,
-    fatture: d.fatture
+    fatture: d.fatture,
+    anticipi: d.anticipi
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -263,6 +264,7 @@ export function importBackup(event) {
           d.abit = backup.abit || [];
           d.log = backup.log || [];
           d.fatture = backup.fatture || [];
+          d.anticipi = backup.anticipi || [];
           pendingExpenses.length = 0;
           fullSave();
           showToast(t('backup.restoreDone', { n: movCount }), 'check');
