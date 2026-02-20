@@ -72,7 +72,7 @@ export function registra() {
     d.saldo += c.cash;
     const label = casseList.length > 1 ? c.name + ' ' : '';
     d.log.push({ d: oggi, v: label + t('fatt.incassoCash') + ' (Z:' + c.z + ' POS:' + c.pos + ')', a: c.cash });
-    messages.push(label + '+' + c.cash.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC');
+    messages.push(label + '+' + c.cash.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC');
   });
 
   pendingExpenses.forEach(e => {
@@ -89,7 +89,7 @@ export function registra() {
 
   if (pendingExpenses.length > 0) {
     const totalExp = pendingExpenses.reduce((s, e) => s + e.amount, 0);
-    messages.push(pendingExpenses.length + ' ' + t('uscite.expenses') + ': -' + totalExp.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC');
+    messages.push(pendingExpenses.length + ' ' + t('uscite.expenses') + ': -' + totalExp.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC');
   }
 
   setCasseList([{ id: 1 }]);

@@ -43,7 +43,7 @@ export function renderDaySummary() {
           <div class="day-summary-saldo">
             <span>${t('day.endBalance')}</span>
             <span style="font-weight:800; font-size:17px; color:${saldoCum >= 0 ? 'var(--blue)' : 'var(--red)'}">
-              \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+              \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
         </div>
@@ -71,7 +71,7 @@ export function renderDaySummary() {
         <div class="day-summary-dot ${isIncome ? 'income' : 'expense'}"></div>
         <div class="day-summary-name">${escapeHtml(l.v)}</div>
         <div class="day-summary-amount ${isIncome ? 'positive' : 'negative'}">
-          ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC
+          ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC
         </div>
         ${editingDay ? `
           <button class="history-delete" data-action="deleteDayLog" data-index="${realIndex}" style="opacity:0.7;">
@@ -107,13 +107,13 @@ export function renderDaySummary() {
       <div class="day-summary-total">
         <span>${t('day.total')}</span>
         <span style="color: ${total >= 0 ? 'var(--green)' : 'var(--red)'}">
-          ${total >= 0 ? '+' : ''}${total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC
+          ${total >= 0 ? '+' : ''}${total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC
         </span>
       </div>
       <div class="day-summary-saldo">
         <span>${t('day.endBalance')}</span>
         <span style="font-weight:800; font-size:17px; color:${saldoCum >= 0 ? 'var(--blue)' : 'var(--red)'}">
-          \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+          \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       </div>
       ${editBtn}
@@ -122,34 +122,199 @@ export function renderDaySummary() {
   `;
 }
 
-export function shareDay() {
+function fmtEur(n) {
+  return n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function generateDayImage(dateStr, dayLogs) {
+  const DPR = 2;
+  const W = 420;
+  const PAD = 24;
+  const INNER = W - PAD * 2;
+
+  const saldoCum = calcSaldoAtDate(selectedDate);
+  let total = 0;
+  dayLogs.forEach(l => { total += l.a; });
+  total = Math.round(total * 100) / 100;
+
+  // Colors
+  const BG = '#F2F2F7';
+  const CARD = '#FFFFFF';
+  const TEXT = '#1C1C1E';
+  const TEXT2 = '#3A3A3C';
+  const TEXT3 = '#636366';
+  const GRAY = '#8E8E93';
+  const GREEN = '#34C759';
+  const RED = '#FF3B30';
+  const BLUE = '#007AFF';
+  const SEP = 'rgba(60,60,67,0.12)';
+  const FONT = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif';
+
+  // Pre-calculate height
+  const HEADER_H = 70;
+  const ROW_H = 42;
+  const SUMMARY_H = 130; // totale + saldo + totale cassa
+  const FOOTER_H = 40;
+  const H = PAD + HEADER_H + dayLogs.length * ROW_H + SUMMARY_H + FOOTER_H + PAD;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  // Background
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  // Card with rounded corners
+  const cardX = 12, cardY = 12, cardW = W - 24, cardH = H - 24, cardR = 20;
+  ctx.beginPath();
+  ctx.moveTo(cardX + cardR, cardY);
+  ctx.lineTo(cardX + cardW - cardR, cardY);
+  ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cardR);
+  ctx.lineTo(cardX + cardW, cardY + cardH - cardR);
+  ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - cardR, cardY + cardH);
+  ctx.lineTo(cardX + cardR, cardY + cardH);
+  ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - cardR);
+  ctx.lineTo(cardX, cardY + cardR);
+  ctx.quadraticCurveTo(cardX, cardY, cardX + cardR, cardY);
+  ctx.closePath();
+  ctx.fillStyle = CARD;
+  ctx.fill();
+  // Card shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.08)';
+  ctx.shadowBlur = 16;
+  ctx.shadowOffsetY = 4;
+  ctx.fill();
+  ctx.restore();
+
+  let y = PAD + 8;
+
+  // Header: "Latina Shopping"
+  ctx.fillStyle = TEXT;
+  ctx.font = `bold 18px ${FONT}`;
+  ctx.fillText('Latina Shopping', PAD, y + 18);
+
+  // Date
+  ctx.fillStyle = GRAY;
+  ctx.font = `500 13px ${FONT}`;
+  ctx.fillText(dateStr, PAD, y + 38);
+
+  y += HEADER_H;
+
+  // Separator
+  ctx.fillStyle = SEP;
+  ctx.fillRect(PAD, y - 10, INNER, 1);
+
+  // Transaction rows
+  dayLogs.forEach(l => {
+    const isIncome = l.a >= 0;
+    const dotColor = isIncome ? GREEN : RED;
+    const amtColor = isIncome ? GREEN : RED;
+    const sign = isIncome ? '+' : '';
+    const amtStr = sign + fmtEur(l.a) + '\u20AC';
+
+    // Dot
+    ctx.beginPath();
+    ctx.arc(PAD + 5, y + 6, 5, 0, Math.PI * 2);
+    ctx.fillStyle = dotColor;
+    ctx.fill();
+
+    // Amount (right-aligned, draw first to know width)
+    ctx.font = `bold 14px ${FONT}`;
+    ctx.fillStyle = amtColor;
+    const amtW = ctx.measureText(amtStr).width;
+    ctx.fillText(amtStr, PAD + INNER - amtW, y + 10);
+
+    // Name (truncate if too long)
+    ctx.font = `500 13px ${FONT}`;
+    ctx.fillStyle = TEXT2;
+    const maxNameW = INNER - amtW - 30;
+    let name = l.v;
+    while (ctx.measureText(name).width > maxNameW && name.length > 3) {
+      name = name.slice(0, -4) + '...';
+    }
+    ctx.fillText(name, PAD + 18, y + 10);
+
+    y += ROW_H;
+  });
+
+  // Separator before totals
+  y += 4;
+  ctx.fillStyle = SEP;
+  ctx.fillRect(PAD, y, INNER, 1.5);
+  y += 16;
+
+  // Totale giorno
+  ctx.font = `bold 15px ${FONT}`;
+  ctx.fillStyle = TEXT;
+  ctx.fillText(t('day.total'), PAD, y + 2);
+  const totalStr = (total >= 0 ? '+' : '') + fmtEur(total) + '\u20AC';
+  ctx.fillStyle = total >= 0 ? GREEN : RED;
+  const totalW = ctx.measureText(totalStr).width;
+  ctx.fillText(totalStr, PAD + INNER - totalW, y + 2);
+
+  y += 30;
+
+  // Saldo fine giornata
+  ctx.font = `600 14px ${FONT}`;
+  ctx.fillStyle = TEXT3;
+  ctx.fillText(t('day.endBalance'), PAD, y + 2);
+  const saldoStr = '\u20AC ' + fmtEur(saldoCum);
+  ctx.font = `800 17px ${FONT}`;
+  ctx.fillStyle = saldoCum >= 0 ? BLUE : RED;
+  const saldoW = ctx.measureText(saldoStr).width;
+  ctx.fillText(saldoStr, PAD + INNER - saldoW, y + 2);
+
+  y += 30;
+
+  // Totale cassa
+  ctx.font = `600 14px ${FONT}`;
+  ctx.fillStyle = TEXT3;
+  ctx.fillText(t('day.totalCash'), PAD, y + 2);
+  const cassaStr = '\u20AC ' + fmtEur(d.saldo);
+  ctx.font = `800 17px ${FONT}`;
+  ctx.fillStyle = d.saldo >= 0 ? BLUE : RED;
+  const cassaW = ctx.measureText(cassaStr).width;
+  ctx.fillText(cassaStr, PAD + INNER - cassaW, y + 2);
+
+  y += 34;
+
+  // Footer separator
+  ctx.fillStyle = SEP;
+  ctx.fillRect(PAD, y, INNER, 1);
+  y += 16;
+
+  // Footer branding
+  ctx.font = `600 11px ${FONT}`;
+  ctx.fillStyle = GRAY;
+  ctx.fillText('Cassa Smart Pro', PAD, y + 2);
+
+  return new Promise(resolve => {
+    canvas.toBlob(resolve, 'image/png');
+  });
+}
+
+export async function shareDay() {
   const dateStr = selectedDate.toLocaleDateString('it-IT');
   const dayLogs = d.log.filter(l => l.d === dateStr);
   if (dayLogs.length === 0) return;
 
-  const saldoCum = calcSaldoAtDate(selectedDate);
-  let total = 0;
-  let lines = [];
+  const blob = await generateDayImage(dateStr, dayLogs);
+  const file = new File([blob], 'cassa-' + dateStr.replace(/\//g, '-') + '.png', { type: 'image/png' });
 
-  dayLogs.forEach(l => {
-    total += l.a;
-    const sign = l.a >= 0 ? '+' : '';
-    lines.push(`${l.a >= 0 ? '\u2B06' : '\u2B07'} ${l.v}: ${sign}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC`);
-  });
-
-  const totalSign = total >= 0 ? '+' : '';
-  const text = `\uD83D\uDCCA ` + t('day.shareTitle') + `${dateStr}\n\n` +
-    lines.join('\n') +
-    `\n\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-    t('day.dayTotal') + `: ${totalSign}${total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC\n` +
-    t('day.cashBalance') + `: \u20AC ${saldoCum.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
-
-  if (navigator.share) {
-    navigator.share({ title: t('day.shareTitle') + dateStr, text }).catch(() => {});
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    navigator.share({ files: [file], title: t('day.shareTitle') + dateStr }).catch(() => {});
   } else {
-    navigator.clipboard.writeText(text).then(() => {
-      showToast(t('day.copied'), 'check');
-    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(t('day.downloaded'), 'check');
   }
 }
 
@@ -206,7 +371,7 @@ export function renderHistory() {
           <div class="history-date">${escapeHtml(l.d)}</div>
         </div>
         <div class="history-amount ${isIncome ? 'positive' : 'negative'}">
-          ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC
+          ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC
         </div>
         <button class="history-delete" data-action="deleteLog" data-index="${origIndex}" data-name="${escapeHtml(l.v)}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -236,7 +401,7 @@ export function tab(n) {
 }
 
 export function toggleSettings() {
-  document.getElementById('settings-panel').classList.toggle('open');
+  document.getElementById('settings-page').classList.toggle('open');
 }
 
 export function manualSaldo() {
@@ -253,15 +418,17 @@ export function manualSaldo() {
 
 export function confirmReset() {
   showConfirm(t('settings.resetTitle'), t('settings.resetMsg'), () => {
-    d.saldo = 0;
-    d.fornitori = [];
-    d.stipendi = [];
-    d.abit = [];
-    d.log = [];
-    d.fatture = [];
-    fullSave();
-    ui();
-    showToast(t('settings.resetDone'), 'check');
+    showConfirm(t('settings.resetConfirm2'), t('settings.resetMsg2'), () => {
+      d.saldo = 0;
+      d.fornitori = [];
+      d.stipendi = [];
+      d.abit = [];
+      d.log = [];
+      d.fatture = [];
+      fullSave();
+      ui();
+      showToast(t('settings.resetDone'), 'check');
+    });
   });
 }
 
@@ -277,7 +444,7 @@ export function ui() {
     trendEl.querySelector('svg').innerHTML = isPositive
       ? '<path d="M12 19V5m0 0-7 7m7-7 7 7"/>'
       : '<path d="M12 5v14m0 0 7-7m-7 7-7-7"/>';
-    trendText.textContent = (isPositive ? '+' : '') + last.a.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC';
+    trendText.textContent = (isPositive ? '+' : '') + last.a.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC';
   } else {
     trendText.textContent = '--';
   }

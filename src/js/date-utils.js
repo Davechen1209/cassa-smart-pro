@@ -31,7 +31,7 @@ export function calcSaldoAtDate(targetDate) {
   d.log.forEach(l => {
     if (parseDateIT(l.d) <= end) cumulative += l.a;
   });
-  return cumulative;
+  return Math.round(cumulative * 100) / 100;
 }
 
 export function parseFlexDate(str) {

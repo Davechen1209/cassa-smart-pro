@@ -333,7 +333,7 @@ export function renderFatture() {
     return st === 'scaduta' || st === 'in_scadenza';
   }).length;
 
-  document.getElementById('fatt-da-pagare').textContent = '\u20AC ' + totalUnpaid.toLocaleString('it-IT', { minimumFractionDigits: 2 });
+  document.getElementById('fatt-da-pagare').textContent = '\u20AC ' + totalUnpaid.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   document.getElementById('fatt-scadenza-count').textContent = expiringCount;
 
   if (filtered.length === 0) {
@@ -353,7 +353,7 @@ export function renderFatture() {
     // For old fatture show "da pagare" info
     const rightText = f.tipoPagamento
       ? tipoPagamentoLabel(f.tipoPagamento)
-      : (f.nonPagato > 0 ? t('fatt.unpaid') + '\u20AC ' + (f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 }) : t('fatt.paid'));
+      : (f.nonPagato > 0 ? t('fatt.unpaid') + '\u20AC ' + (f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : t('fatt.paid'));
 
     return `<div class="fattura-item" data-action="openFatturaDetail" data-id="${f.id}">
       <div class="fattura-status-dot ${dotClass}"></div>
@@ -362,7 +362,7 @@ export function renderFatture() {
         <div class="fattura-meta">${metaParts.join(' \u00B7 ')}</div>
       </div>
       <div class="fattura-amounts">
-        <div class="fattura-total">\u20AC ${f.importo.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+        <div class="fattura-total">\u20AC ${f.importo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         <div class="fattura-unpaid zero">${rightText}</div>
       </div>
     </div>`;
@@ -384,7 +384,7 @@ export function openFatturaDetail(id) {
   let rows = '';
   rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.numero')}</span><span class="fattura-detail-value">${escapeHtml(f.numero || '-')}</span></div>`;
   rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.data')}</span><span class="fattura-detail-value">${arrivoStr}</span></div>`;
-  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.importo')}</span><span class="fattura-detail-value">\u20AC ${f.importo.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
+  rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.importo')}</span><span class="fattura-detail-value">\u20AC ${f.importo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>`;
 
   if (f.tipoPagamento) {
     rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.tipoPagamento')}</span><span class="fattura-detail-value">${tipoPagamentoLabel(f.tipoPagamento)}</span></div>`;
@@ -393,9 +393,9 @@ export function openFatturaDetail(id) {
     }
   } else {
     // Old schema: show legacy payment info
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyCash')} <span style="font-size:10px;color:var(--gray2);">${t('fatt.legacyAuto')}</span></span><span class="fattura-detail-value">\u20AC ${(f.pagCash || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyBonifico')}</span><span class="fattura-detail-value">\u20AC ${(f.pagBonifico || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
-    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyUnpaid')}</span><span class="fattura-detail-value" style="color:${f.nonPagato > 0 ? 'var(--red)' : 'var(--green)'}">\u20AC ${(f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyCash')} <span style="font-size:10px;color:var(--gray2);">${t('fatt.legacyAuto')}</span></span><span class="fattura-detail-value">\u20AC ${(f.pagCash || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyBonifico')}</span><span class="fattura-detail-value">\u20AC ${(f.pagBonifico || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>`;
+    rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.legacyUnpaid')}</span><span class="fattura-detail-value" style="color:${f.nonPagato > 0 ? 'var(--red)' : 'var(--green)'}">\u20AC ${(f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>`;
   }
 
   const cicloStr = f.ciclo && f.ciclo !== 'custom' ? f.ciclo + t('fatt.days') : (f.ciclo === 'custom' ? t('fatt.custom') : '-');

@@ -168,7 +168,7 @@ export function showImportPreview() {
     html += `<tr>
       <td style="padding:8px; font-size:13px;">${escapeHtml(r.date)}</td>
       <td style="padding:8px; font-size:13px;">${escapeHtml(r.desc)}</td>
-      <td style="padding:8px; font-size:13px; text-align:right; font-weight:600; color:${color};">${sign}${r.amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</td>
+      <td style="padding:8px; font-size:13px; text-align:right; font-weight:600; color:${color};">${sign}${r.amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC</td>
     </tr>`;
   });
   html += '</tbody></table></div>';
@@ -183,9 +183,9 @@ export function showImportPreview() {
   summary.innerHTML = `
     <div>${t('backup.totalItems', { n: parsedImportData.length })}</div>
     <div style="font-size:13px; margin-top:4px; color:var(--text3);">
-      ${t('excel.incomes') + ':'} <span style="color:var(--green);">+${totalIncome.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span> |
-      ${t('excel.expenses') + ':'} <span style="color:var(--red);">${totalExpense.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span> |
-      ${t('excel.net') + ':'} <span style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${net >= 0 ? '+' : ''}${net.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span>
+      ${t('excel.incomes') + ':'} <span style="color:var(--green);">+${totalIncome.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC</span> |
+      ${t('excel.expenses') + ':'} <span style="color:var(--red);">${totalExpense.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC</span> |
+      ${t('excel.net') + ':'} <span style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${net >= 0 ? '+' : ''}${net.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC</span>
     </div>
   `;
 

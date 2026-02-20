@@ -26,13 +26,20 @@ const translations = {
 
     // Settings
     'settings.title': 'Impostazioni',
+    'settings.back': 'Indietro',
     'settings.lang': 'Lingua',
+    'settings.langLabel': 'Seleziona lingua',
     'settings.saldo': 'Saldo manuale',
+    'settings.saldoLabel': 'Imposta il saldo corrente',
     'settings.saldoPlaceholder': 'Imposta saldo...',
     'settings.update': 'Aggiorna Saldo',
     'settings.reset': 'Reset Dati',
+    'settings.dangerZone': 'Zona pericolosa',
+    'settings.dangerInfo': 'Questa azione eliminera\' tutti i movimenti, le rubriche e le fatture. Non e\' reversibile.',
     'settings.resetTitle': 'Reset Dati',
     'settings.resetMsg': 'Tutti i movimenti e le rubriche verranno eliminati. Continuare?',
+    'settings.resetConfirm2': 'Sei sicuro?',
+    'settings.resetMsg2': 'Questa azione e\' irreversibile. Tutti i dati verranno persi definitivamente.',
     'settings.resetDone': 'Dati resettati',
 
     // Cloud
@@ -70,8 +77,11 @@ const translations = {
 
     // Backup
     'backup.title': 'oppure backup manuale',
+    'backup.titleCard': 'Backup & Import',
     'backup.download': 'Scarica',
     'backup.restore': 'Ripristina',
+    'backup.export': 'Esporta',
+    'backup.import': 'Importa',
     'backup.excelTitle': 'importa dati da Excel',
     'backup.downloadTemplate': '1. Scarica Template',
     'backup.uploadFile': '2. Carica File',
@@ -193,6 +203,8 @@ const translations = {
     'day.share': 'Condividi Giornata',
     'day.shareTitle': 'Cassa del ',
     'day.copied': 'Copiato negli appunti!',
+    'day.downloaded': 'Immagine salvata',
+    'day.totalCash': 'Totale cassa',
     'day.deleteTitle': 'Elimina Movimento',
     'day.deleteMsg': 'Rimuovere "{name}"? Il saldo verra\' ricalcolato.',
     'day.deleted': 'Movimento eliminato',
@@ -293,13 +305,20 @@ const translations = {
 
     // Settings
     'settings.title': '设置',
+    'settings.back': '返回',
     'settings.lang': '语言',
+    'settings.langLabel': '选择语言',
     'settings.saldo': '手动余额',
+    'settings.saldoLabel': '设置当前余额',
     'settings.saldoPlaceholder': '设置余额...',
     'settings.update': '更新余额',
     'settings.reset': '重置数据',
+    'settings.dangerZone': '危险区域',
+    'settings.dangerInfo': '此操作将删除所有交易记录、通讯录和发票，且不可撤销。',
     'settings.resetTitle': '重置数据',
     'settings.resetMsg': '所有交易记录和通讯录将被删除。是否继续？',
+    'settings.resetConfirm2': '确定吗？',
+    'settings.resetMsg2': '此操作不可逆。所有数据将永久丢失。',
     'settings.resetDone': '数据已重置',
 
     // Cloud
@@ -337,8 +356,11 @@ const translations = {
 
     // Backup
     'backup.title': '或手动备份',
+    'backup.titleCard': '备份和导入',
     'backup.download': '下载',
     'backup.restore': '恢复',
+    'backup.export': '导出',
+    'backup.import': '导入',
     'backup.excelTitle': '从Excel导入数据',
     'backup.downloadTemplate': '1. 下载模板',
     'backup.uploadFile': '2. 上传文件',
@@ -460,6 +482,8 @@ const translations = {
     'day.share': '分享当日',
     'day.shareTitle': '收银记录 ',
     'day.copied': '已复制到剪贴板！',
+    'day.downloaded': '图片已保存',
+    'day.totalCash': '总收银余额',
     'day.deleteTitle': '删除交易',
     'day.deleteMsg': '移除"{name}"？余额将重新计算。',
     'day.deleted': '交易已删除',

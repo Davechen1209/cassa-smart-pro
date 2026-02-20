@@ -125,7 +125,7 @@ export function addExpense() {
   pendingExpenses.push({ name, cat: expCat, type, amount, note, fatturaNum });
   closeExpenseSheet();
   renderPendingList();
-  showToast(name + ' - ' + amount.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '\u20AC' + t('exp.added'), 'check');
+  showToast(name + ' - ' + amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC' + t('exp.added'), 'check');
 }
 
 export function renderPendingList() {
@@ -148,7 +148,7 @@ export function renderPendingList() {
           <div class="pending-name">${escapeHtml(e.name)}</div>
           <div class="pending-cat">${escapeHtml(e.type)}${e.fatturaNum ? ' \u00B7 ' + t('exp.fatt') + escapeHtml(e.fatturaNum) : ''}${e.note ? ' \u00B7 ' + escapeHtml(e.note) : ''}</div>
         </div>
-        <div class="pending-amount">-${e.amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</div>
+        <div class="pending-amount">-${e.amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC</div>
         <button class="pending-remove" data-action="removePending" data-index="${i}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
@@ -158,7 +158,7 @@ export function renderPendingList() {
   html += `
     <div class="pending-total">
       <span>${t('exp.totalExpenses')}</span>
-      <span class="pending-total-amount">-${total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}\u20AC</span>
+      <span class="pending-total-amount">-${total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC</span>
     </div>
   </div>`;
   el.innerHTML = html;
