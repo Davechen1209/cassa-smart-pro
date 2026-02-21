@@ -309,6 +309,20 @@ const translations = {
 
     // Rubriche page
     'rub.pageTitle': 'Rubriche',
+
+    // OCR
+    'ocr.title': 'OCR Fatture',
+    'ocr.info': 'Inserisci la tua API key OpenAI per compilare automaticamente i campi delle fatture dalla foto.',
+    'ocr.keyPlaceholder': 'sk-...',
+    'ocr.save': 'Salva',
+    'ocr.configured': 'Configurato',
+    'ocr.notConfigured': 'Non configurato',
+    'ocr.remove': 'Rimuovi',
+    'ocr.scanning': 'Analisi fattura in corso...',
+    'ocr.success': 'Campi compilati automaticamente',
+    'ocr.error': 'Errore OCR: impossibile analizzare la foto',
+    'ocr.networkError': 'OCR non disponibile (controlla la connessione)',
+    'ocr.invalidKey': 'API key OpenAI non valida',
   },
 
   zh: {
@@ -619,6 +633,20 @@ const translations = {
 
     // Rubriche page
     'rub.pageTitle': '通讯录',
+
+    // OCR
+    'ocr.title': '发票OCR',
+    'ocr.info': '输入您的OpenAI API密钥，从照片自动填写发票字段。',
+    'ocr.keyPlaceholder': 'sk-...',
+    'ocr.save': '保存',
+    'ocr.configured': '已配置',
+    'ocr.notConfigured': '未配置',
+    'ocr.remove': '移除',
+    'ocr.scanning': '正在分析发票...',
+    'ocr.success': '字段已自动填写',
+    'ocr.error': 'OCR错误：无法分析照片',
+    'ocr.networkError': 'OCR不可用（请检查网络连接）',
+    'ocr.invalidKey': 'OpenAI API密钥无效',
   }
 };
 

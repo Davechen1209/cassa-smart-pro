@@ -21,7 +21,8 @@ import {
   ui, tab, toggleSettings, manualSaldo, confirmReset,
   updateDateDisplay, updateHeaderDate,
   startEditDay, stopEditDay, deleteDayLog,
-  deleteLog, renderDaySummary, shareDay
+  deleteLog, renderDaySummary, shareDay,
+  saveOcrKey, removeOcrKey
 } from './js/ui-engine.js';
 
 import {
@@ -145,6 +146,10 @@ document.body.addEventListener('click', (e) => {
     // Anticipi
     case 'repayAnticipo': repayAnticipo(Number(btn.dataset.id)); break;
     case 'filterAnticipi': filterAnticipi(btn.dataset.filter, btn); break;
+
+    // OCR
+    case 'saveOcrKey': saveOcrKey(); break;
+    case 'removeOcrKey': removeOcrKey(); break;
 
     // Cloud
     case 'connectCloud': connectCloud(); break;

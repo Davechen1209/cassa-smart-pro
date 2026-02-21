@@ -10,6 +10,83 @@ import { t } from './i18n.js';
 
 let pendingPhoto = null;
 
+// ─── OCR via OpenAI GPT-4o-mini ───
+
+async function ocrFattura(base64DataUrl) {
+  const apiKey = localStorage.getItem('cassa_openai_key');
+  if (!apiKey) return null;
+
+  const spinner = document.getElementById('ocr-spinner');
+  if (spinner) spinner.style.display = 'flex';
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Estrai i dati da questa fattura italiana. Rispondi SOLO con un oggetto JSON valido, senza markdown o altro testo. Campi: {"numero":"","azienda":"","importo":0,"data":"YYYY-MM-DD","tipoPagamento":"contanti|bonifico|assegno","note":""}. Se un campo non è leggibile lascialo vuoto o 0.' },
+            { type: 'image_url', image_url: { url: base64DataUrl } }
+          ]
+        }],
+        max_tokens: 300
+      })
+    });
+
+    if (res.status === 401) {
+      showToast(t('ocr.invalidKey'), 'warn');
+      return null;
+    }
+
+    if (!res.ok) {
+      showToast(t('ocr.error'), 'warn');
+      return null;
+    }
+
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content || '';
+
+    // Try to parse JSON from response (handle possible markdown wrapping)
+    let jsonStr = content.trim();
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (jsonMatch) jsonStr = jsonMatch[0];
+
+    const parsed = JSON.parse(jsonStr);
+    return parsed;
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      showToast(t('ocr.error'), 'warn');
+    } else {
+      showToast(t('ocr.networkError'), 'warn');
+    }
+    return null;
+  } finally {
+    if (spinner) spinner.style.display = 'none';
+  }
+}
+
+function applyOcrResult(result) {
+  if (!result) return;
+
+  if (result.numero) document.getElementById('fatt-numero').value = result.numero;
+  if (result.azienda) document.getElementById('fatt-azienda').value = result.azienda;
+  if (result.importo && result.importo > 0) document.getElementById('fatt-importo').value = result.importo;
+  if (result.data) document.getElementById('fatt-data-arrivo').value = result.data;
+  if (result.tipoPagamento && ['contanti', 'bonifico', 'assegno'].includes(result.tipoPagamento)) {
+    document.getElementById('fatt-tipo-pagamento').value = result.tipoPagamento;
+    toggleAssegnoGroup();
+  }
+  if (result.note) document.getElementById('fatt-note').value = result.note;
+
+  showToast(t('ocr.success'), 'check');
+}
+
 // ─── Photo helpers ───
 
 function compressImage(file) {
@@ -46,6 +123,10 @@ export async function handleFatturaPhoto(e) {
   const preview = document.getElementById('fatt-photo-preview');
   document.getElementById('fatt-photo-img').src = pendingPhoto;
   preview.style.display = 'block';
+
+  // OCR: auto-fill fields if API key is configured
+  const result = await ocrFattura(pendingPhoto);
+  applyOcrResult(result);
 }
 
 export function removeFatturaPhoto() {

@@ -403,6 +403,38 @@ export function tab(n) {
 
 export function toggleSettings() {
   document.getElementById('settings-page').classList.toggle('open');
+  updateOcrStatus();
+}
+
+// ─── OCR Settings ───
+
+export function updateOcrStatus() {
+  const key = localStorage.getItem('cassa_openai_key');
+  const configured = document.getElementById('ocr-configured');
+  const setup = document.getElementById('ocr-setup');
+  if (!configured || !setup) return;
+  if (key) {
+    configured.style.display = 'block';
+    setup.style.display = 'none';
+  } else {
+    configured.style.display = 'none';
+    setup.style.display = 'block';
+  }
+}
+
+export function saveOcrKey() {
+  const input = document.getElementById('ocr-api-key');
+  const key = input.value.trim();
+  if (!key) return;
+  localStorage.setItem('cassa_openai_key', key);
+  input.value = '';
+  updateOcrStatus();
+  showToast(t('ocr.configured'), 'check');
+}
+
+export function removeOcrKey() {
+  localStorage.removeItem('cassa_openai_key');
+  updateOcrStatus();
 }
 
 export function manualSaldo() {
