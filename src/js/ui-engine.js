@@ -8,7 +8,7 @@ import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './date-utils.js';
 import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
-import { renderFatture } from './fatture.js';
+import { renderFatture, updateFattureTabBadge } from './fatture.js';
 import { renderAnticipi } from './anticipi.js';
 import { t, getLang } from './i18n.js';
 
@@ -231,12 +231,25 @@ export function renderHistory() {
     return;
   }
 
-  const reversed = d.log.slice().reverse();
+  const searchInput = document.getElementById('history-search');
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+  const filtered = [];
+  for (let i = d.log.length - 1; i >= 0; i--) {
+    const l = d.log[i];
+    if (query && !l.v.toLowerCase().includes(query) && !l.d.includes(query)) continue;
+    filtered.push({ entry: l, origIndex: i });
+  }
+
+  if (filtered.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">\uD83D\uDD0D</div><div class="empty-state-text">' + t('history.noResults') + '</div></div>';
+    return;
+  }
+
   let html = '';
   let lastDate = '';
 
-  reversed.forEach((l, ri) => {
-    const origIndex = d.log.length - 1 - ri;
+  filtered.forEach(({ entry: l, origIndex }) => {
     if (l.d !== lastDate) {
       lastDate = l.d;
       html += `<div class="history-date-header">${escapeHtml(l.d)}</div>`;
@@ -286,6 +299,7 @@ export function tab(n) {
 export function toggleSettings() {
   document.getElementById('settings-page').classList.toggle('open');
   updateOcrStatus();
+  renderCustomCatsSettings();
 }
 
 // ─── OCR Settings ───
@@ -371,6 +385,8 @@ export function ui() {
   renderDaySummary();
   renderFatture();
   renderAnticipi();
+  updateFattureTabBadge();
+  renderDashboard();
 }
 
 export function updateHeaderDate() {
@@ -379,4 +395,103 @@ export function updateHeaderDate() {
   const locale = getLang() === 'zh' ? 'zh-CN' : 'it-IT';
   const formatted = now.toLocaleDateString(locale, opts);
   document.getElementById('header-date').textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+// ─── Dashboard ───
+
+export function renderDashboard() {
+  const container = document.getElementById('dashboard-content');
+  if (!container || container.style.display === 'none') return;
+
+  const saldo = d.saldo;
+  const now = new Date();
+  const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+  let monthIncome = 0, monthExpenses = 0;
+  d.log.forEach(l => {
+    if (!l.d) return;
+    const parts = l.d.split('/');
+    if (parts.length === 3) {
+      const lm = parts[2] + '-' + parts[1];
+      if (lm === curMonthKey) {
+        if (l.a >= 0) monthIncome += l.a;
+        else monthExpenses += Math.abs(l.a);
+      }
+    }
+  });
+  const netMonth = monthIncome - monthExpenses;
+
+  const unpaid = (d.fatture || []).filter(f => !f.pagata);
+  const unpaidTotal = unpaid.reduce((s, f) => s + (f.importo || 0), 0);
+
+  const fmt = n => '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  container.innerHTML = `
+    <div class="dashboard-metrics">
+      <div class="dash-metric green">
+        <div class="dash-metric-label">${t('dash.monthIncome')}</div>
+        <div class="dash-metric-value">${fmt(monthIncome)}</div>
+      </div>
+      <div class="dash-metric red">
+        <div class="dash-metric-label">${t('dash.monthExpenses')}</div>
+        <div class="dash-metric-value">${fmt(monthExpenses)}</div>
+      </div>
+      <div class="dash-metric ${netMonth >= 0 ? 'blue' : 'orange'}">
+        <div class="dash-metric-label">${t('dash.netMonth')}</div>
+        <div class="dash-metric-value">${fmt(netMonth)}</div>
+      </div>
+      <div class="dash-metric orange">
+        <div class="dash-metric-label">${t('dash.unpaidFatture')}</div>
+        <div class="dash-metric-value">${fmt(unpaidTotal)}</div>
+        <div class="dash-metric-sub">${unpaid.length} ${t('dash.invoices')}</div>
+      </div>
+    </div>`;
+}
+
+export function toggleDashboard() {
+  const content = document.getElementById('dashboard-content');
+  const chevron = document.getElementById('dashboard-chevron');
+  if (!content) return;
+  const open = content.style.display !== 'none';
+  content.style.display = open ? 'none' : 'block';
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(90deg)';
+  if (!open) renderDashboard();
+}
+
+// ─── Custom Categories Settings ───
+
+export function renderCustomCatsSettings() {
+  const el = document.getElementById('custom-cats-list');
+  if (!el) return;
+  if ((d.customCats || []).length === 0) {
+    el.innerHTML = '<div class="pending-empty">' + t('customCats.empty') + '</div>';
+    return;
+  }
+  el.innerHTML = d.customCats.map((cc, i) => `
+    <div class="custom-cat-row">
+      <span class="custom-cat-emoji">${cc.emoji || ''}</span>
+      <span class="custom-cat-name">${escapeHtml(cc.name)}</span>
+      <button class="history-delete" data-action="removeCustomCat" data-index="${i}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+export function addCustomCat() {
+  const emoji = document.getElementById('new-cat-emoji').value.trim();
+  const name = document.getElementById('new-cat-name').value.trim();
+  if (!name) { showToast(t('customCats.enterName'), 'warn'); return; }
+  if (!d.customCats) d.customCats = [];
+  d.customCats.push({ name, emoji });
+  document.getElementById('new-cat-emoji').value = '';
+  document.getElementById('new-cat-name').value = '';
+  fullSave();
+  renderCustomCatsSettings();
+  showToast(t('customCats.added', { name }), 'check');
+}
+
+export function removeCustomCat(index) {
+  d.customCats.splice(index, 1);
+  fullSave();
+  renderCustomCatsSettings();
 }

@@ -7,6 +7,7 @@ let d = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
 };
 if (!d.fatture) d.fatture = [];
 if (!d.anticipi) d.anticipi = [];
+if (!d.customCats) d.customCats = [];
 
 let casseList = [{ id: 1 }];
 let casseNextId = 2;
@@ -52,6 +53,7 @@ function resetData() {
   d.log = [];
   d.fatture = [];
   d.anticipi = [];
+  d.customCats = [];
   pendingExpenses = [];
   save();
 }

@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#007AFF">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="apple-touch-icon" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <title>Cassa Smart Pro</title>
 </head>
 <body>
@@ -45,10 +45,13 @@
 <!-- Header -->
 <div class="header">
     <div>
-        <div class="header-title"><span data-i18n="app.title">Cassa Smart Pro</span> <span class="sync-dot" id="sync-dot" data-i18n-title="app.cloudDisconnected" title="Cloud non connesso"></span></div>
+        <div class="header-title"><span data-i18n="app.title">Cassa Smart Pro</span> <span class="sync-dot" id="sync-dot" data-i18n-title="app.cloudDisconnected" title="Cloud non connesso"></span><span class="offline-dot" id="offline-dot" style="display:none;"></span></div>
         <div class="header-date" id="header-date"></div>
     </div>
     <div style="display:flex; gap:4px;">
+        <button class="header-btn" data-action="openSearch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
         <button class="header-btn" data-action="toggleRubricaPage">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -60,6 +63,14 @@
             </svg>
         </button>
     </div>
+</div>
+
+<!-- Offline Banner -->
+<div id="offline-banner" class="offline-banner" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0;">
+        <line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+    </svg>
+    <span data-i18n="offline.banner">Modalità offline — i dati verranno sincronizzati al ritorno online</span>
 </div>
 
 <!-- Settings Page (full-screen slide from right) -->
@@ -85,6 +96,29 @@
             </div>
         </div>
 
+        <!-- PIN -->
+        <div class="settings-card">
+            <div class="settings-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span data-i18n="pin.change">Cambia PIN</span>
+            </div>
+            <div class="input-group">
+                <label data-i18n="pin.oldPin">PIN attuale</label>
+                <input type="password" class="input-field" id="pin-old" inputmode="numeric" maxlength="8" pattern="[0-9]*">
+            </div>
+            <div class="input-group">
+                <label data-i18n="pin.newPin">Nuovo PIN</label>
+                <input type="password" class="input-field" id="pin-new" inputmode="numeric" maxlength="8" pattern="[0-9]*">
+            </div>
+            <div class="input-group">
+                <label data-i18n="pin.confirmPin">Conferma PIN</label>
+                <input type="password" class="input-field" id="pin-confirm" inputmode="numeric" maxlength="8" pattern="[0-9]*">
+            </div>
+            <div class="settings-row" style="margin-top:8px;">
+                <button class="btn-sm blue" data-action="changePin" style="flex:1; text-align:center;" data-i18n="pin.save">Salva</button>
+            </div>
+        </div>
+
         <!-- Saldo -->
         <div class="settings-card">
             <div class="settings-card-title" data-i18n="settings.saldo">Saldo manuale</div>
@@ -94,6 +128,21 @@
             </div>
             <div class="settings-row" style="margin-top:8px;">
                 <button class="btn-sm blue" data-action="manualSaldo" style="flex:1; text-align:center;" data-i18n="settings.update">Aggiorna Saldo</button>
+            </div>
+        </div>
+
+        <!-- Custom Expense Categories -->
+        <div class="settings-card">
+            <div class="settings-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                <span data-i18n="customCats.title">Categorie Personalizzate</span>
+            </div>
+            <div class="cloud-info" data-i18n="customCats.info">Crea categorie di spesa personalizzate.</div>
+            <div id="custom-cats-list"></div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <input type="text" class="input-field" id="new-cat-emoji" placeholder="⚡" style="width:50px; text-align:center; font-size:18px;">
+                <input type="text" class="input-field" id="new-cat-name" data-i18n-placeholder="customCats.namePlaceholder" placeholder="Nome categoria..." style="flex:1;">
+                <button class="btn-sm blue" data-action="addCustomCat" data-i18n="customCats.add">Aggiungi</button>
             </div>
         </div>
 
@@ -192,6 +241,18 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Auto Backup -->
+        <div class="settings-card">
+            <div class="settings-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                <span data-i18n="autoBackup.title">Backup Automatico</span>
+            </div>
+            <div class="cloud-info" data-i18n="autoBackup.info">Scarica automaticamente un backup JSON ogni 7 giorni.</div>
+            <div id="auto-backup-status"></div>
         </div>
 
         <!-- Backup -->
@@ -320,6 +381,20 @@
 
     <!-- TAB 1: REGISTRA -->
     <div class="section active" id="s1">
+        <!-- Dashboard Card (collapsible) -->
+        <div class="card stats-card" id="dashboard-card">
+            <div class="stats-header" data-action="toggleDashboard">
+                <div class="stats-header-left">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);">
+                        <rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>
+                    </svg>
+                    <span data-i18n="dash.title">Riepilogo</span>
+                </div>
+                <svg class="rubrica-chevron" id="dashboard-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+            <div id="dashboard-content" style="display:none;"></div>
+        </div>
+
         <div class="card">
             <!-- DATE PICKER -->
             <div class="date-picker-row">
@@ -428,6 +503,28 @@
 
     <!-- TAB 3: STORICO -->
     <div class="section" id="s3">
+        <!-- Statistics -->
+        <div class="card stats-card">
+            <div class="stats-header" data-action="toggleStats">
+                <div class="stats-header-left">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                    <span data-i18n="stats.title">Statistiche</span>
+                </div>
+                <svg class="rubrica-chevron" id="stats-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+            <div id="stats-content" style="display:none;"></div>
+        </div>
+
+        <div class="history-search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;opacity:0.4;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="history-search" data-i18n-placeholder="history.searchPlaceholder" placeholder="Cerca movimenti...">
+            <button class="history-export-btn" data-action="openPdfReport" data-i18n-title="pdf.reportBtn" title="Report PDF">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+            </button>
+            <button class="history-export-btn" data-action="exportMovimenti" title="Esporta Excel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+        </div>
         <div class="card">
             <div id="history"></div>
         </div>
@@ -435,6 +532,9 @@
 
     <!-- TAB 4: FATTURE -->
     <div class="section" id="s4">
+        <!-- Due Warning Card -->
+        <div id="fatt-due-warning" class="card due-warning-card" style="display:none;border-left:3px solid var(--orange);margin-bottom:16px;"></div>
+
         <div style="display:flex; gap:10px; margin-bottom:16px;">
             <div class="card" style="flex:1; text-align:center; padding:14px; margin-bottom:0;">
                 <div style="font-size:11px; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:0.3px;" data-i18n="fatt.daPagare">Da pagare</div>
@@ -479,7 +579,10 @@
         <span data-i18n="tab.storico">Storico</span>
     </button>
     <button class="tab-btn" data-action="tab" data-tab="4" id="tab4">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <div style="position:relative;display:inline-flex;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span class="tab-notification-badge" id="fatture-tab-badge" style="display:none;"></span>
+        </div>
         <span data-i18n="tab.fatture">Fatture</span>
     </button>
 </div>
@@ -513,6 +616,7 @@
             <button class="segment-btn" data-action="switchExpCat" data-cat="anticipo" data-i18n="ant.title">Anticipo</button>
             <button class="segment-btn" data-action="switchExpCat" data-cat="libera" data-i18n="exp.libera">Libera</button>
         </div>
+        <div id="exp-custom-cats" class="exp-custom-cats" style="display:none;"></div>
 
         <div class="voice-section" id="exp-voices-section">
             <div class="voice-label" data-i18n="exp.selectVoice">Seleziona voce</div>
@@ -687,6 +791,37 @@
 <div class="toast" id="toast">
     <span class="toast-icon" id="toast-icon"></span>
     <span id="toast-text"></span>
+</div>
+
+<!-- PDF Report Sheet -->
+<div class="expense-overlay" id="pdf-report-overlay">
+    <div class="expense-sheet" style="padding-bottom:calc(24px + env(safe-area-inset-bottom));">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" data-i18n="pdf.title">Report Mensile</div>
+        <div class="input-group">
+            <label data-i18n="pdf.selectMonth">Seleziona mese</label>
+            <input type="month" class="input-field" id="pdf-report-month">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button class="btn-sm gray" data-action="closePdfReport" style="flex:1;" data-i18n="fatt.cancel">Annulla</button>
+            <button class="btn-sm blue" data-action="printReport" style="flex:1;" data-i18n="pdf.print">Stampa / PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Print Area -->
+<div id="print-area"></div>
+
+<!-- Search Overlay -->
+<div class="search-overlay" id="search-overlay">
+    <div class="search-container">
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px;opacity:0.5;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" class="search-input" id="search-input" data-i18n-placeholder="search.placeholder" placeholder="Cerca in tutto..." autocomplete="off">
+            <button class="search-cancel-btn" data-action="closeSearch" data-i18n="search.cancel">Annulla</button>
+        </div>
+        <div class="search-results" id="search-results"></div>
+    </div>
 </div>
 
 <script type="module" src="/src/main.js"></script>

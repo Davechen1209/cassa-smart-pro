@@ -58,12 +58,25 @@ export function updateExpSegments() {
   const cats = ['fornitori', 'stipendi', 'abit', 'anticipo', 'libera'];
   btns.forEach((btn, i) => btn.classList.toggle('active', cats[i] === expCat));
 
+  // Render custom category chips
+  const customContainer = document.getElementById('exp-custom-cats');
+  if (customContainer) {
+    customContainer.innerHTML = (d.customCats || []).map(cc =>
+      `<button class="segment-btn ${expCat === 'custom:' + cc.name ? 'active' : ''}"
+               data-action="switchExpCat" data-cat="custom:${escapeHtml(cc.name)}">
+        ${cc.emoji ? cc.emoji + ' ' : ''}${escapeHtml(cc.name)}
+      </button>`
+    ).join('');
+    customContainer.style.display = (d.customCats || []).length > 0 ? 'flex' : 'none';
+  }
+
   const voicesSection = document.getElementById('exp-voices-section');
   const freeWrap = document.getElementById('free-name-wrap');
+  const isCustom = expCat.startsWith('custom:');
 
   document.getElementById('exp-fattura-wrap').style.display = expCat === 'fornitori' ? 'block' : 'none';
 
-  if (expCat === 'libera') {
+  if (expCat === 'libera' || isCustom) {
     voicesSection.style.display = 'none';
     freeWrap.classList.add('open');
     setTimeout(() => document.getElementById('exp-free-name').focus(), 100);
@@ -132,7 +145,11 @@ export function addExpense() {
 
   let name, type;
 
-  if (expCat === 'libera') {
+  if (expCat.startsWith('custom:')) {
+    const catName = expCat.slice(7);
+    name = document.getElementById('exp-free-name').value.trim() || t('exp.genericExpense');
+    type = catName;
+  } else if (expCat === 'libera') {
     name = document.getElementById('exp-free-name').value.trim() || t('exp.genericExpense');
     type = t('exp.expense');
   } else if (expCat === 'anticipo') {
@@ -153,11 +170,6 @@ export function addExpense() {
 
   const note = document.getElementById('exp-note').value.trim();
   const fatturaNum = expCat === 'fornitori' ? document.getElementById('exp-fattura-num').value.trim() : '';
-  if (expCat === 'fornitori' && !fatturaNum) {
-    showToast(t('exp.enterFattNum'), 'warn');
-    document.getElementById('exp-fattura-num').focus();
-    return;
-  }
   pendingExpenses.push({ name, cat: expCat, type, amount, note, fatturaNum });
   closeExpenseSheet();
   renderPendingList();
@@ -174,6 +186,8 @@ export function renderPendingList() {
 
   const total = pendingExpenses.reduce((s, e) => s + e.amount, 0);
   const iconLetters = { fornitori: 'F', stipendi: 'S', abit: 'A', anticipo: '$', libera: '?' };
+  // Build icon map for custom cats
+  (d.customCats || []).forEach(cc => { iconLetters['custom:' + cc.name] = cc.emoji || '★'; });
 
   let html = '<div class="pending-list">';
   pendingExpenses.forEach((e, i) => {

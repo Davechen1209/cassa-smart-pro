@@ -31,7 +31,7 @@ async function ocrFattura(base64DataUrl) {
         messages: [{
           role: 'user',
           content: [
-            { type: 'text', text: 'Estrai i dati da questa fattura italiana. Rispondi SOLO con un oggetto JSON valido, senza markdown o altro testo. Campi: {"numero":"","azienda":"","importo":0,"data":"YYYY-MM-DD","tipoPagamento":"contanti|bonifico|assegno","note":""}. Se un campo non è leggibile lascialo vuoto o 0.' },
+            { type: 'text', text: t('ocr.prompt') },
             { type: 'image_url', image_url: { url: base64DataUrl } }
           ]
         }],
@@ -413,6 +413,7 @@ function tipoPagamentoLabel(tipo) {
 export function renderFatture() {
   calcAllFattureCash();
   updateFattureAziendaList();
+  renderDueWarningCard();
   const container = document.getElementById('fatture-list');
   if (!d.fatture || d.fatture.length === 0) {
     container.innerHTML = '<div class="fattura-empty">' + t('fatt.empty') + '</div>';
@@ -547,4 +548,64 @@ export function closeFatturaDetail() {
 
 export function closeFatturaDetailOutside(e) {
   if (e.target === e.currentTarget) closeFatturaDetail();
+}
+
+// ─── Due Date Notifications ───
+
+export function getUpcomingDueFatture() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+  return (d.fatture || []).filter(f => {
+    if (f.pagata === true) return false;
+    if (!f.scadenza) return false;
+    const due = new Date(f.scadenza); due.setHours(0, 0, 0, 0);
+    return due <= in7;
+  }).sort((a, b) => (a.scadenza || '').localeCompare(b.scadenza || ''));
+}
+
+export function updateFattureTabBadge() {
+  const badge = document.getElementById('fatture-tab-badge');
+  if (!badge) return;
+  const upcoming = getUpcomingDueFatture();
+  if (upcoming.length > 0) {
+    badge.textContent = upcoming.length;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+export function renderDueWarningCard() {
+  const container = document.getElementById('fatt-due-warning');
+  if (!container) return;
+  const upcoming = getUpcomingDueFatture();
+  if (upcoming.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const items = upcoming.slice(0, 5).map(f => {
+    const due = new Date(f.scadenza); due.setHours(0, 0, 0, 0);
+    const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    const isOverdue = daysLeft < 0;
+    const label = isOverdue
+      ? t('fatt.overdue', { n: Math.abs(daysLeft) })
+      : (daysLeft === 0 ? t('fatt.dueToday') : t('fatt.dueInDays', { n: daysLeft }));
+    return `
+      <div class="due-warning-item" data-action="openFatturaDetail" data-id="${f.id}">
+        <div class="due-warning-dot ${isOverdue ? 'overdue' : 'soon'}"></div>
+        <div class="due-warning-info">
+          <div class="due-warning-name">${escapeHtml(f.azienda || '-')}</div>
+          <div class="due-warning-date">${label}</div>
+        </div>
+        <div class="due-warning-amount">€ ${(f.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+      </div>`;
+  }).join('');
+  container.innerHTML = `
+    <div class="due-warning-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px;">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <span>${t('fatt.dueWarningTitle', { n: upcoming.length })}</span>
+    </div>
+    ${items}`;
 }

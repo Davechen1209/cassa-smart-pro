@@ -11,7 +11,7 @@ import { t } from './i18n.js';
 
 export function downloadTemplate() {
   const ws_data = [
-    ['\u65E5\u671F', '\u603B\u91D1\u989D', 'POS', '\u73B0\u91D1', '\u73B0\u91D1\u652F\u51FA', '\u652F\u51FA\u9879\u76EE', '\u5B58\u94B1', '\u9000\u94B1'],
+    [t('excel.colDate'), t('excel.colTotal'), t('excel.colPos'), t('excel.colCash'), t('excel.colCashOut'), t('excel.colExpItem'), t('excel.colDeposit'), t('excel.colRefund')],
     ['17/02/2026', 1000, 500, 500, '', '', '', ''],
     ['17/02/2026', '', '', '', 120, 'Fornitore Rossi', '', ''],
     ['16/02/2026', 800, 300, 500, 200, 'Stipendio Mario', 50, ''],
@@ -95,7 +95,7 @@ export function importExcel(event) {
         if (isSimpleFormat) {
           const amount = parseNumber(row[colSimpleAmount]);
           if (amount === 0) return;
-          const desc = colExpDesc ? String(row[colExpDesc] || 'Importato').trim() : 'Importato';
+          const desc = colExpDesc ? String(row[colExpDesc] || t('excel.imported')).trim() : t('excel.imported');
           newData.push({ date: dateStr, desc, amount });
           return;
         }
@@ -116,21 +116,21 @@ export function importExcel(event) {
         }
 
         if (incomeAmount > 0) {
-          const desc = totalZ > 0 ? 'Incasso Cash (Z:' + totalZ + ' POS:' + pos + ')' : 'Incasso';
+          const desc = totalZ > 0 ? t('fatt.incassoCash') + ' (Z:' + totalZ + ' POS:' + pos + ')' : t('fatt.incassoCash');
           newData.push({ date: dateStr, desc, amount: incomeAmount });
         }
 
         if (expAmt > 0) {
-          const desc = expDesc || 'Spesa';
+          const desc = expDesc || t('exp.genericExpense');
           newData.push({ date: dateStr, desc, amount: -Math.abs(expAmt) });
         }
 
         if (deposit > 0) {
-          newData.push({ date: dateStr, desc: 'Deposito', amount: -Math.abs(deposit) });
+          newData.push({ date: dateStr, desc: t('excel.deposit'), amount: -Math.abs(deposit) });
         }
 
         if (refund > 0) {
-          newData.push({ date: dateStr, desc: 'Reso cliente', amount: -Math.abs(refund) });
+          newData.push({ date: dateStr, desc: t('excel.refund'), amount: -Math.abs(refund) });
         }
       });
 
@@ -238,7 +238,7 @@ export function confirmFileImport() {
 
 export function downloadFattureTemplate() {
   const ws_data = [
-    ['Data Arrivo', 'Numero', 'Azienda/Fornitore', 'Importo', 'Tipo Pagamento', 'Scadenza', 'Note', 'Pagata'],
+    [t('excel.colArrivalDate'), t('excel.colNumber'), t('excel.colSupplier'), t('excel.colAmount'), t('excel.colPaymentType'), t('excel.colDueDate'), t('excel.colNotes'), t('excel.colPaid')],
     ['2026-02-17', 'FT-001', 'Fornitore Rossi S.r.l.', 1500.00, 'bonifico', '2026-03-17', '', 'TRUE'],
     ['2026-02-18', 'FT-002', 'Azienda Bianchi', 800.50, '', '', 'Da pagare', ''],
     ['2026-02-19', 'FT-003', 'Trasporti Verdi', 2300.00, 'assegno', '2026-04-19', '', 'TRUE'],
@@ -408,6 +408,24 @@ function showFattureImportPreview() {
   document.getElementById('excel-overlay').classList.add('show');
 }
 
+export function exportMovimenti() {
+  if (d.log.length === 0) { showToast(t('history.empty'), 'warn'); return; }
+
+  const rows = [[t('excel.colDate'), t('excel.colDesc'), t('excel.colAmount')]];
+  d.log.forEach(l => {
+    rows.push([l.d, l.v, l.a]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 14 }, { wch: 30 }, { wch: 14 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Movimenti');
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, 'movimenti-' + dateStr + '.xlsx');
+  showToast(t('backup.exportDone'), 'check');
+}
+
 export function downloadBackup() {
   const backup = {
     _app: 'CassaSmartPro',
@@ -419,7 +437,8 @@ export function downloadBackup() {
     abit: d.abit,
     log: d.log,
     fatture: d.fatture,
-    anticipi: d.anticipi
+    anticipi: d.anticipi,
+    customCats: d.customCats || []
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -432,6 +451,49 @@ export function downloadBackup() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast(t('backup.downloaded'), 'check');
+}
+
+// ─── Auto Backup ───
+
+export function isAutoBackupEnabled() {
+  const v = localStorage.getItem('cassa_auto_backup_enabled');
+  return v === null ? true : v === 'true';
+}
+
+export function toggleAutoBackup() {
+  localStorage.setItem('cassa_auto_backup_enabled', (!isAutoBackupEnabled()).toString());
+  renderAutoBackupCard();
+}
+
+export function checkAutoBackup() {
+  if (!isAutoBackupEnabled()) return;
+  const lastTs = parseInt(localStorage.getItem('cassa_auto_backup_ts') || '0', 10);
+  const sevenDays = 7 * 24 * 60 * 60 * 1000;
+  if (Date.now() - lastTs > sevenDays && d.log.length > 0) {
+    setTimeout(() => triggerAutoBackupDownload(), 2000);
+  }
+}
+
+export function triggerAutoBackupDownload() {
+  downloadBackup();
+  localStorage.setItem('cassa_auto_backup_ts', Date.now().toString());
+  renderAutoBackupCard();
+}
+
+export function renderAutoBackupCard() {
+  const el = document.getElementById('auto-backup-status');
+  if (!el) return;
+  const ts = parseInt(localStorage.getItem('cassa_auto_backup_ts') || '0', 10);
+  const enabled = isAutoBackupEnabled();
+  const lastStr = ts ? new Date(ts).toLocaleDateString('it-IT') : t('autoBackup.never');
+  el.innerHTML = `
+    <div class="auto-backup-row">
+      <span class="auto-backup-label">${t('autoBackup.lastLabel')}: <strong>${lastStr}</strong></span>
+      <button class="toggle-switch ${enabled ? 'on' : ''}" data-action="toggleAutoBackup"></button>
+    </div>
+    <button class="btn-sm blue" data-action="triggerManualBackup" style="width:100%;margin-top:12px;">
+      ${t('autoBackup.manualBtn')}
+    </button>`;
 }
 
 export function importBackup(event) {
@@ -462,6 +524,7 @@ export function importBackup(event) {
           d.log = backup.log || [];
           d.fatture = backup.fatture || [];
           d.anticipi = backup.anticipi || [];
+          d.customCats = backup.customCats || [];
           pendingExpenses.length = 0;
           fullSave();
           showToast(t('backup.restoreDone', { n: movCount }), 'check');

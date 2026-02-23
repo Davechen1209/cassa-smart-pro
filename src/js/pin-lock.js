@@ -1,11 +1,17 @@
 import { t } from './i18n.js';
+import { showToast } from './modals.js';
 
 // ─── PIN Lock ───
 
-const CORRECT_PIN = '141219';
+const DEFAULT_PIN = '141219';
+const PIN_KEY = 'cassa_pin';
 const MAX_ATTEMPTS = 5;
 const STORAGE_KEY = 'cassa_pin_blocked';
 const ATTEMPTS_KEY = 'cassa_pin_attempts';
+
+function getPin() {
+  return localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
+}
 
 let currentInput = '';
 let attempts = parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0');
@@ -27,6 +33,7 @@ export function initPinLock() {
   }
 
   overlay.classList.add('show');
+  rebuildDots();
   updateDots();
   updateAttemptsDisplay();
 
@@ -47,7 +54,8 @@ export function initPinLock() {
     const key = btn.dataset.key;
     if (key === undefined) return;
 
-    if (currentInput.length < 6) {
+    const pinLen = getPin().length;
+    if (currentInput.length < pinLen) {
       currentInput += key;
       updateDots();
 
@@ -57,7 +65,7 @@ export function initPinLock() {
         setTimeout(() => btn.classList.remove('pressed'), 80);
       });
 
-      if (currentInput.length === 6) {
+      if (currentInput.length === pinLen) {
         // Check immediately, no artificial delay
         requestAnimationFrame(checkPin);
       }
@@ -77,10 +85,11 @@ export function initPinLock() {
   // Keyboard support
   document.addEventListener('keydown', (e) => {
     if (!overlay.classList.contains('show') || blocked) return;
-    if (e.key >= '0' && e.key <= '9' && currentInput.length < 6) {
+    const pinLen = getPin().length;
+    if (e.key >= '0' && e.key <= '9' && currentInput.length < pinLen) {
       currentInput += e.key;
       updateDots();
-      if (currentInput.length === 6) requestAnimationFrame(checkPin);
+      if (currentInput.length === pinLen) requestAnimationFrame(checkPin);
     } else if (e.key === 'Backspace') {
       currentInput = currentInput.slice(0, -1);
       updateDots();
@@ -92,7 +101,7 @@ function checkPin() {
   const overlay = document.getElementById('pin-overlay');
   const dotsContainer = document.getElementById('pin-dots');
 
-  if (currentInput === CORRECT_PIN) {
+  if (currentInput === getPin()) {
     // Success — fast unlock
     attempts = 0;
     localStorage.setItem(ATTEMPTS_KEY, '0');
@@ -137,6 +146,18 @@ function showBlocked() {
   document.querySelector('.pin-icon').textContent = '⛔';
 }
 
+function rebuildDots() {
+  const container = document.getElementById('pin-dots');
+  if (!container) return;
+  const pinLen = getPin().length;
+  container.innerHTML = '';
+  for (let i = 0; i < pinLen; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'pin-dot';
+    container.appendChild(dot);
+  }
+}
+
 function updateDots() {
   const dots = document.querySelectorAll('#pin-dots .pin-dot');
   dots.forEach((dot, i) => {
@@ -150,4 +171,34 @@ function updateAttemptsDisplay() {
     const remaining = MAX_ATTEMPTS - attempts;
     el.textContent = remaining + ' ' + (remaining === 1 ? t('pin.remaining_one') : t('pin.remaining_other'));
   }
+}
+
+export function changePin() {
+  const oldInput = document.getElementById('pin-old');
+  const newInput = document.getElementById('pin-new');
+  const confirmInput = document.getElementById('pin-confirm');
+  if (!oldInput || !newInput || !confirmInput) return;
+
+  const oldVal = oldInput.value.trim();
+  const newVal = newInput.value.trim();
+  const confirmVal = confirmInput.value.trim();
+
+  if (oldVal !== getPin()) {
+    showToast(t('pin.wrongOld'), 'warn');
+    return;
+  }
+  if (newVal.length < 4 || newVal.length > 8) {
+    showToast(t('pin.invalidLength'), 'warn');
+    return;
+  }
+  if (newVal !== confirmVal) {
+    showToast(t('pin.noMatch'), 'warn');
+    return;
+  }
+
+  localStorage.setItem(PIN_KEY, newVal);
+  oldInput.value = '';
+  newInput.value = '';
+  confirmInput.value = '';
+  showToast(t('pin.changed'), 'check');
 }

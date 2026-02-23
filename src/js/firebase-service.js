@@ -84,6 +84,7 @@ export async function syncToCloud() {
         log: d.log,
         fatture: d.fatture || [],
         anticipi: d.anticipi || [],
+        customCats: d.customCats || [],
         lastUpdate: serverTimestamp(),
         updatedAt: new Date().toISOString()
       });
@@ -114,6 +115,7 @@ export async function loadFromCloud() {
         d.log = cloud.log || d.log;
         d.fatture = cloud.fatture || d.fatture;
         d.anticipi = cloud.anticipi || d.anticipi;
+        d.customCats = cloud.customCats || d.customCats;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
         callUi();
       } else if (localLogLen > cloudLogLen) {
@@ -142,6 +144,7 @@ export async function forceSyncFromCloud() {
       d.log = cloud.log || [];
       d.fatture = cloud.fatture || [];
       d.anticipi = cloud.anticipi || [];
+      d.customCats = cloud.customCats || [];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
       callUi();
       setSyncStatus('synced');

@@ -1,7 +1,7 @@
 // ─── Main Entry Point ───
 
 import './style.css';
-import { initPinLock } from './js/pin-lock.js';
+import { initPinLock, changePin } from './js/pin-lock.js';
 import { setLang, applyLanguage, getLang } from './js/i18n.js';
 
 import {
@@ -21,8 +21,10 @@ import {
   ui, tab, toggleSettings, manualSaldo, confirmReset,
   updateDateDisplay, updateHeaderDate,
   startEditDay, stopEditDay, deleteDayLog,
-  deleteLog, renderDaySummary, shareDay,
-  saveOcrKey, removeOcrKey
+  deleteLog, renderDaySummary, renderHistory, shareDay,
+  saveOcrKey, removeOcrKey,
+  renderCustomCatsSettings, addCustomCat, removeCustomCat,
+  toggleDashboard
 } from './js/ui-engine.js';
 
 import {
@@ -53,11 +55,18 @@ import {
   toggleAssegnoGroup
 } from './js/fatture.js';
 
+import { toggleStats } from './js/statistics.js';
+import { initOfflineMode } from './js/offline-mode.js';
+import { openSearch, closeSearch, onSearchInput, searchResultTap } from './js/search.js';
+import { openPdfReportSheet, closePdfReportSheet, closePdfReportOutside, printReport } from './js/pdf-report.js';
+
 import {
   downloadTemplate, importExcel,
   closeExcelImport, confirmFileImport,
   downloadBackup, importBackup,
-  downloadFattureTemplate, importFattureExcel
+  downloadFattureTemplate, importFattureExcel,
+  exportMovimenti,
+  checkAutoBackup, renderAutoBackupCard, triggerAutoBackupDownload, toggleAutoBackup
 } from './js/excel-utils.js';
 
 // Wire up callbacks: fullSave → syncToCloud + ui
@@ -80,6 +89,13 @@ document.body.addEventListener('click', (e) => {
     case 'manualSaldo': manualSaldo(); break;
     case 'confirmReset': confirmReset(); break;
     case 'setLang': setLang(btn.dataset.lang); updateHeaderDate(); updateDateDisplay(); renderCasse(); ui(); break;
+    case 'changePin': changePin(); break;
+    case 'toggleDashboard': toggleDashboard(); break;
+    case 'openSearch': openSearch(); break;
+    case 'closeSearch': closeSearch(); break;
+    case 'searchResultTap': searchResultTap(Number(btn.dataset.index)); break;
+    case 'addCustomCat': addCustomCat(); break;
+    case 'removeCustomCat': removeCustomCat(Number(btn.dataset.index)); break;
 
     // Date
     case 'shiftDate':
@@ -129,6 +145,7 @@ document.body.addEventListener('click', (e) => {
 
     // History
     case 'deleteLog': deleteLog(Number(btn.dataset.index), btn.dataset.name); break;
+    case 'toggleStats': toggleStats(); break;
 
     // Fatture
     case 'openFatturaSheet': openFatturaSheet(btn.dataset.id ? Number(btn.dataset.id) : undefined); break;
@@ -168,8 +185,14 @@ document.body.addEventListener('click', (e) => {
     case 'triggerExcelFile': document.getElementById('excel-file').click(); break;
     case 'downloadFattureTemplate': downloadFattureTemplate(); break;
     case 'triggerFattureFile': document.getElementById('fatture-excel-file').click(); break;
+    case 'exportMovimenti': exportMovimenti(); break;
+    case 'openPdfReport': openPdfReportSheet(); break;
+    case 'closePdfReport': closePdfReportSheet(); break;
+    case 'printReport': printReport(); break;
     case 'closeExcelImport': closeExcelImport(); break;
     case 'confirmFileImport': confirmFileImport(); break;
+    case 'toggleAutoBackup': toggleAutoBackup(); break;
+    case 'triggerManualBackup': triggerAutoBackupDownload(); break;
   }
 });
 
@@ -178,6 +201,7 @@ document.getElementById('expense-overlay').addEventListener('click', closeExpens
 document.getElementById('modal-overlay').addEventListener('click', closeModalOutside);
 document.getElementById('fattura-overlay').addEventListener('click', closeFatturaOutside);
 document.getElementById('fattura-detail-overlay').addEventListener('click', closeFatturaDetailOutside);
+document.getElementById('pdf-report-overlay').addEventListener('click', closePdfReportOutside);
 
 // Keyboard events
 document.getElementById('modal-input').addEventListener('keydown', function (e) {
@@ -216,6 +240,8 @@ document.getElementById('fatt-ciclo').addEventListener('change', function () {
 document.getElementById('import-file').addEventListener('change', importBackup);
 document.getElementById('excel-file').addEventListener('change', importExcel);
 document.getElementById('fatture-excel-file').addEventListener('change', importFattureExcel);
+document.getElementById('history-search').addEventListener('input', () => renderHistory());
+document.getElementById('search-input').addEventListener('input', onSearchInput);
 
 // ─── Init ───
 initPinLock();
@@ -224,4 +250,7 @@ updateHeaderDate();
 updateDateDisplay();
 renderCasse();
 initFirebase();
+initOfflineMode();
+renderAutoBackupCard();
+checkAutoBackup();
 ui();
