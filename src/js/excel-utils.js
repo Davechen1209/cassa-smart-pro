@@ -237,13 +237,13 @@ export function confirmFileImport() {
 
 export function downloadFattureTemplate() {
   const ws_data = [
-    ['Data Arrivo', 'Numero', 'Azienda/Fornitore', 'Importo', 'Tipo Pagamento', 'Scadenza', 'Note'],
-    ['2026-02-17', 'FT-001', 'Fornitore Rossi S.r.l.', 1500.00, 'bonifico', '2026-03-17', ''],
-    ['2026-02-18', 'FT-002', 'Azienda Bianchi', 800.50, 'contanti', '', 'Pagata in contanti'],
-    ['2026-02-19', 'FT-003', 'Trasporti Verdi', 2300.00, 'assegno', '2026-04-19', ''],
+    ['Data Arrivo', 'Numero', 'Azienda/Fornitore', 'Importo', 'Tipo Pagamento', 'Scadenza', 'Note', 'Pagata'],
+    ['2026-02-17', 'FT-001', 'Fornitore Rossi S.r.l.', 1500.00, 'bonifico', '2026-03-17', '', 'TRUE'],
+    ['2026-02-18', 'FT-002', 'Azienda Bianchi', 800.50, '', '', 'Da pagare', ''],
+    ['2026-02-19', 'FT-003', 'Trasporti Verdi', 2300.00, 'assegno', '2026-04-19', '', 'TRUE'],
   ];
   const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  ws['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 20 }];
+  ws['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 20 }, { wch: 10 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Fatture');
   XLSX.writeFile(wb, 'template-fatture.xlsx');
@@ -275,6 +275,7 @@ export function importFattureExcel(event) {
       const colTipo = findCol(headers, ['tipo pagamento', 'tipo', 'pagamento', 'payment']);
       const colScadenza = findCol(headers, ['scadenza', 'due date', 'deadline']);
       const colNote = findCol(headers, ['note', 'notes', 'descrizione', 'desc']);
+      const colPagata = findCol(headers, ['pagata', 'paid', 'pagato', 'saldato']);
 
       if (!colAzienda && !colImporto) {
         showToast(t('backup.noValidData'), 'warn');
@@ -314,6 +315,14 @@ export function importFattureExcel(event) {
           else if (tipoPagamento.includes('cont') || tipoPagamento.includes('cash')) tipoPagamento = 'contanti';
           else if (tipoPagamento.includes('asseg') || tipoPagamento.includes('check')) tipoPagamento = 'assegno';
           else tipoPagamento = '';
+        }
+
+        // Flag "Pagata": if TRUE and no tipoPagamento, default to contanti
+        if (!tipoPagamento && colPagata) {
+          const pagVal = String(row[colPagata] || '').trim().toLowerCase();
+          if (pagVal === 'true' || pagVal === 'si' || pagVal === 'sì' || pagVal === '1' || pagVal === 'x' || pagVal === 'yes') {
+            tipoPagamento = 'contanti';
+          }
         }
 
         let scadenza = '';
