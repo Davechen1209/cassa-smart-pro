@@ -6,6 +6,7 @@ export function escapeHtml(str) {
   return div.innerHTML;
 }
 
+let toastTimer = null;
 export function showToast(text, type) {
   const toast = document.getElementById('toast');
   const iconEl = document.getElementById('toast-icon');
@@ -13,8 +14,9 @@ export function showToast(text, type) {
   const icons = { check: '\u2705', trash: '\uD83D\uDDD1\uFE0F', warn: '\u26A0\uFE0F' };
   iconEl.textContent = icons[type] || '\u2705';
   textEl.textContent = text;
+  if (toastTimer) clearTimeout(toastTimer);
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
+  toastTimer = setTimeout(() => { toast.classList.remove('show'); toastTimer = null; }, 2500);
 }
 
 export function showConfirm(title, msg, callback) {

@@ -47,6 +47,7 @@ import {
 import {
   openFatturaSheet, closeFatturaSheet, closeFatturaOutside,
   saveFattura, deleteFattura, filterFatture,
+  markFatturaPaid, markFatturaUnpaid,
   openFatturaDetail, closeFatturaDetail, closeFatturaDetailOutside,
   triggerFatturaPhoto, handleFatturaPhoto, removeFatturaPhoto,
   toggleAssegnoGroup
@@ -134,6 +135,8 @@ document.body.addEventListener('click', (e) => {
     case 'closeFatturaSheet': closeFatturaSheet(); break;
     case 'saveFattura': saveFattura(); break;
     case 'deleteFattura': deleteFattura(Number(btn.dataset.id)); break;
+    case 'markFatturaPaid': markFatturaPaid(Number(btn.dataset.id)); break;
+    case 'markFatturaUnpaid': markFatturaUnpaid(Number(btn.dataset.id)); break;
     case 'filterFatture': filterFatture(btn.dataset.filter, btn); break;
     case 'openFatturaDetail': openFatturaDetail(Number(btn.dataset.id)); break;
     case 'closeFatturaDetail': closeFatturaDetail(); break;

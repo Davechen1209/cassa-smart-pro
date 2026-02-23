@@ -83,6 +83,7 @@ export async function syncToCloud() {
         abit: d.abit,
         log: d.log,
         fatture: d.fatture || [],
+        anticipi: d.anticipi || [],
         lastUpdate: serverTimestamp(),
         updatedAt: new Date().toISOString()
       });
@@ -112,6 +113,7 @@ export async function loadFromCloud() {
         d.abit = cloud.abit || d.abit;
         d.log = cloud.log || d.log;
         d.fatture = cloud.fatture || d.fatture;
+        d.anticipi = cloud.anticipi || d.anticipi;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
         callUi();
       } else if (localLogLen > cloudLogLen) {
@@ -139,6 +141,7 @@ export async function forceSyncFromCloud() {
       d.abit = cloud.abit || [];
       d.log = cloud.log || [];
       d.fatture = cloud.fatture || [];
+      d.anticipi = cloud.anticipi || [];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
       callUi();
       setSyncStatus('synced');

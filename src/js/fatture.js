@@ -234,6 +234,7 @@ export function autoCreateFatturaIfNeeded(fornitore, importo, data, fatturaNum) 
     importo: importo,
     tipoPagamento: 'contanti',
     numeroAssegno: '',
+    pagata: true,
     foto: null
   });
 }
@@ -245,8 +246,8 @@ export function updateFattureAziendaList() {
 }
 
 export function getFatturaStatus(f) {
-  // New schema: tipoPagamento present = already has payment type
-  if (f.tipoPagamento) return 'pagata';
+  // Explicit pagata flag (new schema)
+  if (f.pagata === true) return 'pagata';
   // Old schema retrocompat
   if ('nonPagato' in f && f.nonPagato <= 0) return 'pagata';
   if (f.scadenza) {
@@ -257,6 +258,26 @@ export function getFatturaStatus(f) {
     if (diff <= 7) return 'in_scadenza';
   }
   return 'aperta';
+}
+
+export function markFatturaPaid(id) {
+  const f = d.fatture.find(x => x.id === id);
+  if (!f) return;
+  f.pagata = true;
+  fullSave();
+  closeFatturaDetail();
+  renderFatture();
+  showToast(t('fatt.markedPaid'), 'check');
+}
+
+export function markFatturaUnpaid(id) {
+  const f = d.fatture.find(x => x.id === id);
+  if (!f) return;
+  f.pagata = false;
+  fullSave();
+  closeFatturaDetail();
+  renderFatture();
+  showToast(t('fatt.markedUnpaid'), 'check');
 }
 
 // ─── Sheet open/close ───
@@ -331,9 +352,10 @@ export function saveFattura() {
 
   if (!azienda) { showToast(t('fatt.enterFornitore'), 'warn'); return; }
   if (importo <= 0) { showToast(t('fatt.invalidAmount'), 'warn'); return; }
-  if (!tipoPagamento) { showToast(t('fatt.selectTipo'), 'warn'); return; }
   if (tipoPagamento === 'assegno' && !numeroAssegno) { showToast(t('fatt.enterAssegno'), 'warn'); return; }
 
+  // Preserve existing pagata flag when editing
+  const existing = editingFatturaId ? d.fatture.find(x => x.id === editingFatturaId) : null;
   const fattura = {
     id: editingFatturaId || Date.now(),
     dataArrivo: document.getElementById('fatt-data-arrivo').value,
@@ -345,7 +367,8 @@ export function saveFattura() {
     ciclo: document.getElementById('fatt-ciclo').value,
     scadenza: document.getElementById('fatt-scadenza').value,
     note: document.getElementById('fatt-note').value.trim(),
-    foto: pendingPhoto || null
+    foto: pendingPhoto || null,
+    pagata: existing ? existing.pagata : false
   };
 
   if (editingFatturaId) {
@@ -407,8 +430,12 @@ export function renderFatture() {
   else if (fattureFilter === 'pagate') filtered = sorted.filter(f => getFatturaStatus(f) === 'pagata');
   else if (fattureFilter === 'scadute') filtered = sorted.filter(f => getFatturaStatus(f) === 'scaduta');
 
-  // Stats: for old fatture use nonPagato, for new ones count all as paid
-  const totalUnpaid = d.fatture.reduce((s, f) => s + (f.nonPagato || 0), 0);
+  // Stats: count unpaid amounts
+  const totalUnpaid = d.fatture.reduce((s, f) => {
+    if (f.nonPagato > 0) return s + f.nonPagato; // old schema
+    if (getFatturaStatus(f) !== 'pagata') return s + (f.importo || 0); // new schema
+    return s;
+  }, 0);
   const expiringCount = d.fatture.filter(f => {
     const st = getFatturaStatus(f);
     return st === 'scaduta' || st === 'in_scadenza';
@@ -431,10 +458,14 @@ export function renderFatture() {
     if (arrivoStr) metaParts.push(arrivoStr);
     if (f.tipoPagamento) metaParts.push(tipoPagamentoLabel(f.tipoPagamento));
 
-    // For old fatture show "da pagare" info
-    const rightText = f.tipoPagamento
-      ? tipoPagamentoLabel(f.tipoPagamento)
-      : (f.nonPagato > 0 ? t('fatt.unpaid') + '\u20AC ' + (f.nonPagato || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : t('fatt.paid'));
+    // Status text
+    let rightText;
+    if ('nonPagato' in f) {
+      // Old schema
+      rightText = f.nonPagato > 0 ? t('fatt.unpaid') + '\u20AC ' + f.nonPagato.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : t('fatt.paid');
+    } else {
+      rightText = status === 'pagata' ? t('fatt.paid') : t('fatt.unpaidLabel');
+    }
 
     return `<div class="fattura-item" data-action="openFatturaDetail" data-id="${f.id}">
       <div class="fattura-status-dot ${dotClass}"></div>
@@ -492,6 +523,13 @@ export function openFatturaDetail(id) {
       <span class="fattura-detail-label">${t('fatt.fotoLabel')}</span>
       <img src="${f.foto}" alt="Foto fattura" class="fattura-detail-photo" onclick="window.open(this.src)">
     </div>`;
+  }
+
+  // Mark as paid/unpaid button
+  if (status === 'pagata') {
+    rows += `<div style="margin-top:12px;"><button class="btn-sm gray" data-action="markFatturaUnpaid" data-id="${f.id}" style="width:100%;">${t('fatt.markUnpaid')}</button></div>`;
+  } else {
+    rows += `<div style="margin-top:12px;"><button class="btn-sm green" data-action="markFatturaPaid" data-id="${f.id}" style="width:100%; background:var(--green); color:#fff;">${t('fatt.markPaid')}</button></div>`;
   }
 
   rows += `<div class="fattura-actions-row">

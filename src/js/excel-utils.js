@@ -214,6 +214,7 @@ export function confirmFileImport() {
         ciclo: '',
         scadenza: r.scadenza || '',
         note: r.note || '',
+        pagata: !!r.tipoPagamento,
         foto: null
       });
     });

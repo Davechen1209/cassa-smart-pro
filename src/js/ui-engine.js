@@ -326,7 +326,7 @@ export function manualSaldo() {
     fullSave();
     ui();
     document.getElementById('set-saldo').value = '';
-    document.getElementById('settings-panel').classList.remove('open');
+    document.getElementById('settings-page').classList.remove('open');
     showToast(t('saldo.updated'), 'check');
   }
 }
