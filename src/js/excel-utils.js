@@ -2,8 +2,8 @@
 
 import * as XLSX from 'xlsx';
 import {
-  d, fullSave, pendingExpenses, parsedImportData,
-  setParsedImportData
+  d, fullSave, pendingExpenses, parsedImportData, importMode,
+  setParsedImportData, setImportMode
 } from './state.js';
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { parseFlexDate } from './date-utils.js';
@@ -134,6 +134,7 @@ export function importExcel(event) {
         }
       });
 
+      setImportMode('movimenti');
       setParsedImportData(newData);
 
       if (newData.length === 0) {
@@ -200,15 +201,201 @@ export function closeExcelImport() {
 export function confirmFileImport() {
   if (parsedImportData.length === 0) return;
 
-  parsedImportData.forEach(r => {
-    d.saldo += r.amount;
-    d.log.push({ d: r.date, v: r.desc, a: r.amount });
-  });
+  if (importMode === 'fatture') {
+    parsedImportData.forEach(r => {
+      d.fatture.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        dataArrivo: r.dataArrivo || '',
+        azienda: r.azienda || '',
+        numero: r.numero || '',
+        importo: r.importo || 0,
+        tipoPagamento: r.tipoPagamento || '',
+        numeroAssegno: '',
+        ciclo: '',
+        scadenza: r.scadenza || '',
+        note: r.note || '',
+        foto: null
+      });
+    });
+    const count = parsedImportData.length;
+    fullSave();
+    closeExcelImport();
+    showToast(t('backup.importedFatture', { n: count }), 'check');
+  } else {
+    parsedImportData.forEach(r => {
+      d.saldo += r.amount;
+      d.log.push({ d: r.date, v: r.desc, a: r.amount });
+    });
+    const count = parsedImportData.length;
+    fullSave();
+    closeExcelImport();
+    showToast(t('backup.imported', { n: count }), 'check');
+  }
+}
 
-  const count = parsedImportData.length;
-  fullSave();
-  closeExcelImport();
-  showToast(t('backup.imported', { n: count }), 'check');
+// ─── Fatture Excel Import ───
+
+export function downloadFattureTemplate() {
+  const ws_data = [
+    ['Data Arrivo', 'Numero', 'Azienda/Fornitore', 'Importo', 'Tipo Pagamento', 'Scadenza', 'Note'],
+    ['2026-02-17', 'FT-001', 'Fornitore Rossi S.r.l.', 1500.00, 'bonifico', '2026-03-17', ''],
+    ['2026-02-18', 'FT-002', 'Azienda Bianchi', 800.50, 'contanti', '', 'Pagata in contanti'],
+    ['2026-02-19', 'FT-003', 'Trasporti Verdi', 2300.00, 'assegno', '2026-04-19', ''],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 20 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Fatture');
+  XLSX.writeFile(wb, 'template-fatture.xlsx');
+  showToast(t('backup.templateDone'), 'check');
+}
+
+export function importFattureExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      if (rows.length === 0) { showToast(t('backup.fileEmpty'), 'warn'); return; }
+
+      const headers = Object.keys(rows[0]);
+      const newData = [];
+
+      const colData = findCol(headers, ['data arrivo', 'data', 'date', 'giorno', '\u65E5\u671F']);
+      const colNumero = findCol(headers, ['numero', 'num', 'n.', 'fattura']);
+      const colAzienda = findCol(headers, ['azienda', 'fornitore', 'ragione sociale', 'nome', 'supplier']);
+      const colImporto = findCol(headers, ['importo', 'amount', 'totale', 'valore']);
+      const colTipo = findCol(headers, ['tipo pagamento', 'tipo', 'pagamento', 'payment']);
+      const colScadenza = findCol(headers, ['scadenza', 'due date', 'deadline']);
+      const colNote = findCol(headers, ['note', 'notes', 'descrizione', 'desc']);
+
+      if (!colAzienda && !colImporto) {
+        showToast(t('backup.noValidData'), 'warn');
+        return;
+      }
+
+      rows.forEach(row => {
+        const azienda = colAzienda ? String(row[colAzienda] || '').trim() : '';
+        const importo = parseNumber(colImporto ? row[colImporto] : 0);
+        if (!azienda && importo === 0) return;
+
+        const rawDate = colData ? row[colData] : null;
+        let dataArrivo = '';
+        if (rawDate) {
+          if (rawDate instanceof Date) {
+            dataArrivo = rawDate.toISOString().slice(0, 10);
+          } else if (typeof rawDate === 'number') {
+            const dt = new Date((rawDate - 25569) * 86400 * 1000);
+            dataArrivo = dt.toISOString().slice(0, 10);
+          } else {
+            const s = String(rawDate).trim();
+            if (s.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              dataArrivo = s;
+            } else {
+              const parsed = parseFlexDate(s);
+              if (parsed) {
+                const parts = parsed.split('/');
+                dataArrivo = parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
+              }
+            }
+          }
+        }
+
+        let tipoPagamento = colTipo ? String(row[colTipo] || '').trim().toLowerCase() : '';
+        if (tipoPagamento && !['contanti', 'bonifico', 'assegno'].includes(tipoPagamento)) {
+          if (tipoPagamento.includes('bonif') || tipoPagamento.includes('bank')) tipoPagamento = 'bonifico';
+          else if (tipoPagamento.includes('cont') || tipoPagamento.includes('cash')) tipoPagamento = 'contanti';
+          else if (tipoPagamento.includes('asseg') || tipoPagamento.includes('check')) tipoPagamento = 'assegno';
+          else tipoPagamento = '';
+        }
+
+        let scadenza = '';
+        if (colScadenza && row[colScadenza]) {
+          const rawScad = row[colScadenza];
+          if (rawScad instanceof Date) {
+            scadenza = rawScad.toISOString().slice(0, 10);
+          } else if (typeof rawScad === 'number') {
+            const dt = new Date((rawScad - 25569) * 86400 * 1000);
+            scadenza = dt.toISOString().slice(0, 10);
+          } else {
+            const s = String(rawScad).trim();
+            if (s.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              scadenza = s;
+            } else {
+              const parsed = parseFlexDate(s);
+              if (parsed) {
+                const parts = parsed.split('/');
+                scadenza = parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
+              }
+            }
+          }
+        }
+
+        newData.push({
+          dataArrivo,
+          numero: colNumero ? String(row[colNumero] || '').trim() : '',
+          azienda,
+          importo: Math.abs(importo),
+          tipoPagamento,
+          scadenza,
+          note: colNote ? String(row[colNote] || '').trim() : ''
+        });
+      });
+
+      setImportMode('fatture');
+      setParsedImportData(newData);
+
+      if (newData.length === 0) {
+        showToast(t('backup.noValidData'), 'warn');
+        return;
+      }
+
+      showFattureImportPreview();
+    } catch (err) {
+      showToast(t('backup.fileError') + err.message, 'warn');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showFattureImportPreview() {
+  const preview = document.getElementById('import-preview');
+  const summary = document.getElementById('import-summary');
+  const total = parsedImportData.reduce((s, r) => s + r.importo, 0);
+
+  let html = '<div style="overflow-x:auto;"><table class="edit-table" style="margin-bottom:8px;"><thead><tr>';
+  html += '<th>' + t('excel.colDate') + '</th><th>' + t('fatt.fornitore') + '</th><th>' + t('fatt.numero') + '</th><th style="text-align:right;">' + t('excel.colAmount') + '</th></tr></thead><tbody>';
+
+  const showRows = parsedImportData.slice(0, 8);
+  showRows.forEach(r => {
+    html += '<tr>';
+    html += '<td style="padding:8px; font-size:13px;">' + escapeHtml(r.dataArrivo) + '</td>';
+    html += '<td style="padding:8px; font-size:13px;">' + escapeHtml(r.azienda) + '</td>';
+    html += '<td style="padding:8px; font-size:13px;">' + escapeHtml(r.numero) + '</td>';
+    html += '<td style="padding:8px; font-size:13px; text-align:right; font-weight:600;">' + r.importo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  if (parsedImportData.length > 8) {
+    html += '<div style="text-align:center; font-size:12px; color:var(--gray); margin-bottom:8px;">' + t('backup.moreItems', { n: parsedImportData.length - 8 }) + '</div>';
+  }
+
+  preview.innerHTML = html;
+
+  summary.style.display = 'block';
+  summary.innerHTML = '<div>' + t('backup.totalFatture', { n: parsedImportData.length }) + '</div>' +
+    '<div style="font-size:13px; margin-top:4px; color:var(--text3);">' +
+    t('excel.colAmount') + ': <span style="font-weight:600;">' + total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC</span></div>';
+
+  document.getElementById('excel-overlay').classList.add('show');
 }
 
 export function downloadBackup() {

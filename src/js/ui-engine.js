@@ -127,175 +127,59 @@ function fmtEur(n) {
   return n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function generateDayImage(dateStr, dayLogs) {
-  const DPR = 2;
-  const W = 420;
-  const PAD = 24;
-  const INNER = W - PAD * 2;
-
+function generateDayText(dateStr, dayLogs) {
   const saldoCum = calcSaldoAtDate(selectedDate);
-  let total = 0;
-  dayLogs.forEach(l => { total += l.a; });
-  total = Math.round(total * 100) / 100;
+  const incassi = dayLogs.filter(l => l.a >= 0);
+  const uscite = dayLogs.filter(l => l.a < 0);
 
-  // Colors
-  const BG = '#F2F2F7';
-  const CARD = '#FFFFFF';
-  const TEXT = '#1C1C1E';
-  const TEXT2 = '#3A3A3C';
-  const TEXT3 = '#636366';
-  const GRAY = '#8E8E93';
-  const GREEN = '#34C759';
-  const RED = '#FF3B30';
-  const BLUE = '#007AFF';
-  const SEP = 'rgba(60,60,67,0.12)';
-  const FONT = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif';
+  let totalIncassi = 0;
+  let totalUscite = 0;
+  incassi.forEach(l => { totalIncassi += l.a; });
+  uscite.forEach(l => { totalUscite += l.a; });
+  totalIncassi = Math.round(totalIncassi * 100) / 100;
+  totalUscite = Math.round(totalUscite * 100) / 100;
 
-  // Pre-calculate height
-  const HEADER_H = 70;
-  const ROW_H = 42;
-  const SUMMARY_H = 130; // totale + saldo + totale cassa
-  const FOOTER_H = 40;
-  const H = PAD + HEADER_H + dayLogs.length * ROW_H + SUMMARY_H + FOOTER_H + PAD;
+  const lines = [];
+  lines.push(t('day.shareTitle') + dateStr);
+  lines.push('');
 
-  const canvas = document.createElement('canvas');
-  canvas.width = W * DPR;
-  canvas.height = H * DPR;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(DPR, DPR);
+  // ━━ Incassi ━━
+  if (incassi.length > 0) {
+    lines.push('\u2501\u2501 ' + t('day.shareIncassi') + ' \u2501\u2501');
+    incassi.forEach(l => {
+      // Parse Z and POS from description like "Incasso Cash (Z:1500 POS:300)"
+      const zMatch = l.v.match(/Z:([\d.,]+)/);
+      const posMatch = l.v.match(/POS:([\d.,]+)/);
+      if (zMatch && posMatch) {
+        const z = parseFloat(zMatch[1].replace(',', '.'));
+        const pos = parseFloat(posMatch[1].replace(',', '.'));
+        const name = l.v.replace(/\s*\(Z:.*\)/, '').trim();
+        lines.push(name);
+        lines.push('  Z: ' + fmtEur(z) + '\u20AC - POS: ' + fmtEur(pos) + '\u20AC = ' + fmtEur(l.a) + '\u20AC');
+      } else {
+        lines.push('+ ' + fmtEur(l.a) + '\u20AC  ' + l.v);
+      }
+    });
+    lines.push('');
+  }
 
-  // Background
-  ctx.fillStyle = BG;
-  ctx.fillRect(0, 0, W, H);
+  // ━━ Uscite ━━
+  if (uscite.length > 0) {
+    lines.push('\u2501\u2501 ' + t('day.shareUscite') + ' \u2501\u2501');
+    uscite.forEach(l => {
+      lines.push('- ' + fmtEur(Math.abs(l.a)) + '\u20AC  ' + l.v);
+    });
+    lines.push('');
+  }
 
-  // Card with rounded corners
-  const cardX = 12, cardY = 12, cardW = W - 24, cardH = H - 24, cardR = 20;
-  ctx.beginPath();
-  ctx.moveTo(cardX + cardR, cardY);
-  ctx.lineTo(cardX + cardW - cardR, cardY);
-  ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cardR);
-  ctx.lineTo(cardX + cardW, cardY + cardH - cardR);
-  ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - cardR, cardY + cardH);
-  ctx.lineTo(cardX + cardR, cardY + cardH);
-  ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - cardR);
-  ctx.lineTo(cardX, cardY + cardR);
-  ctx.quadraticCurveTo(cardX, cardY, cardX + cardR, cardY);
-  ctx.closePath();
-  ctx.fillStyle = CARD;
-  ctx.fill();
-  // Card shadow
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.08)';
-  ctx.shadowBlur = 16;
-  ctx.shadowOffsetY = 4;
-  ctx.fill();
-  ctx.restore();
+  // ━━━━━━━━━━━━━
+  lines.push('\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501');
+  const rimasto = Math.round((totalIncassi + totalUscite) * 100) / 100;
+  lines.push(t('day.shareRemaining') + ': ' + (rimasto >= 0 ? '+' : '') + fmtEur(rimasto) + '\u20AC');
+  lines.push(t('day.endBalance') + ': \u20AC' + fmtEur(saldoCum));
+  lines.push(t('day.totalCash') + ': \u20AC' + fmtEur(d.saldo));
 
-  let y = PAD + 8;
-
-  // Header: "Latina Shopping"
-  ctx.fillStyle = TEXT;
-  ctx.font = `bold 18px ${FONT}`;
-  ctx.fillText('Latina Shopping', PAD, y + 18);
-
-  // Date
-  ctx.fillStyle = GRAY;
-  ctx.font = `500 13px ${FONT}`;
-  ctx.fillText(dateStr, PAD, y + 38);
-
-  y += HEADER_H;
-
-  // Separator
-  ctx.fillStyle = SEP;
-  ctx.fillRect(PAD, y - 10, INNER, 1);
-
-  // Transaction rows
-  dayLogs.forEach(l => {
-    const isIncome = l.a >= 0;
-    const dotColor = isIncome ? GREEN : RED;
-    const amtColor = isIncome ? GREEN : RED;
-    const sign = isIncome ? '+' : '';
-    const amtStr = sign + fmtEur(l.a) + '\u20AC';
-
-    // Dot
-    ctx.beginPath();
-    ctx.arc(PAD + 5, y + 6, 5, 0, Math.PI * 2);
-    ctx.fillStyle = dotColor;
-    ctx.fill();
-
-    // Amount (right-aligned, draw first to know width)
-    ctx.font = `bold 14px ${FONT}`;
-    ctx.fillStyle = amtColor;
-    const amtW = ctx.measureText(amtStr).width;
-    ctx.fillText(amtStr, PAD + INNER - amtW, y + 10);
-
-    // Name (truncate if too long)
-    ctx.font = `500 13px ${FONT}`;
-    ctx.fillStyle = TEXT2;
-    const maxNameW = INNER - amtW - 30;
-    let name = l.v;
-    while (ctx.measureText(name).width > maxNameW && name.length > 3) {
-      name = name.slice(0, -4) + '...';
-    }
-    ctx.fillText(name, PAD + 18, y + 10);
-
-    y += ROW_H;
-  });
-
-  // Separator before totals
-  y += 4;
-  ctx.fillStyle = SEP;
-  ctx.fillRect(PAD, y, INNER, 1.5);
-  y += 16;
-
-  // Totale giorno
-  ctx.font = `bold 15px ${FONT}`;
-  ctx.fillStyle = TEXT;
-  ctx.fillText(t('day.total'), PAD, y + 2);
-  const totalStr = (total >= 0 ? '+' : '') + fmtEur(total) + '\u20AC';
-  ctx.fillStyle = total >= 0 ? GREEN : RED;
-  const totalW = ctx.measureText(totalStr).width;
-  ctx.fillText(totalStr, PAD + INNER - totalW, y + 2);
-
-  y += 30;
-
-  // Saldo fine giornata
-  ctx.font = `600 14px ${FONT}`;
-  ctx.fillStyle = TEXT3;
-  ctx.fillText(t('day.endBalance'), PAD, y + 2);
-  const saldoStr = '\u20AC ' + fmtEur(saldoCum);
-  ctx.font = `800 17px ${FONT}`;
-  ctx.fillStyle = saldoCum >= 0 ? BLUE : RED;
-  const saldoW = ctx.measureText(saldoStr).width;
-  ctx.fillText(saldoStr, PAD + INNER - saldoW, y + 2);
-
-  y += 30;
-
-  // Totale cassa
-  ctx.font = `600 14px ${FONT}`;
-  ctx.fillStyle = TEXT3;
-  ctx.fillText(t('day.totalCash'), PAD, y + 2);
-  const cassaStr = '\u20AC ' + fmtEur(d.saldo);
-  ctx.font = `800 17px ${FONT}`;
-  ctx.fillStyle = d.saldo >= 0 ? BLUE : RED;
-  const cassaW = ctx.measureText(cassaStr).width;
-  ctx.fillText(cassaStr, PAD + INNER - cassaW, y + 2);
-
-  y += 34;
-
-  // Footer separator
-  ctx.fillStyle = SEP;
-  ctx.fillRect(PAD, y, INNER, 1);
-  y += 16;
-
-  // Footer branding
-  ctx.font = `600 11px ${FONT}`;
-  ctx.fillStyle = GRAY;
-  ctx.fillText('Cassa Smart Pro', PAD, y + 2);
-
-  return new Promise(resolve => {
-    canvas.toBlob(resolve, 'image/png');
-  });
+  return lines.join('\n');
 }
 
 export async function shareDay() {
@@ -303,19 +187,17 @@ export async function shareDay() {
   const dayLogs = d.log.filter(l => l.d === dateStr);
   if (dayLogs.length === 0) return;
 
-  const blob = await generateDayImage(dateStr, dayLogs);
-  const file = new File([blob], 'cassa-' + dateStr.replace(/\//g, '-') + '.png', { type: 'image/png' });
+  const text = generateDayText(dateStr, dayLogs);
 
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    navigator.share({ files: [file], title: t('day.shareTitle') + dateStr }).catch(() => {});
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => {});
   } else {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast(t('day.downloaded'), 'check');
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(t('day.copied'), 'check');
+    } catch {
+      showToast(t('day.copied'), 'check');
+    }
   }
 }
 

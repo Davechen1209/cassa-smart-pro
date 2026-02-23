@@ -24,6 +24,7 @@ let editingFatturaId = null;
 let anticipiFilter = 'aperti';
 let anticipiNextId = d.anticipi.length > 0 ? Math.max(...d.anticipi.map(a => a.id)) + 1 : 1;
 let parsedImportData = [];
+let importMode = 'movimenti'; // 'movimenti' or 'fatture'
 
 // Firebase state
 let firebaseDb = null;
@@ -66,7 +67,7 @@ export {
   selectedDate, editingDay,
   fattureFilter, editingFatturaId,
   anticipiFilter, anticipiNextId,
-  parsedImportData,
+  parsedImportData, importMode,
   firebaseDb, firebaseUser, cloudSyncEnabled, syncDebounceTimer
 };
 
@@ -86,6 +87,7 @@ export function setEditingFatturaId(val) { editingFatturaId = val; }
 export function setAnticipiFilter(val) { anticipiFilter = val; }
 export function setAnticipiNextId(val) { anticipiNextId = val; }
 export function setParsedImportData(val) { parsedImportData = val; }
+export function setImportMode(val) { importMode = val; }
 export function setFirebaseDb(val) { firebaseDb = val; }
 export function setFirebaseUser(val) { firebaseUser = val; }
 export function setCloudSyncEnabled(val) { cloudSyncEnabled = val; }

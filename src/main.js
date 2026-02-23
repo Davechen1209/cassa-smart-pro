@@ -55,7 +55,8 @@ import {
 import {
   downloadTemplate, importExcel,
   closeExcelImport, confirmFileImport,
-  downloadBackup, importBackup
+  downloadBackup, importBackup,
+  downloadFattureTemplate, importFattureExcel
 } from './js/excel-utils.js';
 
 // Wire up callbacks: fullSave → syncToCloud + ui
@@ -162,6 +163,8 @@ document.body.addEventListener('click', (e) => {
     case 'triggerImportFile': document.getElementById('import-file').click(); break;
     case 'downloadTemplate': downloadTemplate(); break;
     case 'triggerExcelFile': document.getElementById('excel-file').click(); break;
+    case 'downloadFattureTemplate': downloadFattureTemplate(); break;
+    case 'triggerFattureFile': document.getElementById('fatture-excel-file').click(); break;
     case 'closeExcelImport': closeExcelImport(); break;
     case 'confirmFileImport': confirmFileImport(); break;
   }
@@ -209,6 +212,7 @@ document.getElementById('fatt-ciclo').addEventListener('change', function () {
 // File inputs
 document.getElementById('import-file').addEventListener('change', importBackup);
 document.getElementById('excel-file').addEventListener('change', importExcel);
+document.getElementById('fatture-excel-file').addEventListener('change', importFattureExcel);
 
 // ─── Init ───
 initPinLock();
