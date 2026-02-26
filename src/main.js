@@ -22,9 +22,9 @@ import {
   updateDateDisplay, updateHeaderDate,
   startEditDay, stopEditDay, deleteDayLog,
   deleteLog, renderDaySummary, renderHistory, shareDay,
-  saveOcrKey, removeOcrKey,
   renderCustomCatsSettings, addCustomCat, removeCustomCat,
-  toggleDashboard
+  toggleDashboard,
+  saveAziendaData, saveOcrKey, removeOcrKey
 } from './js/ui-engine.js';
 
 import {
@@ -52,7 +52,7 @@ import {
   markFatturaPaid, markFatturaUnpaid,
   openFatturaDetail, closeFatturaDetail, closeFatturaDetailOutside,
   triggerFatturaPhoto, handleFatturaPhoto, removeFatturaPhoto,
-  toggleAssegnoGroup
+  toggleAssegnoGroup, downloadFatturaPdf
 } from './js/fatture.js';
 
 import { toggleStats } from './js/statistics.js';
@@ -168,7 +168,9 @@ document.body.addEventListener('click', (e) => {
     case 'repayAnticipo': repayAnticipo(Number(btn.dataset.id)); break;
     case 'filterAnticipi': filterAnticipi(btn.dataset.filter, btn); break;
 
-    // OCR
+    // PDF / AI
+    case 'downloadFatturaPdf': downloadFatturaPdf(Number(btn.dataset.id)); break;
+    case 'saveAziendaData': saveAziendaData(); break;
     case 'saveOcrKey': saveOcrKey(); break;
     case 'removeOcrKey': removeOcrKey(); break;
 

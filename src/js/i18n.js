@@ -140,7 +140,7 @@ const translations = {
     'excel.colDate': 'Data',
     'excel.colDesc': 'Descrizione',
     'excel.colAmount': 'Importo',
-    'excel.colTotal': 'Totale Z',
+    'excel.colTotal': 'TOTALE',
     'excel.colPos': 'POS',
     'excel.colCash': 'Contanti',
     'excel.colCashOut': 'Uscita Cash',
@@ -155,7 +155,8 @@ const translations = {
     'incassi.title': 'Incassi',
     'incassi.add': 'Aggiungi Cassa',
     'incassi.cassa': 'Cassa',
-    'incassi.totaleZ': 'Totale Z',
+    'incassi.totaleZ': 'TOTALE',
+    'incassi.totaleLabel': 'TOTALE',
     'incassi.pos': 'POS',
 
     // Uscite
@@ -327,7 +328,7 @@ const translations = {
     'fatt.legacyAuto': '(auto)',
     'fatt.legacyBonifico': 'Bonifico/Assegno',
     'fatt.legacyUnpaid': 'Non pagato',
-    'fatt.incassoCash': 'Incasso Cash',
+    'fatt.incassoCash': 'Incasso Contanti',
 
     // Anticipi
     'tab.anticipi': 'Anticipi',
@@ -360,20 +361,35 @@ const translations = {
     // Rubriche page
     'rub.pageTitle': 'Rubriche',
 
-    // OCR
-    'ocr.title': 'OCR Fatture',
+    // Scanner PDF
+    'fatt.scanning': 'Scansione in corso...',
+    'fatt.scanDone': 'PDF creato',
+    'fatt.downloadPdf': 'Scarica PDF',
+    'fatt.pdfAttached': 'PDF allegato',
+    'fatt.pdfLabel': 'Documento',
+    'fatt.noPdf': 'Nessun PDF allegato',
+
+    // Dati Azienda
+    'azienda.title': 'Dati Azienda',
+    'azienda.info': 'I tuoi dati aziendali. Servono per distinguere i tuoi dati da quelli del fornitore durante la scansione automatica.',
+    'azienda.nome': 'Nome azienda',
+    'azienda.nomePlaceholder': 'Es. Ristorante Da Mario...',
+    'azienda.piva': 'P.IVA / Codice Fiscale',
+    'azienda.pivaPlaceholder': 'Es. IT01234567890...',
+    'azienda.saved': 'Dati azienda salvati',
+    'azienda.save': 'Salva',
+
+    // AI Invoice Recognition
+    'ocr.title': 'Riconoscimento Fatture (AI)',
     'ocr.info': 'Inserisci la tua API key OpenAI per compilare automaticamente i campi delle fatture dalla foto.',
     'ocr.keyPlaceholder': 'sk-...',
     'ocr.save': 'Salva',
     'ocr.configured': 'Configurato',
     'ocr.notConfigured': 'Non configurato',
     'ocr.remove': 'Rimuovi',
-    'ocr.scanning': 'Analisi fattura in corso...',
-    'ocr.success': 'Campi compilati automaticamente',
-    'ocr.error': 'Errore OCR: impossibile analizzare la foto',
-    'ocr.networkError': 'OCR non disponibile (controlla la connessione)',
-    'ocr.invalidKey': 'API key OpenAI non valida',
-    'ocr.prompt': 'Estrai i dati da questa fattura. Rispondi SOLO con un oggetto JSON valido, senza markdown o altro testo. Campi: {"numero":"","azienda":"","importo":0,"data":"YYYY-MM-DD","tipoPagamento":"contanti|bonifico|assegno","note":""}. Se un campo non è leggibile lascialo vuoto o 0.',
+    'ocr.extracting': 'Analisi fattura...',
+    'ocr.extracted': 'Campi compilati automaticamente',
+    'ocr.extractError': 'Impossibile analizzare la fattura',
 
     // Offline
     'offline.banner': 'Modalità offline — i dati verranno sincronizzati al ritorno online',
@@ -571,7 +587,7 @@ const translations = {
     'excel.colDate': '日期',
     'excel.colDesc': '说明',
     'excel.colAmount': '金额',
-    'excel.colTotal': 'Z总计',
+    'excel.colTotal': '总计',
     'excel.colPos': 'POS',
     'excel.colCash': '现金',
     'excel.colCashOut': '现金支出',
@@ -586,7 +602,8 @@ const translations = {
     'incassi.title': '收入',
     'incassi.add': '添加收银台',
     'incassi.cassa': '收银台',
-    'incassi.totaleZ': 'Z总计',
+    'incassi.totaleZ': '总计',
+    'incassi.totaleLabel': '总计',
     'incassi.pos': 'POS',
 
     // Uscite
@@ -791,20 +808,35 @@ const translations = {
     // Rubriche page
     'rub.pageTitle': '名册',
 
-    // OCR
-    'ocr.title': '账单识别(OCR)',
+    // Scanner PDF
+    'fatt.scanning': '正在扫描...',
+    'fatt.scanDone': 'PDF已创建',
+    'fatt.downloadPdf': '下载PDF',
+    'fatt.pdfAttached': '已附PDF',
+    'fatt.pdfLabel': '文件',
+    'fatt.noPdf': '无附件PDF',
+
+    // Dati Azienda
+    'azienda.title': '企业信息',
+    'azienda.info': '你的企业信息，用于在自动扫描时区分你的数据和供应商的数据。',
+    'azienda.nome': '企业名称',
+    'azienda.nomePlaceholder': '例如：马里奥餐厅...',
+    'azienda.piva': '税号',
+    'azienda.pivaPlaceholder': '例如：IT01234567890...',
+    'azienda.saved': '企业信息已保存',
+    'azienda.save': '保存',
+
+    // AI Invoice Recognition
+    'ocr.title': '账单识别 (AI)',
     'ocr.info': '输入OpenAI API密钥，拍照后可自动识别并填写账单信息。',
     'ocr.keyPlaceholder': 'sk-...',
     'ocr.save': '保存',
     'ocr.configured': '已配置',
     'ocr.notConfigured': '未配置',
     'ocr.remove': '删除',
-    'ocr.scanning': '正在识别账单...',
-    'ocr.success': '已自动填写',
-    'ocr.error': '识别失败，无法分析照片',
-    'ocr.networkError': '无法识别（请检查网络）',
-    'ocr.invalidKey': 'API密钥无效',
-    'ocr.prompt': '提取此发票中的数据。仅返回有效JSON对象，不要返回markdown或其他文本。字段：{"numero":"","azienda":"","importo":0,"data":"YYYY-MM-DD","tipoPagamento":"contanti|bonifico|assegno","note":""}。如果某个字段无法识别，留空或填0。',
+    'ocr.extracting': '正在分析账单...',
+    'ocr.extracted': '已自动填写',
+    'ocr.extractError': '无法分析账单',
 
     // Offline
     'offline.banner': '离线模式 — 恢复联网后将自动同步数据',

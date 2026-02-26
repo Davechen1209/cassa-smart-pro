@@ -45,7 +45,7 @@
 <!-- Header -->
 <div class="header">
     <div>
-        <div class="header-title"><span data-i18n="app.title">Cassa Smart Pro</span> <span class="sync-dot" id="sync-dot" data-i18n-title="app.cloudDisconnected" title="Cloud non connesso"></span><span class="offline-dot" id="offline-dot" style="display:none;"></span></div>
+        <div class="header-title"><span data-i18n="app.title">Cassa Smart Pro</span> <span class="sync-dot" id="sync-dot" style="display:none;" data-i18n-title="app.cloudDisconnected" title="Cloud non connesso"></span><span class="offline-dot" id="offline-dot" style="display:none;"></span></div>
         <div class="header-date" id="header-date"></div>
     </div>
     <div style="display:flex; gap:4px;">
@@ -146,6 +146,46 @@
             </div>
         </div>
 
+        <!-- Dati Azienda -->
+        <div class="settings-card">
+            <div class="settings-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span data-i18n="azienda.title">Dati Azienda</span>
+            </div>
+            <div class="cloud-info" data-i18n="azienda.info">I tuoi dati aziendali. Servono per distinguere i tuoi dati da quelli del fornitore durante la scansione automatica.</div>
+            <div class="input-group" style="margin-top:10px;">
+                <label data-i18n="azienda.nome">Nome azienda</label>
+                <input type="text" class="input-field" id="azienda-nome" data-i18n-placeholder="azienda.nomePlaceholder" placeholder="Es. Ristorante Da Mario...">
+            </div>
+            <div class="input-group">
+                <label data-i18n="azienda.piva">P.IVA / Codice Fiscale</label>
+                <input type="text" class="input-field" id="azienda-piva" data-i18n-placeholder="azienda.pivaPlaceholder" placeholder="Es. IT01234567890...">
+            </div>
+            <button class="btn-sm blue" data-action="saveAziendaData" style="margin-top:10px; width:100%;" data-i18n="azienda.save">Salva</button>
+        </div>
+
+        <!-- AI Invoice Recognition -->
+        <div class="settings-card">
+            <div class="settings-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <span data-i18n="ocr.title">Riconoscimento Fatture (AI)</span>
+            </div>
+            <div class="cloud-info" data-i18n="ocr.info">Inserisci la tua API key OpenAI per compilare automaticamente i campi delle fatture dalla foto.</div>
+            <div id="ocr-setup">
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <input type="text" class="input-field" id="ocr-api-key" data-i18n-placeholder="ocr.keyPlaceholder" placeholder="sk-..." style="flex:1;">
+                    <button class="btn-sm blue" data-action="saveOcrKey" data-i18n="ocr.save">Salva</button>
+                </div>
+            </div>
+            <div id="ocr-configured" style="display:none; margin-top:10px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div style="width:8px; height:8px; border-radius:50%; background:var(--green);"></div>
+                    <span style="font-size:13px; font-weight:600;" data-i18n="ocr.configured">Configurato</span>
+                </div>
+                <button class="btn-sm red" data-action="removeOcrKey" style="width:100%;" data-i18n="ocr.remove">Rimuovi</button>
+            </div>
+        </div>
+
         <!-- Cloud Sync -->
         <div class="settings-card">
             <div class="settings-card-title">
@@ -207,38 +247,6 @@
 
                 <div class="cloud-actions">
                     <button class="btn-sm blue" data-action="connectCloud" style="flex:1;" data-i18n="cloud.connect">Connetti al Cloud</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- OCR Fatture -->
-        <div class="settings-card">
-            <div class="settings-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                <span data-i18n="ocr.title">OCR Fatture</span>
-            </div>
-            <div class="cloud-info" data-i18n="ocr.info">Inserisci la tua API key OpenAI per compilare automaticamente i campi delle fatture dalla foto.</div>
-            <div id="ocr-status-ui">
-                <div id="ocr-configured" style="display:none;">
-                    <div class="cloud-connected">
-                        <div class="cloud-connected-dot"></div>
-                        <div class="cloud-connected-text" data-i18n="ocr.configured">Configurato</div>
-                    </div>
-                    <div class="cloud-actions" style="margin-top:8px;">
-                        <button class="btn-sm red" data-action="removeOcrKey" data-i18n="ocr.remove">Rimuovi</button>
-                    </div>
-                </div>
-                <div id="ocr-setup">
-                    <div class="cloud-disconnected">
-                        <div class="cloud-disconnected-dot"></div>
-                        <div class="cloud-disconnected-text" data-i18n="ocr.notConfigured">Non configurato</div>
-                    </div>
-                    <div class="input-group" style="margin-top:8px;">
-                        <input type="password" class="input-field" id="ocr-api-key" data-i18n-placeholder="ocr.keyPlaceholder" placeholder="sk-...">
-                    </div>
-                    <div class="cloud-actions" style="margin-top:8px;">
-                        <button class="btn-sm blue" data-action="saveOcrKey" style="flex:1;" data-i18n="ocr.save">Salva</button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -760,13 +768,14 @@
             <div class="photo-upload">
                 <input type="file" accept="image/*" capture="environment" id="fatt-photo-input" style="display:none;">
                 <button type="button" class="btn-sm gray" data-action="triggerFatturaPhoto" data-i18n="fatt.attachPhoto">📷 Allega foto</button>
-                <div class="photo-preview" id="fatt-photo-preview" style="display:none;">
-                    <img id="fatt-photo-img" src="" alt="Anteprima">
+                <div class="scan-spinner" id="scan-spinner" style="display:none;">
+                    <div class="ocr-spinner-circle"></div>
+                    <div class="ocr-spinner-text" data-i18n="fatt.scanning">Scansione in corso...</div>
+                </div>
+                <div class="pdf-preview" id="fatt-pdf-preview" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:20px;height:20px;color:var(--red);flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span data-i18n="fatt.pdfAttached">PDF allegato</span>
                     <button type="button" class="photo-remove" data-action="removeFatturaPhoto">✕</button>
-                    <div class="ocr-spinner" id="ocr-spinner" style="display:none;">
-                        <div class="ocr-spinner-circle"></div>
-                        <div class="ocr-spinner-text" data-i18n="ocr.scanning">Analisi fattura in corso...</div>
-                    </div>
                 </div>
             </div>
         </div>

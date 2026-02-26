@@ -72,7 +72,7 @@ export function registra() {
   casse.forEach(c => {
     d.saldo += c.cash;
     const label = casseList.length > 1 ? c.name + ' ' : '';
-    d.log.push({ d: oggi, v: label + t('fatt.incassoCash') + ' (Z:' + c.z + ' POS:' + c.pos + ')', a: c.cash });
+    d.log.push({ d: oggi, v: label + t('fatt.incassoCash') + ' (' + t('incassi.totaleLabel') + ':' + c.z + ' POS:' + c.pos + ')', a: c.cash });
     messages.push(label + '+' + c.cash.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC');
   });
 

@@ -1348,20 +1348,34 @@ body {
     cursor: pointer;
 }
 
-/* OCR Spinner */
-.ocr-spinner {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6); border-radius: var(--radius-sm);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+/* Scan Spinner */
+.scan-spinner {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--card); border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
 }
 .ocr-spinner-circle {
-    width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.3);
-    border-top-color: white; border-radius: 50%;
-    animation: ocrSpin 0.8s linear infinite;
+    width: 22px; height: 22px; border: 3px solid rgba(0,0,0,0.1);
+    border-top-color: var(--blue); border-radius: 50%;
+    animation: ocrSpin 0.8s linear infinite; flex-shrink: 0;
 }
 @keyframes ocrSpin { to { transform: rotate(360deg); } }
 .ocr-spinner-text {
-    color: white; font-size: 11px; font-weight: 600; text-align: center;
+    color: var(--gray2); font-size: 12px; font-weight: 600;
+}
+
+/* PDF Preview */
+.pdf-preview {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--card); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); position: relative;
+}
+.pdf-preview span { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+.pdf-preview .photo-remove {
+    position: static; width: 24px; height: 24px;
+    background: rgba(0,0,0,0.08); color: var(--gray2);
+    border: none; border-radius: 50%; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════════════

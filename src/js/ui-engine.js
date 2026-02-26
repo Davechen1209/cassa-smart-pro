@@ -148,14 +148,14 @@ function generateDayText(dateStr, dayLogs) {
     lines.push('\u2501\u2501 ' + t('day.shareIncassi') + ' \u2501\u2501');
     incassi.forEach(l => {
       // Parse Z and POS from description like "Incasso Cash (Z:1500 POS:300)"
-      const zMatch = l.v.match(/Z:([\d.,]+)/);
+      const zMatch = l.v.match(/(?:Z|TOTALE|总计):([\d.,]+)/);
       const posMatch = l.v.match(/POS:([\d.,]+)/);
       if (zMatch && posMatch) {
         const z = parseFloat(zMatch[1].replace(',', '.'));
         const pos = parseFloat(posMatch[1].replace(',', '.'));
-        const name = l.v.replace(/\s*\(Z:.*\)/, '').trim();
+        const name = l.v.replace(/\s*\((?:Z|TOTALE|总计):.*\)/, '').trim();
         lines.push(name);
-        lines.push('  Z: ' + fmtEur(z) + '\u20AC - POS: ' + fmtEur(pos) + '\u20AC = ' + fmtEur(l.a) + '\u20AC');
+        lines.push('  ' + t('incassi.totaleLabel') + ': ' + fmtEur(z) + '\u20AC - POS: ' + fmtEur(pos) + '\u20AC = ' + fmtEur(l.a) + '\u20AC');
       } else {
         lines.push('+ ' + fmtEur(l.a) + '\u20AC  ' + l.v);
       }
@@ -298,13 +298,33 @@ export function tab(n) {
 
 export function toggleSettings() {
   document.getElementById('settings-page').classList.toggle('open');
-  updateOcrStatus();
   renderCustomCatsSettings();
+  renderAziendaSettings();
+  renderOcrApiSettings();
 }
 
-// ─── OCR Settings ───
+// ─── Dati Azienda Settings ───
 
-export function updateOcrStatus() {
+export function renderAziendaSettings() {
+  const nomeEl = document.getElementById('azienda-nome');
+  const pivaEl = document.getElementById('azienda-piva');
+  if (!nomeEl || !pivaEl) return;
+  nomeEl.value = d.aziendaData?.nome || '';
+  pivaEl.value = d.aziendaData?.piva || '';
+}
+
+export function saveAziendaData() {
+  d.aziendaData = {
+    nome: document.getElementById('azienda-nome').value.trim(),
+    piva: document.getElementById('azienda-piva').value.trim()
+  };
+  fullSave();
+  showToast(t('azienda.saved'), 'check');
+}
+
+// ─── OCR API Key Settings ───
+
+export function renderOcrApiSettings() {
   const key = localStorage.getItem('cassa_openai_key');
   const configured = document.getElementById('ocr-configured');
   const setup = document.getElementById('ocr-setup');
@@ -324,13 +344,13 @@ export function saveOcrKey() {
   if (!key) return;
   localStorage.setItem('cassa_openai_key', key);
   input.value = '';
-  updateOcrStatus();
+  renderOcrApiSettings();
   showToast(t('ocr.configured'), 'check');
 }
 
 export function removeOcrKey() {
   localStorage.removeItem('cassa_openai_key');
-  updateOcrStatus();
+  renderOcrApiSettings();
 }
 
 export function manualSaldo() {

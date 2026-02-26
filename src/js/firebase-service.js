@@ -14,6 +14,21 @@ import { t } from './i18n.js';
 let _uiCallback = null;
 export function setUiCallback(fn) { _uiCallback = fn; }
 
+// Merge cloud fatture (without photos) with local fatture (with photos)
+function mergeFattureLocal(cloudFatture, localFatture) {
+  const localMap = {};
+  (localFatture || []).forEach(f => {
+    if (f.id) {
+      if (f.pdf) localMap[f.id] = { pdf: f.pdf };
+      else if (f.foto) localMap[f.id] = { foto: f.foto };
+    }
+  });
+  return cloudFatture.map(f => {
+    if (!f.pdf && !f.foto && f.id && localMap[f.id]) return { ...f, ...localMap[f.id] };
+    return f;
+  });
+}
+
 function callUi() {
   if (_uiCallback) _uiCallback();
 }
@@ -22,15 +37,19 @@ export function setSyncStatus(status) {
   const dot = document.getElementById('sync-dot');
   dot.className = 'sync-dot';
   if (status === 'synced') {
+    dot.style.display = 'inline-block';
     dot.classList.add('synced');
     dot.title = t('cloud.synced');
   } else if (status === 'syncing') {
+    dot.style.display = 'inline-block';
     dot.classList.add('syncing');
     dot.title = t('cloud.syncing');
   } else if (status === 'error') {
+    dot.style.display = 'inline-block';
     dot.classList.add('error');
     dot.title = t('cloud.syncError');
   } else {
+    dot.style.display = 'none';
     dot.title = t('app.cloudDisconnected');
   }
 }
@@ -76,15 +95,22 @@ export async function syncToCloud() {
   setSyncDebounceTimer(setTimeout(async () => {
     setSyncStatus('syncing');
     try {
+      // Strip foto (base64) from fatture to stay under Firestore 1MB limit
+      const fattureNoFoto = (d.fatture || []).map(f => {
+        if (!f.foto && !f.pdf) return f;
+        const { foto, pdf, ...rest } = f;
+        return rest;
+      });
       await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
         saldo: d.saldo,
         fornitori: d.fornitori,
         stipendi: d.stipendi,
         abit: d.abit,
         log: d.log,
-        fatture: d.fatture || [],
+        fatture: fattureNoFoto,
         anticipi: d.anticipi || [],
         customCats: d.customCats || [],
+        aziendaData: d.aziendaData || {},
         lastUpdate: serverTimestamp(),
         updatedAt: new Date().toISOString()
       });
@@ -113,9 +139,10 @@ export async function loadFromCloud() {
         d.stipendi = cloud.stipendi || d.stipendi;
         d.abit = cloud.abit || d.abit;
         d.log = cloud.log || d.log;
-        d.fatture = cloud.fatture || d.fatture;
+        d.fatture = mergeFattureLocal(cloud.fatture || d.fatture, d.fatture);
         d.anticipi = cloud.anticipi || d.anticipi;
         d.customCats = cloud.customCats || d.customCats;
+        d.aziendaData = cloud.aziendaData || d.aziendaData;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
         callUi();
       } else if (localLogLen > cloudLogLen) {
@@ -142,9 +169,10 @@ export async function forceSyncFromCloud() {
       d.stipendi = cloud.stipendi || [];
       d.abit = cloud.abit || [];
       d.log = cloud.log || [];
-      d.fatture = cloud.fatture || [];
+      d.fatture = mergeFattureLocal(cloud.fatture || [], d.fatture);
       d.anticipi = cloud.anticipi || [];
       d.customCats = cloud.customCats || [];
+      d.aziendaData = cloud.aziendaData || {};
       localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
       callUi();
       setSyncStatus('synced');
@@ -164,6 +192,7 @@ export async function initFirebase() {
   const storedConfig = localStorage.getItem('cassa_firebase_config');
   if (!storedConfig) {
     updateCloudUI(false);
+    setSyncStatus('disconnected');
     return;
   }
 

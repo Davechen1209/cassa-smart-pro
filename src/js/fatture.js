@@ -7,95 +7,33 @@ import {
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { toISODate } from './date-utils.js';
 import { t } from './i18n.js';
+import { jsPDF } from 'jspdf';
 
-let pendingPhoto = null;
+let pendingPdf = null;
 
-// ─── OCR via OpenAI GPT-4o-mini ───
+// ─── Document Scanner: Photo → PDF ───
 
-async function ocrFattura(base64DataUrl) {
-  const apiKey = localStorage.getItem('cassa_openai_key');
-  if (!apiKey) return null;
-
-  const spinner = document.getElementById('ocr-spinner');
-  if (spinner) spinner.style.display = 'flex';
-
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: t('ocr.prompt') },
-            { type: 'image_url', image_url: { url: base64DataUrl } }
-          ]
-        }],
-        max_tokens: 300
-      })
-    });
-
-    if (res.status === 401) {
-      showToast(t('ocr.invalidKey'), 'warn');
-      return null;
-    }
-
-    if (!res.ok) {
-      showToast(t('ocr.error'), 'warn');
-      return null;
-    }
-
-    const data = await res.json();
-    const content = data.choices?.[0]?.message?.content || '';
-
-    // Try to parse JSON from response (handle possible markdown wrapping)
-    let jsonStr = content.trim();
-    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-    if (jsonMatch) jsonStr = jsonMatch[0];
-
-    const parsed = JSON.parse(jsonStr);
-    return parsed;
-  } catch (e) {
-    if (e instanceof SyntaxError) {
-      showToast(t('ocr.error'), 'warn');
-    } else {
-      showToast(t('ocr.networkError'), 'warn');
-    }
-    return null;
-  } finally {
-    if (spinner) spinner.style.display = 'none';
+function scanEnhance(canvas) {
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const contrast = 1.4;
+  const brightness = 10;
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = Math.min(255, Math.max(0, (data[i] - 128) * contrast + 128 + brightness));
+    data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - 128) * contrast + 128 + brightness));
+    data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - 128) * contrast + 128 + brightness));
   }
+  ctx.putImageData(imageData, 0, 0);
 }
 
-function applyOcrResult(result) {
-  if (!result) return;
-
-  if (result.numero) document.getElementById('fatt-numero').value = result.numero;
-  if (result.azienda) document.getElementById('fatt-azienda').value = result.azienda;
-  if (result.importo && result.importo > 0) document.getElementById('fatt-importo').value = result.importo;
-  if (result.data) document.getElementById('fatt-data-arrivo').value = result.data;
-  if (result.tipoPagamento && ['contanti', 'bonifico', 'assegno'].includes(result.tipoPagamento)) {
-    document.getElementById('fatt-tipo-pagamento').value = result.tipoPagamento;
-    toggleAssegnoGroup();
-  }
-  if (result.note) document.getElementById('fatt-note').value = result.note;
-
-  showToast(t('ocr.success'), 'check');
-}
-
-// ─── Photo helpers ───
-
-function compressImage(file) {
+function imageToCanvas(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 1024;
+        const MAX = 2048;
         let w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -104,12 +42,97 @@ function compressImage(file) {
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
+        scanEnhance(canvas);
+        resolve(canvas);
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   });
+}
+
+function canvasToPdf(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const isPortrait = h >= w;
+  const pdf = new jsPDF({ orientation: isPortrait ? 'portrait' : 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 5;
+  const ratio = Math.min((pageW - margin * 2) / w, (pageH - margin * 2) / h);
+  const imgW = w * ratio, imgH = h * ratio;
+  const x = (pageW - imgW) / 2, y = (pageH - imgH) / 2;
+  const jpegData = canvas.toDataURL('image/jpeg', 0.85);
+  pdf.addImage(jpegData, 'JPEG', x, y, imgW, imgH);
+  return pdf.output('datauristring');
+}
+
+// ─── AI Invoice Data Extraction ───
+
+async function extractInvoiceData(jpegBase64) {
+  const apiKey = localStorage.getItem('cassa_openai_key');
+  if (!apiKey) return null;
+
+  const azienda = d.aziendaData || {};
+  let contextLine = '';
+  if (azienda.nome || azienda.piva) {
+    contextLine = `I dati dell'ACQUIRENTE/CLIENTE (da IGNORARE) sono: Nome: "${azienda.nome || ''}", P.IVA: "${azienda.piva || ''}". `;
+  }
+
+  const prompt = contextLine +
+    'Analizza questa fattura/ricevuta. Estrai SOLO i dati del FORNITORE/VENDITORE (NON quelli dell\'acquirente/cliente). ' +
+    'Rispondi SOLO con un oggetto JSON valido, senza markdown o altro testo. ' +
+    'Campi: {"azienda":"nome del fornitore","numero":"numero fattura","importo":0,"data":"YYYY-MM-DD","tipoPagamento":"contanti|bonifico|assegno","note":""}. ' +
+    'Se un campo non è leggibile lascialo vuoto o 0.';
+
+  try {
+    const base64 = jpegBase64.replace(/^data:image\/\w+;base64,/, '');
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64, detail: 'low' } }
+          ]
+        }]
+      })
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    const text = json.choices?.[0]?.message?.content || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    return JSON.parse(match[0]);
+  } catch (e) {
+    console.error('AI extraction error:', e);
+    return null;
+  }
+}
+
+function applyExtractedData(data) {
+  if (!data) return;
+  const setIfEmpty = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && !el.value && val) el.value = val;
+  };
+  setIfEmpty('fatt-azienda', data.azienda);
+  setIfEmpty('fatt-numero', data.numero);
+  if (data.importo > 0) setIfEmpty('fatt-importo', data.importo);
+  if (data.data) setIfEmpty('fatt-data-arrivo', data.data);
+  if (data.tipoPagamento) {
+    const el = document.getElementById('fatt-tipo-pagamento');
+    if (el && !el.value) {
+      el.value = data.tipoPagamento;
+      // Trigger assegno group toggle
+      el.dispatchEvent(new Event('change'));
+    }
+  }
+  if (data.note) setIfEmpty('fatt-note', data.note);
 }
 
 export function triggerFatturaPhoto() {
@@ -119,21 +142,72 @@ export function triggerFatturaPhoto() {
 export async function handleFatturaPhoto(e) {
   const file = e.target.files[0];
   if (!file) return;
-  pendingPhoto = await compressImage(file);
-  const preview = document.getElementById('fatt-photo-preview');
-  document.getElementById('fatt-photo-img').src = pendingPhoto;
-  preview.style.display = 'block';
 
-  // OCR: auto-fill fields if API key is configured
-  const result = await ocrFattura(pendingPhoto);
-  applyOcrResult(result);
+  const spinner = document.getElementById('scan-spinner');
+  if (spinner) spinner.style.display = 'flex';
+
+  try {
+    const canvas = await imageToCanvas(file);
+    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+    // Run PDF generation + AI extraction in parallel
+    const pdfPromise = Promise.resolve(canvasToPdf(canvas));
+    const aiPromise = extractInvoiceData(jpegBase64).catch(() => null);
+
+    const [pdfResult, aiResult] = await Promise.all([pdfPromise, aiPromise]);
+
+    pendingPdf = pdfResult;
+    const preview = document.getElementById('fatt-pdf-preview');
+    if (preview) preview.style.display = 'flex';
+
+    if (aiResult) {
+      applyExtractedData(aiResult);
+      showToast(t('ocr.extracted'), 'check');
+    } else {
+      showToast(t('fatt.scanDone'), 'check');
+    }
+  } finally {
+    if (spinner) spinner.style.display = 'none';
+  }
 }
 
 export function removeFatturaPhoto() {
-  pendingPhoto = null;
-  document.getElementById('fatt-photo-preview').style.display = 'none';
-  document.getElementById('fatt-photo-img').src = '';
+  pendingPdf = null;
+  document.getElementById('fatt-pdf-preview').style.display = 'none';
   document.getElementById('fatt-photo-input').value = '';
+}
+
+export function downloadFatturaPdf(id) {
+  const f = d.fatture.find(x => x.id === id);
+  if (!f) return;
+  const pdfData = f.pdf || f.foto;
+  if (!pdfData) { showToast(t('fatt.noPdf'), 'warn'); return; }
+
+  const fileName = 'fattura_' + (f.azienda || 'doc').replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_') + (f.numero ? '_' + f.numero : '') + '.pdf';
+
+  if (pdfData.startsWith('data:application/pdf')) {
+    // It's a PDF data URI — download directly
+    const link = document.createElement('a');
+    link.href = pdfData;
+    link.download = fileName;
+    link.click();
+  } else {
+    // Legacy: it's a photo (base64 JPEG) — convert to PDF on the fly
+    const img = new Image();
+    img.onload = () => {
+      const isPortrait = img.height >= img.width;
+      const pdf = new jsPDF({ orientation: isPortrait ? 'portrait' : 'landscape', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 5;
+      const ratio = Math.min((pageW - margin * 2) / img.width, (pageH - margin * 2) / img.height);
+      const imgW = img.width * ratio;
+      const imgH = img.height * ratio;
+      pdf.addImage(pdfData, 'JPEG', (pageW - imgW) / 2, (pageH - imgH) / 2, imgW, imgH);
+      pdf.save(fileName);
+    };
+    img.src = pdfData;
+  }
 }
 
 // ─── Assegno group toggle ───
@@ -235,6 +309,7 @@ export function autoCreateFatturaIfNeeded(fornitore, importo, data, fatturaNum) 
     tipoPagamento: 'contanti',
     numeroAssegno: '',
     pagata: true,
+    pdf: null,
     foto: null
   });
 }
@@ -306,11 +381,10 @@ export function openFatturaSheet(id) {
     document.getElementById('fatt-note').value = f.note || '';
     toggleAssegnoGroup();
 
-    // Photo
-    if (f.foto) {
-      pendingPhoto = f.foto;
-      document.getElementById('fatt-photo-img').src = f.foto;
-      document.getElementById('fatt-photo-preview').style.display = 'block';
+    // PDF/Photo
+    if (f.pdf || f.foto) {
+      pendingPdf = f.pdf || f.foto;
+      document.getElementById('fatt-pdf-preview').style.display = 'flex';
     } else {
       removeFatturaPhoto();
     }
@@ -335,7 +409,7 @@ export function openFatturaSheet(id) {
 export function closeFatturaSheet() {
   document.getElementById('fattura-overlay').classList.remove('show');
   setEditingFatturaId(null);
-  pendingPhoto = null;
+  pendingPdf = null;
 }
 
 export function closeFatturaOutside(e) {
@@ -367,7 +441,8 @@ export function saveFattura() {
     ciclo: document.getElementById('fatt-ciclo').value,
     scadenza: document.getElementById('fatt-scadenza').value,
     note: document.getElementById('fatt-note').value.trim(),
-    foto: pendingPhoto || null,
+    pdf: pendingPdf || null,
+    foto: null,
     pagata: existing ? existing.pagata : false
   };
 
@@ -519,10 +594,15 @@ export function openFatturaDetail(id) {
     rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.note')}</span><span class="fattura-detail-value">${escapeHtml(f.note)}</span></div>`;
   }
 
-  if (f.foto) {
-    rows += `<div class="fattura-detail-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
-      <span class="fattura-detail-label">${t('fatt.fotoLabel')}</span>
-      <img src="${f.foto}" alt="Foto fattura" class="fattura-detail-photo" onclick="window.open(this.src)">
+  if (f.pdf || f.foto) {
+    rows += `<div class="fattura-detail-row">
+      <span class="fattura-detail-label">${t('fatt.pdfLabel')}</span>
+      <button class="btn-sm blue" data-action="downloadFatturaPdf" data-id="${f.id}" style="font-size:13px;padding:6px 14px;">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          ${t('fatt.downloadPdf')}
+        </span>
+      </button>
     </div>`;
   }
 

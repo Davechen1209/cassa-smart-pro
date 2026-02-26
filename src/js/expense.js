@@ -127,10 +127,11 @@ export function selectExpVoice(name) {
 }
 
 export function addNewVoiceFromSheet() {
-  setModalCat(expCat);
+  const actualCat = expCat === 'anticipo' ? 'stipendi' : expCat;
+  setModalCat(actualCat);
   setEditingItem(null);
   const labels = { fornitori: t('rub.newFornitore'), stipendi: t('rub.newStipendio'), abit: t('rub.newVoce') };
-  document.getElementById('modal-title').textContent = labels[expCat] || '';
+  document.getElementById('modal-title').textContent = labels[actualCat] || '';
   document.getElementById('modal-input').value = '';
   document.getElementById('modal-overlay').classList.add('show');
   setTimeout(() => document.getElementById('modal-input').focus(), 350);
