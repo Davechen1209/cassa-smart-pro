@@ -444,7 +444,7 @@ body {
     padding: 12px 20px 20px;
     padding-bottom: max(24px, env(safe-area-inset-bottom));
     transform: translateY(100%);
-    transition: transform 0.45s var(--ease-out-quart);
+    transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
     max-height: 90vh; overflow-y: auto;
     box-shadow: 0 -6px 40px rgba(0,0,0,0.12), 0 -1px 6px rgba(0,0,0,0.06);
     will-change: transform;
@@ -825,6 +825,80 @@ body {
     cursor: pointer; transition: all 0.15s ease;
 }
 .btn-danger:active { background: rgba(255,59,48,0.2); transform: scale(0.98); }
+
+/* ─── Settings Accordion Sections ─── */
+.settings-section {
+    background: var(--card);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.settings-section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 18px;
+    font-weight: 700; font-size: 15px; letter-spacing: -0.1px;
+    cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) ease;
+}
+.settings-section-header:active { background: var(--separator); }
+.section-chevron {
+    width: 18px; height: 18px; color: var(--gray2);
+    transition: transform 0.3s var(--ease-out-quart);
+    flex-shrink: 0;
+}
+.settings-section.open .section-chevron { transform: rotate(180deg); }
+.settings-section-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s var(--ease-out-quart);
+}
+.settings-section.open .settings-section-body { max-height: 3000px; }
+.settings-section-body > .settings-card {
+    box-shadow: none; margin-bottom: 0;
+    border-radius: 0;
+    border-top: 0.5px solid var(--separator);
+}
+.settings-section-body > .settings-danger {
+    margin: 0; border-radius: 0;
+    border-top: 0.5px solid var(--separator);
+}
+
+/* ─── Fullscreen Photo Overlay ─── */
+.photo-fullscreen-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.95);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+}
+.photo-fullscreen-overlay.show { display: flex; }
+.photo-fullscreen-close {
+    position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px;
+    background: rgba(255,255,255,0.15); border: none;
+    color: #fff; font-size: 20px; font-weight: 700;
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 2;
+    transition: background var(--duration-fast) ease;
+}
+.photo-fullscreen-close:active { background: rgba(255,255,255,0.3); }
+.photo-fullscreen-container {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    overflow: auto; touch-action: pinch-zoom;
+    width: 100%; max-height: calc(100vh - 120px);
+}
+.photo-fullscreen-container img {
+    max-width: 100%; max-height: 85vh;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+}
+.photo-fullscreen-actions {
+    position: absolute;
+    bottom: max(24px, env(safe-area-inset-bottom));
+    z-index: 2;
+    display: flex; gap: 10px;
+}
 
 /* ═══════════════════════════════════════════════════
    TOAST — Glass Pill
@@ -1318,7 +1392,7 @@ body {
     width: 100%; max-width: 500px;
     max-height: 90vh; overflow-y: auto;
     transform: translateY(100%);
-    transition: transform 0.45s var(--ease-out-quart);
+    transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
     box-shadow: 0 -6px 40px rgba(0,0,0,0.12), 0 -1px 6px rgba(0,0,0,0.06);
     will-change: transform;
 }

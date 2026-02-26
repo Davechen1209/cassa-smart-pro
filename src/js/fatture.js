@@ -595,14 +595,22 @@ export function openFatturaDetail(id) {
   }
 
   if (f.pdf || f.foto) {
-    rows += `<div class="fattura-detail-row">
+    rows += `<div class="fattura-detail-row" style="flex-wrap:wrap;gap:8px;">
       <span class="fattura-detail-label">${t('fatt.pdfLabel')}</span>
-      <button class="btn-sm blue" data-action="downloadFatturaPdf" data-id="${f.id}" style="font-size:13px;padding:6px 14px;">
-        <span style="display:flex;align-items:center;gap:6px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          ${t('fatt.downloadPdf')}
-        </span>
-      </button>
+      <span style="display:flex;gap:8px;">
+        <button class="btn-sm blue" data-action="openPhotoFullscreen" data-id="${f.id}" style="font-size:13px;padding:6px 14px;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            ${t('fatt.viewPhoto')}
+          </span>
+        </button>
+        <button class="btn-sm gray" data-action="downloadFatturaPdf" data-id="${f.id}" style="font-size:13px;padding:6px 14px;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            PDF
+          </span>
+        </button>
+      </span>
     </div>`;
   }
 
@@ -628,6 +636,60 @@ export function closeFatturaDetail() {
 
 export function closeFatturaDetailOutside(e) {
   if (e.target === e.currentTarget) closeFatturaDetail();
+}
+
+// ─── Fullscreen Photo/PDF Preview ───
+
+export function openPhotoFullscreen(id) {
+  const f = d.fatture.find(x => x.id === id);
+  if (!f) return;
+  const data = f.pdf || f.foto;
+  if (!data) { showToast(t('fatt.noPdf'), 'warn'); return; }
+
+  const overlay = document.getElementById('photo-fullscreen-overlay');
+  const img = document.getElementById('photo-fullscreen-img');
+  const dlBtn = document.getElementById('photo-fullscreen-download');
+
+  if (data.startsWith('data:application/pdf')) {
+    // PDF data URI — extract the image from the PDF by rendering it
+    // Since jsPDF-generated PDFs contain a single JPEG, extract it
+    const base64 = data.split(',')[1];
+    const binary = atob(base64);
+    // Find JPEG start (FF D8) and end (FF D9) markers
+    let jpegStart = -1, jpegEnd = -1;
+    for (let i = 0; i < binary.length - 1; i++) {
+      if (binary.charCodeAt(i) === 0xFF && binary.charCodeAt(i + 1) === 0xD8) { jpegStart = i; break; }
+    }
+    if (jpegStart >= 0) {
+      for (let i = binary.length - 2; i >= jpegStart; i--) {
+        if (binary.charCodeAt(i) === 0xFF && binary.charCodeAt(i + 1) === 0xD9) { jpegEnd = i + 2; break; }
+      }
+    }
+    if (jpegStart >= 0 && jpegEnd > jpegStart) {
+      const jpegBytes = new Uint8Array(jpegEnd - jpegStart);
+      for (let i = 0; i < jpegBytes.length; i++) jpegBytes[i] = binary.charCodeAt(jpegStart + i);
+      const blob = new Blob([jpegBytes], { type: 'image/jpeg' });
+      img.src = URL.createObjectURL(blob);
+    } else {
+      // Fallback: show nothing useful for non-extractable PDFs
+      img.src = '';
+    }
+  } else {
+    // Legacy JPEG data URI — show directly
+    img.src = data;
+  }
+
+  if (dlBtn) dlBtn.setAttribute('data-id', id);
+  overlay.classList.add('show');
+}
+
+export function closePhotoFullscreen() {
+  const overlay = document.getElementById('photo-fullscreen-overlay');
+  const img = document.getElementById('photo-fullscreen-img');
+  overlay.classList.remove('show');
+  // Clean up object URL if used
+  if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  img.src = '';
 }
 
 // ─── Due Date Notifications ───

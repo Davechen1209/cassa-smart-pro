@@ -52,7 +52,8 @@ import {
   markFatturaPaid, markFatturaUnpaid,
   openFatturaDetail, closeFatturaDetail, closeFatturaDetailOutside,
   triggerFatturaPhoto, handleFatturaPhoto, removeFatturaPhoto,
-  toggleAssegnoGroup, downloadFatturaPdf
+  toggleAssegnoGroup, downloadFatturaPdf,
+  openPhotoFullscreen, closePhotoFullscreen
 } from './js/fatture.js';
 
 import { toggleStats } from './js/statistics.js';
@@ -163,6 +164,15 @@ document.body.addEventListener('click', (e) => {
       break;
     case 'triggerFatturaPhoto': triggerFatturaPhoto(); break;
     case 'removeFatturaPhoto': removeFatturaPhoto(); break;
+    case 'openPhotoFullscreen': openPhotoFullscreen(Number(btn.dataset.id)); break;
+    case 'closePhotoFullscreen': closePhotoFullscreen(); break;
+
+    // Settings sections
+    case 'toggleSettingsSection': {
+      const section = btn.closest('.settings-section');
+      if (section) section.classList.toggle('open');
+      break;
+    }
 
     // Anticipi
     case 'repayAnticipo': repayAnticipo(Number(btn.dataset.id)); break;
@@ -204,6 +214,9 @@ document.getElementById('modal-overlay').addEventListener('click', closeModalOut
 document.getElementById('fattura-overlay').addEventListener('click', closeFatturaOutside);
 document.getElementById('fattura-detail-overlay').addEventListener('click', closeFatturaDetailOutside);
 document.getElementById('pdf-report-overlay').addEventListener('click', closePdfReportOutside);
+document.getElementById('photo-fullscreen-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closePhotoFullscreen();
+});
 
 // Keyboard events
 document.getElementById('modal-input').addEventListener('keydown', function (e) {

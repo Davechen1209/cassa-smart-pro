@@ -84,237 +84,223 @@
     </div>
     <div class="settings-body">
 
-        <!-- Lingua -->
-        <div class="settings-card">
-            <div class="settings-card-title" data-i18n="settings.lang">Lingua</div>
-            <div class="lang-section">
-                <div class="lang-label" data-i18n="settings.langLabel">Seleziona lingua</div>
-                <div class="lang-toggle">
-                    <button class="lang-btn active" data-action="setLang" data-lang="it">Italiano</button>
-                    <button class="lang-btn" data-action="setLang" data-lang="zh">中文</button>
-                </div>
+        <!-- Section 1: Generale -->
+        <div class="settings-section open">
+            <div class="settings-section-header" data-action="toggleSettingsSection">
+                <span data-i18n="settings.general">Generale</span>
+                <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-        </div>
-
-        <!-- PIN -->
-        <div class="settings-card">
-            <div class="settings-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span data-i18n="pin.change">Cambia PIN</span>
-            </div>
-            <div class="input-group">
-                <label data-i18n="pin.oldPin">PIN attuale</label>
-                <input type="password" class="input-field" id="pin-old" inputmode="numeric" maxlength="8" pattern="[0-9]*">
-            </div>
-            <div class="input-group">
-                <label data-i18n="pin.newPin">Nuovo PIN</label>
-                <input type="password" class="input-field" id="pin-new" inputmode="numeric" maxlength="8" pattern="[0-9]*">
-            </div>
-            <div class="input-group">
-                <label data-i18n="pin.confirmPin">Conferma PIN</label>
-                <input type="password" class="input-field" id="pin-confirm" inputmode="numeric" maxlength="8" pattern="[0-9]*">
-            </div>
-            <div class="settings-row" style="margin-top:8px;">
-                <button class="btn-sm blue" data-action="changePin" style="flex:1; text-align:center;" data-i18n="pin.save">Salva</button>
-            </div>
-        </div>
-
-        <!-- Saldo -->
-        <div class="settings-card">
-            <div class="settings-card-title" data-i18n="settings.saldo">Saldo manuale</div>
-            <div class="input-group">
-                <label data-i18n="settings.saldoLabel">Imposta il saldo corrente</label>
-                <input type="number" class="input-field" id="set-saldo" data-i18n-placeholder="settings.saldoPlaceholder" placeholder="Imposta saldo..." inputmode="decimal">
-            </div>
-            <div class="settings-row" style="margin-top:8px;">
-                <button class="btn-sm blue" data-action="manualSaldo" style="flex:1; text-align:center;" data-i18n="settings.update">Aggiorna Saldo</button>
-            </div>
-        </div>
-
-        <!-- Custom Expense Categories -->
-        <div class="settings-card">
-            <div class="settings-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
-                <span data-i18n="customCats.title">Categorie Personalizzate</span>
-            </div>
-            <div class="cloud-info" data-i18n="customCats.info">Crea categorie di spesa personalizzate.</div>
-            <div id="custom-cats-list"></div>
-            <div style="display:flex; gap:8px; margin-top:12px;">
-                <input type="text" class="input-field" id="new-cat-emoji" placeholder="⚡" style="width:50px; text-align:center; font-size:18px;">
-                <input type="text" class="input-field" id="new-cat-name" data-i18n-placeholder="customCats.namePlaceholder" placeholder="Nome categoria..." style="flex:1;">
-                <button class="btn-sm blue" data-action="addCustomCat" data-i18n="customCats.add">Aggiungi</button>
-            </div>
-        </div>
-
-        <!-- Dati Azienda -->
-        <div class="settings-card">
-            <div class="settings-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                <span data-i18n="azienda.title">Dati Azienda</span>
-            </div>
-            <div class="cloud-info" data-i18n="azienda.info">I tuoi dati aziendali. Servono per distinguere i tuoi dati da quelli del fornitore durante la scansione automatica.</div>
-            <div class="input-group" style="margin-top:10px;">
-                <label data-i18n="azienda.nome">Nome azienda</label>
-                <input type="text" class="input-field" id="azienda-nome" data-i18n-placeholder="azienda.nomePlaceholder" placeholder="Es. Ristorante Da Mario...">
-            </div>
-            <div class="input-group">
-                <label data-i18n="azienda.piva">P.IVA / Codice Fiscale</label>
-                <input type="text" class="input-field" id="azienda-piva" data-i18n-placeholder="azienda.pivaPlaceholder" placeholder="Es. IT01234567890...">
-            </div>
-            <button class="btn-sm blue" data-action="saveAziendaData" style="margin-top:10px; width:100%;" data-i18n="azienda.save">Salva</button>
-        </div>
-
-        <!-- AI Invoice Recognition -->
-        <div class="settings-card">
-            <div class="settings-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                <span data-i18n="ocr.title">Riconoscimento Fatture (AI)</span>
-            </div>
-            <div class="cloud-info" data-i18n="ocr.info">Inserisci la tua API key OpenAI per compilare automaticamente i campi delle fatture dalla foto.</div>
-            <div id="ocr-setup">
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <input type="text" class="input-field" id="ocr-api-key" data-i18n-placeholder="ocr.keyPlaceholder" placeholder="sk-..." style="flex:1;">
-                    <button class="btn-sm blue" data-action="saveOcrKey" data-i18n="ocr.save">Salva</button>
-                </div>
-            </div>
-            <div id="ocr-configured" style="display:none; margin-top:10px;">
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                    <div style="width:8px; height:8px; border-radius:50%; background:var(--green);"></div>
-                    <span style="font-size:13px; font-weight:600;" data-i18n="ocr.configured">Configurato</span>
-                </div>
-                <button class="btn-sm red" data-action="removeOcrKey" style="width:100%;" data-i18n="ocr.remove">Rimuovi</button>
-            </div>
-        </div>
-
-        <!-- Cloud Sync -->
-        <div class="settings-card">
-            <div class="settings-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                <span data-i18n="cloud.title">Sincronizzazione Cloud</span>
-            </div>
-
-            <!-- Connected state -->
-            <div id="cloud-connected-ui" style="display:none;">
-                <div class="cloud-connected">
-                    <div class="cloud-connected-dot"></div>
-                    <div class="cloud-connected-text" data-i18n="cloud.connected">Cloud connesso</div>
-                </div>
-                <div class="cloud-last-sync" id="cloud-last-sync" data-i18n="cloud.lastSync">Ultimo sync: --</div>
-                <div class="cloud-info" data-i18n="cloud.autoSave">I tuoi dati vengono salvati automaticamente nel cloud Firebase ad ogni modifica.</div>
-                <div class="cloud-actions">
-                    <button class="btn-sm blue" data-action="forceSyncFromCloud" data-i18n="cloud.reload">Ricarica dal Cloud</button>
-                    <button class="btn-sm red" data-action="disconnectCloud" data-i18n="cloud.disconnect">Disconnetti</button>
-                </div>
-            </div>
-
-            <!-- Disconnected state: Setup wizard -->
-            <div id="cloud-setup-ui">
-                <div class="cloud-disconnected">
-                    <div class="cloud-disconnected-dot"></div>
-                    <div class="cloud-disconnected-text" data-i18n="cloud.notConfigured">Cloud non configurato</div>
-                </div>
-                <div class="cloud-info" data-i18n="cloud.setupInfo">Configura Firebase per salvare i dati nel cloud in modo automatico e sicuro. Servono 5 minuti (una sola volta).</div>
-
-                <div class="setup-steps">
-                    <div class="setup-step">
-                        <div class="step-num">1</div>
-                        <div>Vai su <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> e crea un nuovo progetto (nome a piacere, disattiva Google Analytics).</div>
-                    </div>
-                    <div class="setup-step">
-                        <div class="step-num">2</div>
-                        <div>Nel progetto, clicca <b>"Crea"</b> > <b>"Firestore Database"</b> nel menu a sinistra. Scegli <b>"Avvia in modalita' test"</b> e seleziona la region piu' vicina.</div>
-                    </div>
-                    <div class="setup-step">
-                        <div class="step-num">3</div>
-                        <div>Nel menu <b>"Creazione"</b> > <b>"Authentication"</b>, clicca <b>"Inizia"</b>, poi abilita il provider <b>"Google"</b>.</div>
-                    </div>
-                    <div class="setup-step">
-                        <div class="step-num">4</div>
-                        <div>Vai in <b>Impostazioni progetto</b> (icona ingranaggio in alto) > scorri fino a <b>"Le tue app"</b> > clicca <b>"Web"</b> (icona &lt;/&gt;). Dai un nome e clicca Registra. Copia il blocco <code>firebaseConfig</code> e incollalo qui sotto.</div>
+            <div class="settings-section-body">
+                <div class="settings-card">
+                    <div class="settings-card-title" data-i18n="settings.lang">Lingua</div>
+                    <div class="lang-section">
+                        <div class="lang-label" data-i18n="settings.langLabel">Seleziona lingua</div>
+                        <div class="lang-toggle">
+                            <button class="lang-btn active" data-action="setLang" data-lang="it">Italiano</button>
+                            <button class="lang-btn" data-action="setLang" data-lang="zh">中文</button>
+                        </div>
                     </div>
                 </div>
-
-                <textarea class="config-textarea" id="firebase-config-input" placeholder="Incolla qui il tuo firebaseConfig, ad esempio:
-
-{
-  apiKey: &quot;AIza...&quot;,
-  authDomain: &quot;mio-progetto.firebaseapp.com&quot;,
-  projectId: &quot;mio-progetto&quot;,
-  storageBucket: &quot;mio-progetto.appspot.com&quot;,
-  messagingSenderId: &quot;123456&quot;,
-  appId: &quot;1:123:web:abc&quot;
-}"></textarea>
-
-                <div class="cloud-actions">
-                    <button class="btn-sm blue" data-action="connectCloud" style="flex:1;" data-i18n="cloud.connect">Connetti al Cloud</button>
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span data-i18n="pin.change">Cambia PIN</span>
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="pin.oldPin">PIN attuale</label>
+                        <input type="password" class="input-field" id="pin-old" inputmode="numeric" maxlength="8" pattern="[0-9]*">
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="pin.newPin">Nuovo PIN</label>
+                        <input type="password" class="input-field" id="pin-new" inputmode="numeric" maxlength="8" pattern="[0-9]*">
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="pin.confirmPin">Conferma PIN</label>
+                        <input type="password" class="input-field" id="pin-confirm" inputmode="numeric" maxlength="8" pattern="[0-9]*">
+                    </div>
+                    <div class="settings-row" style="margin-top:8px;">
+                        <button class="btn-sm blue" data-action="changePin" style="flex:1; text-align:center;" data-i18n="pin.save">Salva</button>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <div class="settings-card-title" data-i18n="settings.saldo">Saldo manuale</div>
+                    <div class="input-group">
+                        <label data-i18n="settings.saldoLabel">Imposta il saldo corrente</label>
+                        <input type="number" class="input-field" id="set-saldo" data-i18n-placeholder="settings.saldoPlaceholder" placeholder="Imposta saldo..." inputmode="decimal">
+                    </div>
+                    <div class="settings-row" style="margin-top:8px;">
+                        <button class="btn-sm blue" data-action="manualSaldo" style="flex:1; text-align:center;" data-i18n="settings.update">Aggiorna Saldo</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Auto Backup -->
-        <div class="settings-card">
-            <div class="settings-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;">
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-                </svg>
-                <span data-i18n="autoBackup.title">Backup Automatico</span>
+        <!-- Section 2: Fatture & AI -->
+        <div class="settings-section">
+            <div class="settings-section-header" data-action="toggleSettingsSection">
+                <span data-i18n="settings.fattureAi">Fatture & AI</span>
+                <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-            <div class="cloud-info" data-i18n="autoBackup.info">Scarica automaticamente un backup JSON ogni 7 giorni.</div>
-            <div id="auto-backup-status"></div>
+            <div class="settings-section-body">
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span data-i18n="azienda.title">Dati Azienda</span>
+                    </div>
+                    <div class="cloud-info" data-i18n="azienda.info">I tuoi dati aziendali. Servono per distinguere i tuoi dati da quelli del fornitore durante la scansione automatica.</div>
+                    <div class="input-group" style="margin-top:10px;">
+                        <label data-i18n="azienda.nome">Nome azienda</label>
+                        <input type="text" class="input-field" id="azienda-nome" data-i18n-placeholder="azienda.nomePlaceholder" placeholder="Es. Ristorante Da Mario...">
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="azienda.piva">P.IVA / Codice Fiscale</label>
+                        <input type="text" class="input-field" id="azienda-piva" data-i18n-placeholder="azienda.pivaPlaceholder" placeholder="Es. IT01234567890...">
+                    </div>
+                    <button class="btn-sm blue" data-action="saveAziendaData" style="margin-top:10px; width:100%;" data-i18n="azienda.save">Salva</button>
+                </div>
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                        <span data-i18n="ocr.title">Riconoscimento Fatture (AI)</span>
+                    </div>
+                    <div class="cloud-info" data-i18n="ocr.info">Inserisci la tua API key OpenAI per compilare automaticamente i campi delle fatture dalla foto.</div>
+                    <div id="ocr-setup">
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <input type="text" class="input-field" id="ocr-api-key" data-i18n-placeholder="ocr.keyPlaceholder" placeholder="sk-..." style="flex:1;">
+                            <button class="btn-sm blue" data-action="saveOcrKey" data-i18n="ocr.save">Salva</button>
+                        </div>
+                    </div>
+                    <div id="ocr-configured" style="display:none; margin-top:10px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                            <div style="width:8px; height:8px; border-radius:50%; background:var(--green);"></div>
+                            <span style="font-size:13px; font-weight:600;" data-i18n="ocr.configured">Configurato</span>
+                        </div>
+                        <button class="btn-sm red" data-action="removeOcrKey" style="width:100%;" data-i18n="ocr.remove">Rimuovi</button>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                        <span data-i18n="customCats.title">Categorie Personalizzate</span>
+                    </div>
+                    <div class="cloud-info" data-i18n="customCats.info">Crea categorie di spesa personalizzate.</div>
+                    <div id="custom-cats-list"></div>
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <input type="text" class="input-field" id="new-cat-emoji" placeholder="⚡" style="width:50px; text-align:center; font-size:18px;">
+                        <input type="text" class="input-field" id="new-cat-name" data-i18n-placeholder="customCats.namePlaceholder" placeholder="Nome categoria..." style="flex:1;">
+                        <button class="btn-sm blue" data-action="addCustomCat" data-i18n="customCats.add">Aggiungi</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Backup -->
-        <div class="settings-card">
-            <div class="settings-card-title" data-i18n="backup.titleCard">Backup & Import</div>
-            <div class="backup-actions">
-                <button class="btn-backup download" data-action="downloadBackup">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    <span data-i18n="backup.export">Esporta</span>
-                </button>
-                <button class="btn-backup upload" data-action="triggerImportFile">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span data-i18n="backup.import">Importa</span>
-                </button>
-                <input type="file" id="import-file" accept=".json" style="display:none;">
+        <!-- Section 3: Cloud & Backup -->
+        <div class="settings-section">
+            <div class="settings-section-header" data-action="toggleSettingsSection">
+                <span data-i18n="settings.cloudBackup">Cloud & Backup</span>
+                <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-
-            <div class="cloud-divider" data-i18n="backup.excelTitle">importa dati da Excel</div>
-            <div style="display:flex; gap:8px;">
-                <button class="btn-sm gray" data-action="downloadTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
-                </button>
-                <button class="btn-sm blue" data-action="triggerExcelFile" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span data-i18n="backup.uploadFile">2. Carica File</span>
-                </button>
+            <div class="settings-section-body">
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                        <span data-i18n="cloud.title">Sincronizzazione Cloud</span>
+                    </div>
+                    <div id="cloud-connected-ui" style="display:none;">
+                        <div class="cloud-connected">
+                            <div class="cloud-connected-dot"></div>
+                            <div class="cloud-connected-text" data-i18n="cloud.connected">Cloud connesso</div>
+                        </div>
+                        <div class="cloud-last-sync" id="cloud-last-sync" data-i18n="cloud.lastSync">Ultimo sync: --</div>
+                        <div class="cloud-info" data-i18n="cloud.autoSave">I tuoi dati vengono salvati automaticamente nel cloud Firebase ad ogni modifica.</div>
+                        <div class="cloud-actions">
+                            <button class="btn-sm blue" data-action="forceSyncFromCloud" data-i18n="cloud.reload">Ricarica dal Cloud</button>
+                            <button class="btn-sm red" data-action="disconnectCloud" data-i18n="cloud.disconnect">Disconnetti</button>
+                        </div>
+                    </div>
+                    <div id="cloud-setup-ui">
+                        <div class="cloud-disconnected">
+                            <div class="cloud-disconnected-dot"></div>
+                            <div class="cloud-disconnected-text" data-i18n="cloud.notConfigured">Cloud non configurato</div>
+                        </div>
+                        <div class="cloud-info" data-i18n="cloud.setupInfo">Configura Firebase per salvare i dati nel cloud in modo automatico e sicuro. Servono 5 minuti (una sola volta).</div>
+                        <div class="setup-steps">
+                            <div class="setup-step"><div class="step-num">1</div><div>Vai su <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> e crea un nuovo progetto.</div></div>
+                            <div class="setup-step"><div class="step-num">2</div><div>Crea <b>Firestore Database</b> in modalita' test.</div></div>
+                            <div class="setup-step"><div class="step-num">3</div><div>Abilita <b>Authentication</b> > provider <b>Google</b>.</div></div>
+                            <div class="setup-step"><div class="step-num">4</div><div>Impostazioni progetto > App Web > copia <code>firebaseConfig</code> qui sotto.</div></div>
+                        </div>
+                        <textarea class="config-textarea" id="firebase-config-input" placeholder='Incolla qui il tuo firebaseConfig...'></textarea>
+                        <div class="cloud-actions">
+                            <button class="btn-sm blue" data-action="connectCloud" style="flex:1;" data-i18n="cloud.connect">Connetti al Cloud</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                        <span data-i18n="autoBackup.title">Backup Automatico</span>
+                    </div>
+                    <div class="cloud-info" data-i18n="autoBackup.info">Scarica automaticamente un backup JSON ogni 7 giorni.</div>
+                    <div id="auto-backup-status"></div>
+                </div>
+                <div class="settings-card">
+                    <div class="settings-card-title" data-i18n="backup.titleCard">Backup & Import</div>
+                    <div class="backup-actions">
+                        <button class="btn-backup download" data-action="downloadBackup">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span data-i18n="backup.export">Esporta</span>
+                        </button>
+                        <button class="btn-backup upload" data-action="triggerImportFile">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span data-i18n="backup.import">Importa</span>
+                        </button>
+                        <input type="file" id="import-file" accept=".json" style="display:none;">
+                    </div>
+                    <div class="cloud-divider" data-i18n="backup.excelTitle">importa dati da Excel</div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-sm gray" data-action="downloadTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
+                        </button>
+                        <button class="btn-sm blue" data-action="triggerExcelFile" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span data-i18n="backup.uploadFile">2. Carica File</span>
+                        </button>
+                    </div>
+                    <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
+                    <div class="cloud-divider" data-i18n="backup.excelFattureTitle">Importa Fatture da Excel</div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-sm gray" data-action="downloadFattureTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
+                        </button>
+                        <button class="btn-sm blue" data-action="triggerFattureFile" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span data-i18n="backup.uploadFile">2. Carica File</span>
+                        </button>
+                    </div>
+                    <input type="file" id="fatture-excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
+                </div>
             </div>
-            <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
-            <div style="font-size:11px; color:var(--gray); margin-top:8px; text-align:center; line-height:1.4;" data-i18n="backup.excelHelp">Scarica il template, compilalo con i tuoi dati, poi caricalo</div>
-
-            <div class="cloud-divider" data-i18n="backup.excelFattureTitle">Importa Fatture da Excel</div>
-            <div style="display:flex; gap:8px;">
-                <button class="btn-sm gray" data-action="downloadFattureTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
-                </button>
-                <button class="btn-sm blue" data-action="triggerFattureFile" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span data-i18n="backup.uploadFile">2. Carica File</span>
-                </button>
-            </div>
-            <input type="file" id="fatture-excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
-            <div style="font-size:11px; color:var(--gray); margin-top:8px; text-align:center; line-height:1.4;" data-i18n="backup.excelFattureHelp">Colonne: Data, Numero, Azienda, Importo, Tipo Pagamento, Scadenza, Note</div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="settings-danger">
-            <div class="settings-card-title" style="color:var(--red);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <span data-i18n="settings.dangerZone">Zona pericolosa</span>
+        <!-- Section 4: Avanzate -->
+        <div class="settings-section">
+            <div class="settings-section-header" data-action="toggleSettingsSection">
+                <span data-i18n="settings.advanced">Avanzate</span>
+                <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-            <div class="settings-danger-info" data-i18n="settings.dangerInfo">Questa azione eliminera' tutti i movimenti, le rubriche e le fatture. Non e' reversibile.</div>
-            <button class="btn-danger" data-action="confirmReset" data-i18n="settings.reset">Reset Dati</button>
+            <div class="settings-section-body">
+                <div class="settings-danger">
+                    <div class="settings-card-title" style="color:var(--red);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span data-i18n="settings.dangerZone">Zona pericolosa</span>
+                    </div>
+                    <div class="settings-danger-info" data-i18n="settings.dangerInfo">Questa azione eliminera' tutti i movimenti, le rubriche e le fatture. Non e' reversibile.</div>
+                    <button class="btn-danger" data-action="confirmReset" data-i18n="settings.reset">Reset Dati</button>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -793,6 +779,17 @@
         <div class="sheet-handle"></div>
         <div class="sheet-title" id="fattura-detail-title" data-i18n="fatt.detail">Dettaglio Fattura</div>
         <div id="fattura-detail-content"></div>
+    </div>
+</div>
+
+<!-- Photo Fullscreen Overlay -->
+<div class="photo-fullscreen-overlay" id="photo-fullscreen-overlay">
+    <button class="photo-fullscreen-close" data-action="closePhotoFullscreen">&times;</button>
+    <div class="photo-fullscreen-container" id="photo-fullscreen-container">
+        <img id="photo-fullscreen-img" src="" alt="">
+    </div>
+    <div class="photo-fullscreen-actions">
+        <button class="btn-sm blue" id="photo-fullscreen-download" data-action="downloadFatturaPdf" data-i18n="fatt.downloadPdf">Scarica PDF</button>
     </div>
 </div>
 

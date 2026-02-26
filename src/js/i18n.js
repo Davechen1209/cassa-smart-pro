@@ -50,6 +50,10 @@ const translations = {
     'settings.resetConfirm2': 'Sei sicuro?',
     'settings.resetMsg2': 'Questa azione e\' irreversibile. Tutti i dati verranno persi definitivamente.',
     'settings.resetDone': 'Dati resettati',
+    'settings.general': 'Generale',
+    'settings.fattureAi': 'Fatture & AI',
+    'settings.cloudBackup': 'Cloud & Backup',
+    'settings.advanced': 'Avanzate',
 
     // Cloud
     'cloud.title': 'Sincronizzazione Cloud',
@@ -368,6 +372,7 @@ const translations = {
     'fatt.pdfAttached': 'PDF allegato',
     'fatt.pdfLabel': 'Documento',
     'fatt.noPdf': 'Nessun PDF allegato',
+    'fatt.viewPhoto': 'Apri',
 
     // Dati Azienda
     'azienda.title': 'Dati Azienda',
@@ -497,6 +502,10 @@ const translations = {
     'settings.resetConfirm2': '确定要删除吗？',
     'settings.resetMsg2': '此操作无法撤销，所有数据将永久丢失。',
     'settings.resetDone': '数据已清空',
+    'settings.general': '通用',
+    'settings.fattureAi': '账单 & AI',
+    'settings.cloudBackup': '云端 & 备份',
+    'settings.advanced': '高级',
 
     // Cloud
     'cloud.title': '云端同步',
@@ -815,6 +824,7 @@ const translations = {
     'fatt.pdfAttached': '已附PDF',
     'fatt.pdfLabel': '文件',
     'fatt.noPdf': '无附件PDF',
+    'fatt.viewPhoto': '查看',
 
     // Dati Azienda
     'azienda.title': '企业信息',
