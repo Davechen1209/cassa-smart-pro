@@ -467,7 +467,17 @@ export async function saveFattura() {
     d.fatture.push(fattura);
   }
 
-  fullSave();
+  try {
+    fullSave();
+  } catch (e) {
+    console.error('[saveFattura] fullSave failed:', e);
+    // Emergency: strip any remaining blobs from all fatture and retry
+    d.fatture.forEach(f => { delete f.pdf; delete f.foto; });
+    try { fullSave(); } catch (_) {
+      showToast('Errore salvataggio: memoria piena', 'warn');
+      return;
+    }
+  }
   closeFatturaSheet();
   showToast(editingFatturaId ? t('fatt.updated') : t('fatt.added'), 'check');
 }

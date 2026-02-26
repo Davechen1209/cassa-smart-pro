@@ -40,7 +40,14 @@ let _onSaveCallback = null;
 export function setOnSaveCallback(fn) { _onSaveCallback = fn; }
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  } catch (e) {
+    // localStorage full — emergency: strip any remaining PDF blobs
+    console.warn('[save] localStorage full, stripping blobs...', e);
+    (d.fatture || []).forEach(f => { delete f.pdf; delete f.foto; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  }
 }
 
 export function fullSave() {
