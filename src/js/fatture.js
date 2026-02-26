@@ -8,6 +8,7 @@ import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { toISODate } from './date-utils.js';
 import { t } from './i18n.js';
 import { jsPDF } from 'jspdf';
+import { storePdf, getPdf, deletePdf } from './pdf-storage.js';
 
 let pendingPdf = null;
 
@@ -177,10 +178,10 @@ export function removeFatturaPhoto() {
   document.getElementById('fatt-photo-input').value = '';
 }
 
-export function downloadFatturaPdf(id) {
+export async function downloadFatturaPdf(id) {
   const f = d.fatture.find(x => x.id === id);
-  if (!f) return;
-  const pdfData = f.pdf || f.foto;
+  if (!f || !f.hasPdf) { showToast(t('fatt.noPdf'), 'warn'); return; }
+  const pdfData = await getPdf(id).catch(() => null);
   if (!pdfData) { showToast(t('fatt.noPdf'), 'warn'); return; }
 
   const fileName = 'fattura_' + (f.azienda || 'doc').replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_') + (f.numero ? '_' + f.numero : '') + '.pdf';
@@ -309,8 +310,7 @@ export function autoCreateFatturaIfNeeded(fornitore, importo, data, fatturaNum) 
     tipoPagamento: 'contanti',
     numeroAssegno: '',
     pagata: true,
-    pdf: null,
-    foto: null
+    hasPdf: false
   });
 }
 
@@ -357,7 +357,7 @@ export function markFatturaUnpaid(id) {
 
 // ─── Sheet open/close ───
 
-export function openFatturaSheet(id) {
+export async function openFatturaSheet(id) {
   setEditingFatturaId(id || null);
   const overlay = document.getElementById('fattura-overlay');
   const title = document.getElementById('fattura-sheet-title');
@@ -381,10 +381,14 @@ export function openFatturaSheet(id) {
     document.getElementById('fatt-note').value = f.note || '';
     toggleAssegnoGroup();
 
-    // PDF/Photo
-    if (f.pdf || f.foto) {
-      pendingPdf = f.pdf || f.foto;
-      document.getElementById('fatt-pdf-preview').style.display = 'flex';
+    // PDF/Photo from IndexedDB
+    if (f.hasPdf || f.pdf || f.foto) {
+      pendingPdf = f.pdf || f.foto || await getPdf(f.id).catch(() => null);
+      if (pendingPdf) {
+        document.getElementById('fatt-pdf-preview').style.display = 'flex';
+      } else {
+        removeFatturaPhoto();
+      }
     } else {
       removeFatturaPhoto();
     }
@@ -418,7 +422,7 @@ export function closeFatturaOutside(e) {
 
 // ─── Save ───
 
-export function saveFattura() {
+export async function saveFattura() {
   const azienda = document.getElementById('fatt-azienda').value.trim();
   const importo = parseFloat(document.getElementById('fatt-importo').value) || 0;
   const tipoPagamento = document.getElementById('fatt-tipo-pagamento').value;
@@ -430,8 +434,19 @@ export function saveFattura() {
 
   // Preserve existing pagata flag when editing
   const existing = editingFatturaId ? d.fatture.find(x => x.id === editingFatturaId) : null;
+  const fatturaId = editingFatturaId || Date.now();
+
+  // Store PDF in IndexedDB, keep only hasPdf flag in localStorage
+  const hasPdf = !!pendingPdf;
+  if (pendingPdf) {
+    await storePdf(fatturaId, pendingPdf).catch(err => console.error('[PDF store]', err));
+  } else if (editingFatturaId && existing && existing.hasPdf) {
+    // User removed the photo during editing
+    await deletePdf(fatturaId).catch(() => {});
+  }
+
   const fattura = {
-    id: editingFatturaId || Date.now(),
+    id: fatturaId,
     dataArrivo: document.getElementById('fatt-data-arrivo').value,
     azienda: azienda,
     numero: document.getElementById('fatt-numero').value.trim(),
@@ -441,8 +456,7 @@ export function saveFattura() {
     ciclo: document.getElementById('fatt-ciclo').value,
     scadenza: document.getElementById('fatt-scadenza').value,
     note: document.getElementById('fatt-note').value.trim(),
-    pdf: pendingPdf || null,
-    foto: null,
+    hasPdf: hasPdf,
     pagata: existing ? existing.pagata : false
   };
 
@@ -463,6 +477,7 @@ export function saveFattura() {
 export function deleteFattura(id) {
   showConfirm(t('fatt.deleteTitle'), t('fatt.deleteMsg'), () => {
     d.fatture = d.fatture.filter(x => x.id !== id);
+    deletePdf(id).catch(() => {});
     fullSave();
     closeFatturaDetail();
     showToast(t('fatt.deleted'), 'check');
@@ -594,7 +609,7 @@ export function openFatturaDetail(id) {
     rows += `<div class="fattura-detail-row"><span class="fattura-detail-label">${t('fatt.note')}</span><span class="fattura-detail-value">${escapeHtml(f.note)}</span></div>`;
   }
 
-  if (f.pdf || f.foto) {
+  if (f.hasPdf || f.pdf || f.foto) {
     rows += `<div class="fattura-detail-row" style="flex-wrap:wrap;gap:8px;">
       <span class="fattura-detail-label">${t('fatt.pdfLabel')}</span>
       <span style="display:flex;gap:8px;">
@@ -640,10 +655,10 @@ export function closeFatturaDetailOutside(e) {
 
 // ─── Fullscreen Photo/PDF Preview ───
 
-export function openPhotoFullscreen(id) {
+export async function openPhotoFullscreen(id) {
   const f = d.fatture.find(x => x.id === id);
   if (!f) return;
-  const data = f.pdf || f.foto;
+  const data = f.pdf || f.foto || (f.hasPdf ? await getPdf(id).catch(() => null) : null);
   if (!data) { showToast(t('fatt.noPdf'), 'warn'); return; }
 
   const overlay = document.getElementById('photo-fullscreen-overlay');

@@ -8,6 +8,7 @@ import {
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { parseFlexDate } from './date-utils.js';
 import { t } from './i18n.js';
+import { getAllPdfs, storePdf } from './pdf-storage.js';
 
 export function downloadTemplate() {
   const ws_data = [
@@ -215,7 +216,7 @@ export function confirmFileImport() {
         scadenza: r.scadenza || '',
         note: r.note || '',
         pagata: !!r.tipoPagamento,
-        foto: null
+        hasPdf: false
       });
     });
     const count = parsedImportData.length;
@@ -426,7 +427,18 @@ export function exportMovimenti() {
   showToast(t('backup.exportDone'), 'check');
 }
 
-export function downloadBackup() {
+export async function downloadBackup() {
+  // Fetch all PDFs from IndexedDB and reattach to fatture copy for backup
+  let pdfMap = new Map();
+  try { pdfMap = await getAllPdfs(); } catch (e) { /* IDB unavailable */ }
+
+  const fattureWithPdfs = (d.fatture || []).map(f => {
+    if (f.hasPdf && pdfMap.has(f.id)) {
+      return { ...f, pdf: pdfMap.get(f.id) };
+    }
+    return { ...f };
+  });
+
   const backup = {
     _app: 'CassaSmartPro',
     _version: 6,
@@ -436,7 +448,7 @@ export function downloadBackup() {
     stipendi: d.stipendi,
     abit: d.abit,
     log: d.log,
-    fatture: d.fatture,
+    fatture: fattureWithPdfs,
     anticipi: d.anticipi,
     customCats: d.customCats || []
   };
@@ -474,8 +486,8 @@ export function checkAutoBackup() {
   }
 }
 
-export function triggerAutoBackupDownload() {
-  downloadBackup();
+export async function triggerAutoBackupDownload() {
+  await downloadBackup();
   localStorage.setItem('cassa_auto_backup_ts', Date.now().toString());
   renderAutoBackupCard();
 }
@@ -516,13 +528,25 @@ export function importBackup(event) {
       showConfirm(
         t('backup.restoreTitle'),
         t('backup.restoreMsg', { date: dateStr, n: movCount }),
-        () => {
+        async () => {
+          // Store PDFs from backup into IndexedDB, strip from fatture
+          const fatture = backup.fatture || [];
+          for (const f of fatture) {
+            const blob = f.pdf || f.foto;
+            if (blob && f.id) {
+              try { await storePdf(f.id, blob); } catch (e) { /* IDB error */ }
+              f.hasPdf = true;
+              delete f.pdf;
+              delete f.foto;
+            }
+          }
+
           d.saldo = backup.saldo ?? 0;
           d.fornitori = backup.fornitori || [];
           d.stipendi = backup.stipendi || [];
           d.abit = backup.abit || [];
           d.log = backup.log || [];
-          d.fatture = backup.fatture || [];
+          d.fatture = fatture;
           d.anticipi = backup.anticipi || [];
           d.customCats = backup.customCats || [];
           pendingExpenses.length = 0;

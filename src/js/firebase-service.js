@@ -14,17 +14,17 @@ import { t } from './i18n.js';
 let _uiCallback = null;
 export function setUiCallback(fn) { _uiCallback = fn; }
 
-// Merge cloud fatture (without photos) with local fatture (with photos)
+// Merge cloud fatture with local fatture (preserve hasPdf flag from local)
 function mergeFattureLocal(cloudFatture, localFatture) {
   const localMap = {};
   (localFatture || []).forEach(f => {
-    if (f.id) {
-      if (f.pdf) localMap[f.id] = { pdf: f.pdf };
-      else if (f.foto) localMap[f.id] = { foto: f.foto };
-    }
+    if (f.id) localMap[f.id] = f;
   });
   return cloudFatture.map(f => {
-    if (!f.pdf && !f.foto && f.id && localMap[f.id]) return { ...f, ...localMap[f.id] };
+    const local = f.id ? localMap[f.id] : null;
+    if (local && local.hasPdf && !f.hasPdf) {
+      return { ...f, hasPdf: true };
+    }
     return f;
   });
 }
@@ -95,19 +95,13 @@ export async function syncToCloud() {
   setSyncDebounceTimer(setTimeout(async () => {
     setSyncStatus('syncing');
     try {
-      // Strip foto (base64) from fatture to stay under Firestore 1MB limit
-      const fattureNoFoto = (d.fatture || []).map(f => {
-        if (!f.foto && !f.pdf) return f;
-        const { foto, pdf, ...rest } = f;
-        return rest;
-      });
       await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
         saldo: d.saldo,
         fornitori: d.fornitori,
         stipendi: d.stipendi,
         abit: d.abit,
         log: d.log,
-        fatture: fattureNoFoto,
+        fatture: d.fatture || [],
         anticipi: d.anticipi || [],
         customCats: d.customCats || [],
         aziendaData: d.aziendaData || {},

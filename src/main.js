@@ -5,7 +5,8 @@ import { initPinLock, changePin } from './js/pin-lock.js';
 import { setLang, applyLanguage, getLang } from './js/i18n.js';
 
 import {
-  selectedDate, setSelectedDate, setEditingDay, setOnSaveCallback
+  selectedDate, setSelectedDate, setEditingDay, setOnSaveCallback,
+  initPdfStorage
 } from './js/state.js';
 
 import { closeConfirm, closeModal, closeModalOutside } from './js/modals.js';
@@ -149,9 +150,9 @@ document.body.addEventListener('click', (e) => {
     case 'toggleStats': toggleStats(); break;
 
     // Fatture
-    case 'openFatturaSheet': openFatturaSheet(btn.dataset.id ? Number(btn.dataset.id) : undefined); break;
+    case 'openFatturaSheet': openFatturaSheet(btn.dataset.id ? Number(btn.dataset.id) : undefined).catch(console.error); break;
     case 'closeFatturaSheet': closeFatturaSheet(); break;
-    case 'saveFattura': saveFattura(); break;
+    case 'saveFattura': saveFattura().catch(console.error); break;
     case 'deleteFattura': deleteFattura(Number(btn.dataset.id)); break;
     case 'markFatturaPaid': markFatturaPaid(Number(btn.dataset.id)); break;
     case 'markFatturaUnpaid': markFatturaUnpaid(Number(btn.dataset.id)); break;
@@ -159,12 +160,12 @@ document.body.addEventListener('click', (e) => {
     case 'openFatturaDetail': openFatturaDetail(Number(btn.dataset.id)); break;
     case 'closeFatturaDetail': closeFatturaDetail(); break;
     case 'editFattura':
-      openFatturaSheet(Number(btn.dataset.id));
+      openFatturaSheet(Number(btn.dataset.id)).catch(console.error);
       closeFatturaDetail();
       break;
     case 'triggerFatturaPhoto': triggerFatturaPhoto(); break;
     case 'removeFatturaPhoto': removeFatturaPhoto(); break;
-    case 'openPhotoFullscreen': openPhotoFullscreen(Number(btn.dataset.id)); break;
+    case 'openPhotoFullscreen': openPhotoFullscreen(Number(btn.dataset.id)).catch(console.error); break;
     case 'closePhotoFullscreen': closePhotoFullscreen(); break;
 
     // Settings sections
@@ -179,7 +180,7 @@ document.body.addEventListener('click', (e) => {
     case 'filterAnticipi': filterAnticipi(btn.dataset.filter, btn); break;
 
     // PDF / AI
-    case 'downloadFatturaPdf': downloadFatturaPdf(Number(btn.dataset.id)); break;
+    case 'downloadFatturaPdf': downloadFatturaPdf(Number(btn.dataset.id)).catch(console.error); break;
     case 'saveAziendaData': saveAziendaData(); break;
     case 'saveOcrKey': saveOcrKey(); break;
     case 'removeOcrKey': removeOcrKey(); break;
@@ -191,7 +192,7 @@ document.body.addEventListener('click', (e) => {
     case 'googleSignIn': googleSignIn(); break;
 
     // Backup
-    case 'downloadBackup': downloadBackup(); break;
+    case 'downloadBackup': downloadBackup().catch(console.error); break;
     case 'triggerImportFile': document.getElementById('import-file').click(); break;
     case 'downloadTemplate': downloadTemplate(); break;
     case 'triggerExcelFile': document.getElementById('excel-file').click(); break;
@@ -204,7 +205,7 @@ document.body.addEventListener('click', (e) => {
     case 'closeExcelImport': closeExcelImport(); break;
     case 'confirmFileImport': confirmFileImport(); break;
     case 'toggleAutoBackup': toggleAutoBackup(); break;
-    case 'triggerManualBackup': triggerAutoBackupDownload(); break;
+    case 'triggerManualBackup': triggerAutoBackupDownload().catch(console.error); break;
   }
 });
 
@@ -259,13 +260,16 @@ document.getElementById('history-search').addEventListener('input', () => render
 document.getElementById('search-input').addEventListener('input', onSearchInput);
 
 // ─── Init ───
-initPinLock();
-applyLanguage();
-updateHeaderDate();
-updateDateDisplay();
-renderCasse();
-initFirebase();
-initOfflineMode();
-renderAutoBackupCard();
-checkAutoBackup();
-ui();
+(async () => {
+  initPinLock();
+  applyLanguage();
+  updateHeaderDate();
+  updateDateDisplay();
+  renderCasse();
+  await initPdfStorage();
+  initFirebase();
+  initOfflineMode();
+  renderAutoBackupCard();
+  checkAutoBackup();
+  ui();
+})();

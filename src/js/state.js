@@ -1,5 +1,7 @@
 // ─── State Management ───
 
+import { openDb, migrateFromFatture } from './pdf-storage.js';
+
 const STORAGE_KEY = 'cassa_v6';
 
 let d = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
@@ -96,3 +98,33 @@ export function setFirebaseDb(val) { firebaseDb = val; }
 export function setFirebaseUser(val) { firebaseUser = val; }
 export function setCloudSyncEnabled(val) { cloudSyncEnabled = val; }
 export function setSyncDebounceTimer(val) { syncDebounceTimer = val; }
+
+// ─── PDF Storage Migration (localStorage → IndexedDB) ───
+export async function initPdfStorage() {
+  try {
+    await openDb();
+    const needsMigration = d.fatture.some(f => f.pdf || f.foto);
+    if (needsMigration) {
+      const count = await migrateFromFatture(d.fatture);
+      if (count > 0) {
+        d.fatture.forEach(f => {
+          if (f.pdf || f.foto) {
+            f.hasPdf = true;
+            delete f.pdf;
+            delete f.foto;
+          }
+        });
+        try {
+          save();
+        } catch (e) {
+          // localStorage might be full — force strip all blobs
+          d.fatture.forEach(f => { delete f.pdf; delete f.foto; });
+          try { save(); } catch (_) { /* truly full */ }
+        }
+        console.log(`[PDF migration] moved ${count} PDFs to IndexedDB`);
+      }
+    }
+  } catch (err) {
+    console.error('[PDF storage] IndexedDB unavailable:', err);
+  }
+}
