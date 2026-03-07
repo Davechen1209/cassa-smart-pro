@@ -23,6 +23,7 @@ import {
   updateDateDisplay, updateHeaderDate,
   startEditDay, stopEditDay, deleteDayLog,
   deleteLog, renderDaySummary, renderHistory, shareDay,
+  closeSharePreview, closeSharePreviewOutside, copyShareText, confirmShare,
   renderCustomCatsSettings, addCustomCat, removeCustomCat,
   toggleDashboard,
   saveAziendaData, saveOcrKey, removeOcrKey
@@ -144,6 +145,9 @@ document.body.addEventListener('click', (e) => {
     case 'stopEditDay': stopEditDay(); break;
     case 'deleteDayLog': deleteDayLog(Number(btn.dataset.index)); break;
     case 'shareDay': shareDay(); break;
+    case 'closeSharePreview': closeSharePreview(); break;
+    case 'copyShareText': copyShareText().catch(console.error); break;
+    case 'confirmShare': confirmShare().catch(console.error); break;
 
     // History
     case 'deleteLog': deleteLog(Number(btn.dataset.index), btn.dataset.name); break;
@@ -216,6 +220,7 @@ document.getElementById('modal-overlay').addEventListener('click', closeModalOut
 document.getElementById('fattura-overlay').addEventListener('click', closeFatturaOutside);
 document.getElementById('fattura-detail-overlay').addEventListener('click', closeFatturaDetailOutside);
 document.getElementById('pdf-report-overlay').addEventListener('click', closePdfReportOutside);
+document.getElementById('share-preview-overlay').addEventListener('click', closeSharePreviewOutside);
 document.getElementById('photo-fullscreen-overlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closePhotoFullscreen();
 });

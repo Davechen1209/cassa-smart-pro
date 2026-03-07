@@ -793,6 +793,20 @@
     </div>
 </div>
 
+<!-- Share Preview -->
+<div class="expense-overlay" id="share-preview-overlay">
+    <div class="expense-sheet" style="padding-bottom:calc(24px + env(safe-area-inset-bottom));">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" data-i18n="share.previewTitle">Anteprima Condivisione</div>
+        <pre class="share-preview-text" id="share-preview-text"></pre>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button class="btn-sm gray" data-action="closeSharePreview" style="flex:1;" data-i18n="fatt.cancel">Annulla</button>
+            <button class="btn-sm blue" data-action="copyShareText" style="flex:1;" data-i18n="share.copy">Copia</button>
+            <button class="btn-sm blue" data-action="confirmShare" style="flex:1;" data-i18n="share.send">Condividi</button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast">
     <span class="toast-icon" id="toast-icon"></span>

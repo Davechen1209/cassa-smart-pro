@@ -183,23 +183,43 @@ function generateDayText(dateStr, dayLogs) {
   return lines.join('\n');
 }
 
-export async function shareDay() {
+let pendingShareText = '';
+
+export function shareDay() {
   const dateStr = selectedDate.toLocaleDateString('it-IT');
   const dayLogs = d.log.filter(l => l.d === dateStr);
   if (dayLogs.length === 0) return;
 
-  const text = generateDayText(dateStr, dayLogs);
+  pendingShareText = generateDayText(dateStr, dayLogs);
+  document.getElementById('share-preview-text').textContent = pendingShareText;
+  document.getElementById('share-preview-overlay').classList.add('show');
+}
 
+export function closeSharePreview() {
+  document.getElementById('share-preview-overlay').classList.remove('show');
+  pendingShareText = '';
+}
+
+export function closeSharePreviewOutside(e) {
+  if (e.target === document.getElementById('share-preview-overlay')) closeSharePreview();
+}
+
+export async function copyShareText() {
+  try {
+    await navigator.clipboard.writeText(pendingShareText);
+    showToast(t('day.copied'), 'check');
+  } catch { /* ignore */ }
+  closeSharePreview();
+}
+
+export async function confirmShare() {
   if (navigator.share) {
-    navigator.share({ text }).catch(() => {});
+    navigator.share({ text: pendingShareText }).catch(() => {});
   } else {
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast(t('day.copied'), 'check');
-    } catch {
-      showToast(t('day.copied'), 'check');
-    }
+    await copyShareText();
+    return;
   }
+  closeSharePreview();
 }
 
 export function startEditDay() {
