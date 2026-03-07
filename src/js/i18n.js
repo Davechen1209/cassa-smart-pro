@@ -361,6 +361,9 @@ const translations = {
     'ant.repayMsg': 'Segnare come rimborsato l\'anticipo di {name} ({amount}\u20AC)?',
     'ant.repaid': 'Anticipo di {name} rimborsato',
     'ant.hasOpen': '\u26A0 {name} ha anticipi aperti per \u20AC{amount}',
+    'ant.deleteTitle': 'Elimina Anticipo',
+    'ant.deleteMsg': 'Eliminare l\'anticipo di {name} ({amount}\u20AC)? Se non rimborsato, l\'importo verrà restituito al saldo.',
+    'ant.deleted': 'Anticipo di {name} eliminato',
 
     // Rubriche page
     'rub.pageTitle': 'Rubriche',
@@ -813,6 +816,9 @@ const translations = {
     'ant.repayMsg': '确定将{name}的借支（{amount}\u20AC）标记为已归还？',
     'ant.repaid': '{name}的借支已归还',
     'ant.hasOpen': '\u26A0 {name}有未还借支 \u20AC{amount}',
+    'ant.deleteTitle': '删除借支',
+    'ant.deleteMsg': '确定删除{name}的借支（{amount}\u20AC）？如未归还，金额将退回余额。',
+    'ant.deleted': '{name}的借支已删除',
 
     // Rubriche page
     'rub.pageTitle': '名册',

@@ -44,7 +44,7 @@ import {
 } from './js/rubrica.js';
 
 import {
-  repayAnticipo, filterAnticipi
+  repayAnticipo, filterAnticipi, deleteAnticipo
 } from './js/anticipi.js';
 
 import {
@@ -177,6 +177,7 @@ document.body.addEventListener('click', (e) => {
 
     // Anticipi
     case 'repayAnticipo': repayAnticipo(Number(btn.dataset.id)); break;
+    case 'deleteAnticipo': deleteAnticipo(Number(btn.dataset.id)); break;
     case 'filterAnticipi': filterAnticipi(btn.dataset.filter, btn); break;
 
     // PDF / AI

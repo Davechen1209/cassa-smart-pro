@@ -41,6 +41,9 @@ export function renderAnticipi() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
         </button>
       ` : ''}
+      <button class="anticipo-delete" data-action="deleteAnticipo" data-id="${a.id}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
   `).join('');
 
@@ -97,6 +100,25 @@ export function repayAnticipo(id) {
       d.log.push({ d: oggi, v: t('ant.logRepay') + ': ' + ant.nome, a: ant.importo });
       fullSave();
       showToast(t('ant.repaid', { name: ant.nome }), 'check');
+    }
+  );
+}
+
+export function deleteAnticipo(id) {
+  const ant = d.anticipi.find(a => a.id === id);
+  if (!ant) return;
+
+  showConfirm(
+    t('ant.deleteTitle'),
+    t('ant.deleteMsg', { name: ant.nome, amount: ant.importo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }),
+    () => {
+      // If not yet repaid, refund the amount back to saldo
+      if (!ant.restituito) {
+        d.saldo += ant.importo;
+      }
+      d.anticipi = d.anticipi.filter(a => a.id !== id);
+      fullSave();
+      showToast(t('ant.deleted', { name: ant.nome }), 'trash');
     }
   );
 }
