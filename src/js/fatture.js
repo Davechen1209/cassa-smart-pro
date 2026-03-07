@@ -236,7 +236,7 @@ export function calcAllFattureCash() {
 
   d.log.forEach(entry => {
     if (!entry.v || entry.a >= 0) return;
-    const match = String(entry.v).match(/^Fornitore:\s*(.+?)(\s*\(|$)/i);
+    const match = String(entry.v).match(/^(?:Fornitore|供应商):\s*(.+?)(\s*\(|$)/i);
     if (!match) return;
     const amount = Math.abs(entry.a);
 

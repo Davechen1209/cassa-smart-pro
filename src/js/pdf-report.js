@@ -1,7 +1,7 @@
 // ─── Monthly PDF Report ───
 
 import { d } from './state.js';
-import { t, getLang } from './i18n.js';
+import { t, getLang, translateLogDesc } from './i18n.js';
 
 export function openPdfReportSheet() {
   const now = new Date();
@@ -50,8 +50,9 @@ function buildPrintArea(year, month) {
   // Category breakdown
   const catMap = {};
   expenses.forEach(l => {
-    const ci = l.v.indexOf(':');
-    const cat = ci > 0 ? l.v.substring(0, ci).trim() : t('exp.genericExpense');
+    const translated = translateLogDesc(l.v);
+    const ci = translated.indexOf(':');
+    const cat = ci > 0 ? translated.substring(0, ci).trim() : t('exp.genericExpense');
     catMap[cat] = (catMap[cat] || 0) + Math.abs(l.a);
   });
   const sortedCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
@@ -114,7 +115,7 @@ function buildPrintArea(year, month) {
           <tbody>
             ${monthLogs.map(l => `<tr>
               <td>${l.d}</td>
-              <td>${l.v}</td>
+              <td>${translateLogDesc(l.v)}</td>
               <td class="print-amount ${l.a >= 0 ? 'positive' : 'negative'}">${fmt(l.a)}</td>
             </tr>`).join('')}
           </tbody>

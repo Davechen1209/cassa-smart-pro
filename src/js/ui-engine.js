@@ -10,7 +10,7 @@ import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
 import { renderFatture, updateFattureTabBadge } from './fatture.js';
 import { renderAnticipi } from './anticipi.js';
-import { t, getLang } from './i18n.js';
+import { t, getLang, translateLogDesc } from './i18n.js';
 
 export function updateDateDisplay() {
   document.getElementById('date-display-text').textContent = formatDateDisplay(selectedDate);
@@ -70,7 +70,7 @@ export function renderDaySummary() {
     rows += `
       <div class="day-summary-row">
         <div class="day-summary-dot ${isIncome ? 'income' : 'expense'}"></div>
-        <div class="day-summary-name">${escapeHtml(l.v)}</div>
+        <div class="day-summary-name">${escapeHtml(translateLogDesc(l.v))}</div>
         <div class="day-summary-amount ${isIncome ? 'positive' : 'negative'}">
           ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC
         </div>
@@ -147,17 +147,18 @@ function generateDayText(dateStr, dayLogs) {
   if (incassi.length > 0) {
     lines.push('\u2501\u2501 ' + t('day.shareIncassi') + ' \u2501\u2501');
     incassi.forEach(l => {
-      // Parse Z and POS from description like "Incasso Cash (Z:1500 POS:300)"
-      const zMatch = l.v.match(/(?:Z|TOTALE|总计):([\d.,]+)/);
-      const posMatch = l.v.match(/POS:([\d.,]+)/);
+      const desc = translateLogDesc(l.v);
+      // Parse Z and POS from description like "Incasso Cash (TOTALE:1500 POS:300)"
+      const zMatch = desc.match(/(?:Z|TOTALE|总计):([\d.,]+)/);
+      const posMatch = desc.match(/POS:([\d.,]+)/);
       if (zMatch && posMatch) {
         const z = parseFloat(zMatch[1].replace(',', '.'));
         const pos = parseFloat(posMatch[1].replace(',', '.'));
-        const name = l.v.replace(/\s*\((?:Z|TOTALE|总计):.*\)/, '').trim();
+        const name = desc.replace(/\s*\((?:Z|TOTALE|总计):.*\)/, '').trim();
         lines.push(name);
         lines.push('  ' + t('incassi.totaleLabel') + ': ' + fmtEur(z) + '\u20AC - POS: ' + fmtEur(pos) + '\u20AC = ' + fmtEur(l.a) + '\u20AC');
       } else {
-        lines.push('+ ' + fmtEur(l.a) + '\u20AC  ' + l.v);
+        lines.push('+ ' + fmtEur(l.a) + '\u20AC  ' + desc);
       }
     });
     lines.push('');
@@ -167,7 +168,7 @@ function generateDayText(dateStr, dayLogs) {
   if (uscite.length > 0) {
     lines.push('\u2501\u2501 ' + t('day.shareUscite') + ' \u2501\u2501');
     uscite.forEach(l => {
-      lines.push('- ' + fmtEur(Math.abs(l.a)) + '\u20AC  ' + l.v);
+      lines.push('- ' + fmtEur(Math.abs(l.a)) + '\u20AC  ' + translateLogDesc(l.v));
     });
     lines.push('');
   }
@@ -215,7 +216,7 @@ export function stopEditDay() {
 
 export function deleteDayLog(index) {
   const entry = d.log[index];
-  showConfirm(t('day.deleteTitle'), t('day.deleteMsg', { name: escapeHtml(entry.v) }), () => {
+  showConfirm(t('day.deleteTitle'), t('day.deleteMsg', { name: escapeHtml(translateLogDesc(entry.v)) }), () => {
     d.saldo -= entry.a;
     d.log.splice(index, 1);
     fullSave();
@@ -237,7 +238,7 @@ export function renderHistory() {
   const filtered = [];
   for (let i = d.log.length - 1; i >= 0; i--) {
     const l = d.log[i];
-    if (query && !l.v.toLowerCase().includes(query) && !l.d.includes(query)) continue;
+    if (query && !translateLogDesc(l.v).toLowerCase().includes(query) && !l.d.includes(query)) continue;
     filtered.push({ entry: l, origIndex: i });
   }
 
@@ -263,13 +264,13 @@ export function renderHistory() {
           </svg>
         </div>
         <div class="history-info">
-          <div class="history-name">${escapeHtml(l.v)}</div>
+          <div class="history-name">${escapeHtml(translateLogDesc(l.v))}</div>
           <div class="history-date">${escapeHtml(l.d)}</div>
         </div>
         <div class="history-amount ${isIncome ? 'positive' : 'negative'}">
           ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC
         </div>
-        <button class="history-delete" data-action="deleteLog" data-index="${origIndex}" data-name="${escapeHtml(l.v)}">
+        <button class="history-delete" data-action="deleteLog" data-index="${origIndex}" data-name="${escapeHtml(translateLogDesc(l.v))}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>

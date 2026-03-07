@@ -2,7 +2,7 @@
 
 import { d } from './state.js';
 import { escapeHtml } from './modals.js';
-import { t } from './i18n.js';
+import { t, translateLogDesc } from './i18n.js';
 import { tab } from './ui-engine.js';
 
 let debounceTimer = null;
@@ -40,10 +40,11 @@ function performSearch(query) {
 
   // Search d.log
   d.log.forEach(l => {
-    if ((l.v || '').toLowerCase().includes(q) || (l.d || '').includes(q)) {
+    const desc = translateLogDesc(l.v || '');
+    if (desc.toLowerCase().includes(q) || (l.d || '').includes(q)) {
       results.push({
         type: 'movimento',
-        label: l.v,
+        label: desc,
         sub: l.d + ' · ' + (l.a >= 0 ? '+' : '') +
           l.a.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '€',
         tab: 3

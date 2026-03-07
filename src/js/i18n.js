@@ -906,6 +906,56 @@ const translations = {
   }
 };
 
+// Known type prefixes in both languages for re-translation
+const typeKeys = [
+  { itVal: 'Fornitore', zhVal: '供应商', key: 'exp.fornitore' },
+  { itVal: 'Stipendio', zhVal: '工资', key: 'exp.stipendio' },
+  { itVal: 'Spesa', zhVal: '支出', key: 'exp.expense' },
+  { itVal: 'Anticipo', zhVal: '借支', key: 'ant.logAdvance' },
+  { itVal: 'Spesa generica', zhVal: '其他支出', key: 'exp.genericExpense' },
+];
+const incassoPatterns = [
+  /^(.*?)Incasso Contanti\s*\(TOTALE:([\d.,]+)\s*POS:([\d.,]+)\)$/,
+  /^(.*?)现金收入\s*\(总计:([\d.,]+)\s*POS:([\d.,]+)\)$/,
+];
+const repayPatterns = [
+  /^Rimborso anticipo:\s*(.+)$/,
+  /^归还借支:\s*(.+)$/,
+];
+
+export function translateLogDesc(desc) {
+  if (!desc) return desc;
+
+  // Match income entries: "[cassa] Incasso Contanti (TOTALE:X POS:Y)"
+  for (const re of incassoPatterns) {
+    const m = desc.match(re);
+    if (m) {
+      const prefix = m[1] ? m[1].trim() + ' ' : '';
+      return prefix + t('fatt.incassoCash') + ' (' + t('incassi.totaleLabel') + ':' + m[2] + ' POS:' + m[3] + ')';
+    }
+  }
+
+  // Match anticipi repay: "Rimborso anticipo: NAME"
+  for (const re of repayPatterns) {
+    const m = desc.match(re);
+    if (m) return t('ant.logRepay') + ': ' + m[1];
+  }
+
+  // Match expense entries: "TYPE: NAME (note)" or "TYPE: NAME"
+  const colonIdx = desc.indexOf(': ');
+  if (colonIdx > 0) {
+    const rawType = desc.substring(0, colonIdx);
+    const rest = desc.substring(colonIdx + 2);
+    for (const tk of typeKeys) {
+      if (rawType === tk.itVal || rawType === tk.zhVal) {
+        return t(tk.key) + ': ' + rest;
+      }
+    }
+  }
+
+  return desc;
+}
+
 let currentLang = localStorage.getItem('cassa_lang') || 'it';
 
 export function t(key, params) {

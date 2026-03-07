@@ -1,7 +1,7 @@
 // ─── Statistics Module ───
 
 import { d } from './state.js';
-import { t, getLang } from './i18n.js';
+import { t, getLang, translateLogDesc } from './i18n.js';
 
 export function renderStatistics() {
   const container = document.getElementById('stats-content');
@@ -36,8 +36,9 @@ export function renderStatistics() {
     const amt = Math.abs(l.a);
     totalExpense += amt;
     // Extract category from description (type: name format)
-    const colonIdx = l.v.indexOf(':');
-    const cat = colonIdx > 0 ? l.v.substring(0, colonIdx).trim() : t('exp.genericExpense');
+    const translated = translateLogDesc(l.v);
+    const colonIdx = translated.indexOf(':');
+    const cat = colonIdx > 0 ? translated.substring(0, colonIdx).trim() : t('exp.genericExpense');
     categories[cat] = (categories[cat] || 0) + amt;
   });
 
