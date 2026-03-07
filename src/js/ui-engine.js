@@ -129,6 +129,9 @@ function fmtEur(n) {
 
 function generateDayText(dateStr, dayLogs) {
   const saldoCum = calcSaldoAtDate(selectedDate);
+  const yesterday = new Date(selectedDate);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const saldoYesterday = calcSaldoAtDate(yesterday);
   const incassi = dayLogs.filter(l => l.a >= 0);
   const uscite = dayLogs.filter(l => l.a < 0);
 
@@ -178,7 +181,7 @@ function generateDayText(dateStr, dayLogs) {
   const rimasto = Math.round((totalIncassi + totalUscite) * 100) / 100;
   lines.push(t('day.shareRemaining') + ': ' + (rimasto >= 0 ? '+' : '') + fmtEur(rimasto) + '\u20AC');
   lines.push(t('day.endBalance') + ': \u20AC' + fmtEur(saldoCum));
-  lines.push(t('day.totalCash') + ': \u20AC' + fmtEur(saldoCum));
+  lines.push(t('day.yesterdayBalance') + ': \u20AC' + fmtEur(saldoYesterday));
 
   return lines.join('\n');
 }
