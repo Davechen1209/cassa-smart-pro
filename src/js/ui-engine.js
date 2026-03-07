@@ -178,7 +178,7 @@ function generateDayText(dateStr, dayLogs) {
   const rimasto = Math.round((totalIncassi + totalUscite) * 100) / 100;
   lines.push(t('day.shareRemaining') + ': ' + (rimasto >= 0 ? '+' : '') + fmtEur(rimasto) + '\u20AC');
   lines.push(t('day.endBalance') + ': \u20AC' + fmtEur(saldoCum));
-  lines.push(t('day.totalCash') + ': \u20AC' + fmtEur(d.saldo));
+  lines.push(t('day.totalCash') + ': \u20AC' + fmtEur(saldoCum));
 
   return lines.join('\n');
 }
