@@ -147,6 +147,7 @@ function generateDayText(dateStr, dayLogs) {
   lines.push('');
 
   // ━━ Incassi ━━
+  let totalContanti = 0;
   if (incassi.length > 0) {
     lines.push('\u2501\u2501 ' + t('day.shareIncassi') + ' \u2501\u2501');
     incassi.forEach(l => {
@@ -160,8 +161,10 @@ function generateDayText(dateStr, dayLogs) {
         const name = desc.replace(/\s*\((?:Z|TOTALE|总计):.*\)/, '').trim();
         lines.push(name);
         lines.push('  ' + t('incassi.totaleLabel') + ': ' + fmtEur(z) + '\u20AC - POS: ' + fmtEur(pos) + '\u20AC = ' + fmtEur(l.a) + '\u20AC');
+        totalContanti += (z - pos);
       } else {
         lines.push('+ ' + fmtEur(l.a) + '\u20AC  ' + desc);
+        totalContanti += l.a;
       }
     });
     lines.push('');
@@ -178,6 +181,8 @@ function generateDayText(dateStr, dayLogs) {
 
   // ━━━━━━━━━━━━━
   lines.push('\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501');
+  totalContanti = Math.round(totalContanti * 100) / 100;
+  lines.push(t('day.shareTotalCash') + ': ' + fmtEur(totalContanti) + '\u20AC');
   const rimasto = Math.round((totalIncassi + totalUscite) * 100) / 100;
   lines.push(t('day.shareRemaining') + ': ' + (rimasto >= 0 ? '+' : '') + fmtEur(rimasto) + '\u20AC');
   lines.push(t('day.endBalance') + ': \u20AC' + fmtEur(saldoCum));
