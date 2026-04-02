@@ -452,47 +452,71 @@ export function renderDashboard() {
   const container = document.getElementById('dashboard-content');
   if (!container || container.style.display === 'none') return;
 
-  const saldo = d.saldo;
   const now = new Date();
-  const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const curMonth = now.getMonth();
+  const curYear = now.getFullYear();
+  const curMonthKey = curYear + '-' + String(curMonth + 1).padStart(2, '0');
 
-  let monthIncome = 0, monthExpenses = 0;
+  // 1. Totale in cassa
+  const saldo = d.saldo;
+
+  // 2. Fatture da pagare con scadenza questo mese
+  const fattureMese = (d.fatture || []).filter(f => {
+    if (f.pagata) return false;
+    if (!f.scadenza) return false;
+    const dt = new Date(f.scadenza);
+    return dt.getMonth() === curMonth && dt.getFullYear() === curYear;
+  });
+  const fattureTotal = fattureMese.reduce((s, f) => s + (f.importo || 0), 0);
+
+  // 3. Spese del mese (al di fuori delle fatture)
+  let speseExtra = 0;
   d.log.forEach(l => {
-    if (!l.d) return;
+    if (!l.d || l.a >= 0) return;
     const parts = l.d.split('/');
     if (parts.length === 3) {
       const lm = parts[2] + '-' + parts[1];
-      if (lm === curMonthKey) {
-        if (l.a >= 0) monthIncome += l.a;
-        else monthExpenses += Math.abs(l.a);
-      }
+      if (lm === curMonthKey) speseExtra += Math.abs(l.a);
     }
   });
-  const netMonth = monthIncome - monthExpenses;
 
-  const unpaid = (d.fatture || []).filter(f => !f.pagata);
-  const unpaidTotal = unpaid.reduce((s, f) => s + (f.importo || 0), 0);
+  // 4. Fatture scadute non saldate
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const fattureScadute = (d.fatture || []).filter(f => {
+    if (f.pagata) return false;
+    if (!f.scadenza) return false;
+    const dt = new Date(f.scadenza); dt.setHours(0, 0, 0, 0);
+    return dt < today;
+  });
+  const scaduteTotal = fattureScadute.reduce((s, f) => s + (f.importo || 0), 0);
 
   const fmt = n => '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const rowStyle = 'display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(255,255,255,0.15); border-radius:10px; backdrop-filter:blur(4px);';
+  const labelStyle = 'font-size:12px; font-weight:600; color:rgba(255,255,255,0.85); letter-spacing:0.3px;';
+  const valStyle = 'font-size:15px; font-weight:800; color:#fff;';
+  const subStyle = 'font-size:11px; color:rgba(255,255,255,0.6); margin-top:1px;';
+  const warnDot = fattureScadute.length > 0 ? '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff4444;margin-right:6px;"></span>' : '';
+
   container.innerHTML = `
-    <div class="dashboard-metrics">
-      <div class="dash-metric green">
-        <div class="dash-metric-label">${t('dash.monthIncome')}</div>
-        <div class="dash-metric-value">${fmt(monthIncome)}</div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="${rowStyle}">
+        <div>
+          <div style="${labelStyle}">${t('dash.fattureMese')}</div>
+          <div style="${subStyle}">${fattureMese.length} ${t('dash.invoices')}</div>
+        </div>
+        <div style="${valStyle}">${fmt(fattureTotal)}</div>
       </div>
-      <div class="dash-metric red">
-        <div class="dash-metric-label">${t('dash.monthExpenses')}</div>
-        <div class="dash-metric-value">${fmt(monthExpenses)}</div>
+      <div style="${rowStyle}">
+        <div>
+          <div style="${labelStyle}">${warnDot}${t('dash.fattureScadute')}</div>
+          <div style="${subStyle}">${fattureScadute.length} ${t('dash.invoices')}</div>
+        </div>
+        <div style="${valStyle} ${fattureScadute.length > 0 ? 'color:#ff6b6b;' : ''}">${fmt(scaduteTotal)}</div>
       </div>
-      <div class="dash-metric ${netMonth >= 0 ? 'blue' : 'orange'}">
-        <div class="dash-metric-label">${t('dash.netMonth')}</div>
-        <div class="dash-metric-value">${fmt(netMonth)}</div>
-      </div>
-      <div class="dash-metric orange">
-        <div class="dash-metric-label">${t('dash.unpaidFatture')}</div>
-        <div class="dash-metric-value">${fmt(unpaidTotal)}</div>
-        <div class="dash-metric-sub">${unpaid.length} ${t('dash.invoices')}</div>
+      <div style="${rowStyle}">
+        <div style="${labelStyle}">${t('dash.speseExtra')}</div>
+        <div style="${valStyle}">${fmt(speseExtra)}</div>
       </div>
     </div>`;
 }
@@ -503,7 +527,7 @@ export function toggleDashboard() {
   if (!content) return;
   const open = content.style.display !== 'none';
   content.style.display = open ? 'none' : 'block';
-  if (chevron) chevron.style.transform = open ? '' : 'rotate(90deg)';
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(180deg)';
   if (!open) renderDashboard();
 }
 

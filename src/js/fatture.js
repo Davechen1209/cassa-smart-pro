@@ -528,11 +528,28 @@ export function filterFatture(filter, targetBtn) {
   renderFatture();
 }
 
-export function sortFatture(sortKey) {
-  setFattureSort(sortKey);
-  document.querySelectorAll('#fatt-sort .segment-btn').forEach(b => b.classList.remove('active'));
-  const active = document.querySelector('#fatt-sort .segment-btn[data-sort="' + sortKey + '"]');
-  if (active) active.classList.add('active');
+const sortModes = ['data', 'alfa', 'importo', 'stato'];
+const sortIcons = {
+  data:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="12" height="4" rx="1"/><rect x="3" y="16" width="6" height="4" rx="1"/></svg>',
+  alfa:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M3 18h6l-6-8h6"/><path d="M15 4v16m-3-3 3 3 3-3"/></svg>',
+  importo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  stato:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>'
+};
+
+export function updateSortButton() {
+  const icon = document.getElementById('fatt-sort-icon');
+  const label = document.getElementById('fatt-sort-label');
+  if (!icon || !label) return;
+  icon.innerHTML = sortIcons[fattureSort] || sortIcons.data;
+  const labelKeys = { data: 'fatt.sortDate', alfa: 'fatt.sortAlpha', importo: 'fatt.sortAmount', stato: 'fatt.sortStatus' };
+  label.textContent = t(labelKeys[fattureSort] || 'fatt.sortDate');
+}
+
+export function cycleFattureSort() {
+  const idx = sortModes.indexOf(fattureSort);
+  const next = sortModes[(idx + 1) % sortModes.length];
+  setFattureSort(next);
+  updateSortButton();
   renderFatture();
 }
 

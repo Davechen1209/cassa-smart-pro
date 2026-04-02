@@ -2,9 +2,10 @@
 
 import './style.css';
 import { initPinLock, changePin } from './js/pin-lock.js';
-import { setLang, applyLanguage, getLang } from './js/i18n.js';
+import { setLang, applyLanguage, getLang, t } from './js/i18n.js';
 
 import {
+  d, fullSave,
   selectedDate, setSelectedDate, setEditingDay, setOnSaveCallback,
   initPdfStorage
 } from './js/state.js';
@@ -50,7 +51,7 @@ import {
 
 import {
   openFatturaSheet, closeFatturaSheet, closeFatturaOutside,
-  saveFattura, deleteFattura, filterFatture, sortFatture,
+  saveFattura, deleteFattura, filterFatture, cycleFattureSort,
   markFatturaPaid, markFatturaUnpaid,
   openFatturaDetail, closeFatturaDetail, closeFatturaDetailOutside,
   triggerFatturaPhoto, handleFatturaPhoto, removeFatturaPhoto,
@@ -163,7 +164,7 @@ document.body.addEventListener('click', (e) => {
     case 'markFatturaPaid': markFatturaPaid(Number(btn.dataset.id)); break;
     case 'markFatturaUnpaid': markFatturaUnpaid(Number(btn.dataset.id)); break;
     case 'filterFatture': filterFatture(btn.dataset.filter, btn); break;
-    case 'sortFatture': sortFatture(btn.dataset.sort); break;
+    case 'cycleFattureSort': cycleFattureSort(); break;
     case 'openFatturaDetail': openFatturaDetail(Number(btn.dataset.id)); break;
     case 'closeFatturaDetail': closeFatturaDetail(); break;
     case 'editFattura':
@@ -268,10 +269,50 @@ document.getElementById('fatture-excel-file').addEventListener('change', importF
 document.getElementById('history-search').addEventListener('input', () => renderHistory());
 document.getElementById('search-input').addEventListener('input', onSearchInput);
 
+// ─── Editable App Title ───
+const appTitleEl = document.getElementById('app-title');
+if (d.shopName) appTitleEl.textContent = d.shopName;
+
+appTitleEl.addEventListener('click', () => {
+  appTitleEl.contentEditable = 'true';
+  appTitleEl.style.borderBottom = '1px dashed var(--blue)';
+  appTitleEl.style.outline = 'none';
+  appTitleEl.focus();
+  // Select all text
+  const range = document.createRange();
+  range.selectNodeContents(appTitleEl);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+});
+
+function saveTitle() {
+  appTitleEl.contentEditable = 'false';
+  appTitleEl.style.borderBottom = '1px dashed transparent';
+  const name = appTitleEl.textContent.trim();
+  if (name) {
+    d.shopName = name;
+  } else {
+    delete d.shopName;
+    appTitleEl.textContent = t('app.title');
+  }
+  fullSave();
+}
+
+appTitleEl.addEventListener('blur', saveTitle);
+appTitleEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); appTitleEl.blur(); }
+  if (e.key === 'Escape') {
+    appTitleEl.textContent = d.shopName || t('app.title');
+    appTitleEl.blur();
+  }
+});
+
 // ─── Init ───
 (async () => {
   initPinLock();
   applyLanguage();
+  if (d.shopName) appTitleEl.textContent = d.shopName;
   updateHeaderDate();
   updateDateDisplay();
   renderCasse();

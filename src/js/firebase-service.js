@@ -105,6 +105,7 @@ export async function syncToCloud() {
         anticipi: d.anticipi || [],
         customCats: d.customCats || [],
         aziendaData: d.aziendaData || {},
+        shopName: d.shopName || '',
         lastUpdate: serverTimestamp(),
         updatedAt: new Date().toISOString()
       });
@@ -137,6 +138,7 @@ export async function loadFromCloud() {
         d.anticipi = cloud.anticipi || d.anticipi;
         d.customCats = cloud.customCats || d.customCats;
         d.aziendaData = cloud.aziendaData || d.aziendaData;
+        if (cloud.shopName) d.shopName = cloud.shopName;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
         callUi();
       } else if (localLogLen > cloudLogLen) {

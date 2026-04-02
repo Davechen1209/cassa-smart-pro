@@ -437,10 +437,11 @@ const translations = {
 
     // Dashboard
     'dash.title': 'Riepilogo',
-    'dash.monthIncome': 'Entrate mese',
-    'dash.monthExpenses': 'Uscite mese',
-    'dash.netMonth': 'Netto mese',
-    'dash.unpaidFatture': 'Fatture da pagare',
+    'dash.tapDetail': 'Tocca per dettagli',
+    'dash.totalCassa': 'Totale in cassa',
+    'dash.fattureMese': 'Fatture in scadenza questo mese',
+    'dash.speseExtra': 'Altre spese del mese',
+    'dash.fattureScadute': 'Fatture scadute non saldate',
     'dash.invoices': 'fatture',
 
     // Custom Categories
@@ -902,10 +903,11 @@ const translations = {
 
     // Dashboard
     'dash.title': '概览',
-    'dash.monthIncome': '本月收入',
-    'dash.monthExpenses': '本月支出',
-    'dash.netMonth': '本月净额',
-    'dash.unpaidFatture': '待付账单',
+    'dash.tapDetail': '点击查看详情',
+    'dash.totalCassa': '收银总额',
+    'dash.fattureMese': '本月到期账单',
+    'dash.speseExtra': '本月其他支出',
+    'dash.fattureScadute': '逾期未付账单',
     'dash.invoices': '张账单',
 
     // Custom Categories
