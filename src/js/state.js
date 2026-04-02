@@ -24,6 +24,7 @@ let modalCat = null;
 let selectedDate = new Date();
 let editingDay = false;
 let fattureFilter = 'tutte';
+let fattureSort = 'data';
 let editingFatturaId = null;
 let anticipiFilter = 'aperti';
 let anticipiNextId = d.anticipi.length > 0 ? Math.max(...d.anticipi.map(a => a.id)) + 1 : 1;
@@ -78,7 +79,7 @@ export {
   confirmCallback,
   editingItem, modalCat,
   selectedDate, editingDay,
-  fattureFilter, editingFatturaId,
+  fattureFilter, fattureSort, editingFatturaId,
   anticipiFilter, anticipiNextId,
   parsedImportData, importMode,
   firebaseDb, firebaseUser, cloudSyncEnabled, syncDebounceTimer
@@ -96,6 +97,7 @@ export function setModalCat(val) { modalCat = val; }
 export function setSelectedDate(val) { selectedDate = val; }
 export function setEditingDay(val) { editingDay = val; }
 export function setFattureFilter(val) { fattureFilter = val; }
+export function setFattureSort(val) { fattureSort = val; }
 export function setEditingFatturaId(val) { editingFatturaId = val; }
 export function setAnticipiFilter(val) { anticipiFilter = val; }
 export function setAnticipiNextId(val) { anticipiNextId = val; }

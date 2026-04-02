@@ -1,8 +1,8 @@
 // ─── Fatture (Invoice Tracking) ───
 
 import {
-  d, fullSave, fattureFilter, editingFatturaId,
-  setFattureFilter, setEditingFatturaId
+  d, fullSave, fattureFilter, fattureSort, editingFatturaId,
+  setFattureFilter, setFattureSort, setEditingFatturaId
 } from './state.js';
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { toISODate } from './date-utils.js';
@@ -314,10 +314,35 @@ export function autoCreateFatturaIfNeeded(fornitore, importo, data, fatturaNum) 
   });
 }
 
-export function updateFattureAziendaList() {
-  const dl = document.getElementById('fatt-azienda-list');
-  if (!dl) return;
-  dl.innerHTML = (d.fornitori || []).map(f => '<option value="' + escapeHtml(f) + '">').join('');
+export function updateFattureAziendaList(selectedValue) {
+  const sel = document.getElementById('fatt-azienda');
+  if (!sel) return;
+  const val = selectedValue !== undefined ? selectedValue : sel.value;
+  sel.innerHTML = '<option value="">' + escapeHtml(t('fatt.fornitorePlaceholder')) + '</option>'
+    + (d.fornitori || []).map(f =>
+      '<option value="' + escapeHtml(f) + '"' + (f === val ? ' selected' : '') + '>' + escapeHtml(f) + '</option>'
+    ).join('');
+}
+
+export function addFornitoreFromFattura() {
+  document.getElementById('modal-title').textContent = t('fatt.newFornitore');
+  document.getElementById('modal-input').value = '';
+  document.getElementById('modal-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('modal-input').focus(), 350);
+
+  window._paymentModalHandler = () => {
+    const val = document.getElementById('modal-input').value.trim();
+    window._paymentModalHandler = null;
+    document.getElementById('modal-overlay').classList.remove('show');
+    if (!val) return;
+    if (!d.fornitori) d.fornitori = [];
+    if (!d.fornitori.includes(val)) {
+      d.fornitori.push(val);
+      d.fornitori.sort((a, b) => a.localeCompare(b));
+      fullSave();
+    }
+    updateFattureAziendaList(val);
+  };
 }
 
 export function getFatturaStatus(f) {
@@ -503,6 +528,14 @@ export function filterFatture(filter, targetBtn) {
   renderFatture();
 }
 
+export function sortFatture(sortKey) {
+  setFattureSort(sortKey);
+  document.querySelectorAll('#fatt-sort .segment-btn').forEach(b => b.classList.remove('active'));
+  const active = document.querySelector('#fatt-sort .segment-btn[data-sort="' + sortKey + '"]');
+  if (active) active.classList.add('active');
+  renderFatture();
+}
+
 function tipoPagamentoLabel(tipo) {
   if (tipo === 'contanti') return t('fatt.contanti');
   if (tipo === 'bonifico') return t('fatt.bonifico');
@@ -522,9 +555,25 @@ export function renderFatture() {
     return;
   }
 
-  const sorted = [...d.fatture].sort((a, b) =>
-    (b.dataArrivo || '').localeCompare(a.dataArrivo || '')
-  );
+  let sorted = [...d.fatture];
+  switch (fattureSort) {
+    case 'alfa':
+      sorted.sort((a, b) => (a.azienda || '').localeCompare(b.azienda || ''));
+      break;
+    case 'importo':
+      sorted.sort((a, b) => (b.importo || 0) - (a.importo || 0));
+      break;
+    case 'stato':
+      sorted.sort((a, b) => {
+        const order = { scaduta: 0, in_scadenza: 1, aperta: 2, pagata: 3 };
+        return (order[getFatturaStatus(a)] || 0) - (order[getFatturaStatus(b)] || 0);
+      });
+      break;
+    case 'data':
+    default:
+      sorted.sort((a, b) => (b.dataArrivo || '').localeCompare(a.dataArrivo || ''));
+      break;
+  }
 
   let filtered = sorted;
   if (fattureFilter === 'aperte') filtered = sorted.filter(f => getFatturaStatus(f) !== 'pagata');

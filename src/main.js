@@ -50,12 +50,13 @@ import {
 
 import {
   openFatturaSheet, closeFatturaSheet, closeFatturaOutside,
-  saveFattura, deleteFattura, filterFatture,
+  saveFattura, deleteFattura, filterFatture, sortFatture,
   markFatturaPaid, markFatturaUnpaid,
   openFatturaDetail, closeFatturaDetail, closeFatturaDetailOutside,
   triggerFatturaPhoto, handleFatturaPhoto, removeFatturaPhoto,
   toggleAssegnoGroup, downloadFatturaPdf,
-  openPhotoFullscreen, closePhotoFullscreen
+  openPhotoFullscreen, closePhotoFullscreen,
+  addFornitoreFromFattura
 } from './js/fatture.js';
 
 import { toggleStats } from './js/statistics.js';
@@ -155,12 +156,14 @@ document.body.addEventListener('click', (e) => {
 
     // Fatture
     case 'openFatturaSheet': openFatturaSheet(btn.dataset.id ? Number(btn.dataset.id) : undefined).catch(console.error); break;
+    case 'addFornitoreFromFattura': addFornitoreFromFattura(); break;
     case 'closeFatturaSheet': closeFatturaSheet(); break;
     case 'saveFattura': saveFattura().catch(console.error); break;
     case 'deleteFattura': deleteFattura(Number(btn.dataset.id)); break;
     case 'markFatturaPaid': markFatturaPaid(Number(btn.dataset.id)); break;
     case 'markFatturaUnpaid': markFatturaUnpaid(Number(btn.dataset.id)); break;
     case 'filterFatture': filterFatture(btn.dataset.filter, btn); break;
+    case 'sortFatture': sortFatture(btn.dataset.sort); break;
     case 'openFatturaDetail': openFatturaDetail(Number(btn.dataset.id)); break;
     case 'closeFatturaDetail': closeFatturaDetail(); break;
     case 'editFattura':
