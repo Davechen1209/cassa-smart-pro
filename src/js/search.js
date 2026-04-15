@@ -47,7 +47,7 @@ function performSearch(query) {
         label: desc,
         sub: l.d + ' · ' + (l.a >= 0 ? '+' : '') +
           l.a.toLocaleString('it-IT', { minimumFractionDigits: 2 }) + '€',
-        tab: 3
+        tab: 2
       });
     }
   });
@@ -60,7 +60,7 @@ function performSearch(query) {
         label: f.azienda || '-',
         sub: (f.numero ? 'N° ' + f.numero + ' · ' : '') +
           '€ ' + (f.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 }),
-        tab: 4
+        tab: 3
       });
     }
   });
@@ -79,18 +79,6 @@ function performSearch(query) {
     });
   });
 
-  // Search d.anticipi
-  (d.anticipi || []).forEach(a => {
-    if ((a.nome || '').toLowerCase().includes(q)) {
-      results.push({
-        type: 'anticipo',
-        label: a.nome || '-',
-        sub: '€ ' + (a.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 }),
-        tab: 2
-      });
-    }
-  });
-
   return results;
 }
 
@@ -98,14 +86,12 @@ const typeIcons = {
   movimento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
   fattura: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
   rubrica: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
-  anticipo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>',
 };
 
 const typeLabels = {
   movimento: () => t('search.typeMovimento'),
   fattura: () => t('search.typeFattura'),
   rubrica: () => t('search.typeRubrica'),
-  anticipo: () => t('search.typeAnticipo'),
 };
 
 function renderSearchResults(results) {

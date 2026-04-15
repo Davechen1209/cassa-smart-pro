@@ -344,36 +344,9 @@ const translations = {
     'fatt.legacyUnpaid': 'Non pagato',
     'fatt.incassoCash': 'Incasso Contanti',
 
-    // Anticipi
-    'tab.anticipi': 'Anticipi',
-    'ant.title': 'Anticipi',
-    'ant.totalOpen': 'Totale anticipi aperti',
-    'ant.count': 'anticipi aperti',
-    'ant.filterAll': 'Tutti',
-    'ant.filterOpen': 'Aperti',
-    'ant.filterRepaid': 'Rimborsati',
-    'ant.titleOpen': 'Anticipi Aperti',
-    'ant.empty': 'Nessun anticipo',
-    'ant.new': 'Nuovo Anticipo',
-    'ant.sheetTitle': 'Nuovo Anticipo',
-    'ant.amount': 'Importo',
-    'ant.recipient': 'Destinatario',
-    'ant.freeNamePlaceholder': 'Nome socio...',
-    'ant.note': 'Note (opzionale)',
-    'ant.notePlaceholder': 'Aggiungi una nota...',
-    'ant.cancel': 'Annulla',
-    'ant.save': 'Registra Anticipo',
-    'ant.selectName': 'Inserisci il nome del destinatario',
+    // ANTICIPI REMOVED - keys kept for log translation
     'ant.logAdvance': 'Anticipo',
     'ant.logRepay': 'Rimborso anticipo',
-    'ant.added': 'Anticipo a {name}: {amount}\u20AC registrato',
-    'ant.repayTitle': 'Conferma Rimborso',
-    'ant.repayMsg': 'Segnare come rimborsato l\'anticipo di {name} ({amount}\u20AC)?',
-    'ant.repaid': 'Anticipo di {name} rimborsato',
-    'ant.hasOpen': '\u26A0 {name} ha anticipi aperti per \u20AC{amount}',
-    'ant.deleteTitle': 'Elimina Anticipo',
-    'ant.deleteMsg': 'Eliminare l\'anticipo di {name} ({amount}\u20AC)? Se non rimborsato, l\'importo verrà restituito al saldo.',
-    'ant.deleted': 'Anticipo di {name} eliminato',
 
     // Rubriche page
     'rub.pageTitle': 'Rubriche',
@@ -421,7 +394,7 @@ const translations = {
     'search.typeMovimento': 'Movimenti',
     'search.typeFattura': 'Fatture',
     'search.typeRubrica': 'Rubriche',
-    'search.typeAnticipo': 'Anticipi',
+
 
     // PDF Report
     'pdf.reportBtn': 'Report PDF',
@@ -810,36 +783,8 @@ const translations = {
     'fatt.legacyUnpaid': '未付款',
     'fatt.incassoCash': '现金收入',
 
-    // Anticipi
-    'tab.anticipi': '借支',
-    'ant.title': '借支',
-    'ant.totalOpen': '未还借支总额',
-    'ant.count': '笔未还',
-    'ant.filterAll': '全部',
-    'ant.filterOpen': '未还',
-    'ant.filterRepaid': '已还',
-    'ant.titleOpen': '未还借支',
-    'ant.empty': '暂无借支',
-    'ant.new': '新借支',
-    'ant.sheetTitle': '新借支',
-    'ant.amount': '金额',
-    'ant.recipient': '借款人',
-    'ant.freeNamePlaceholder': '姓名...',
-    'ant.note': '备注（可选）',
-    'ant.notePlaceholder': '添加备注...',
-    'ant.cancel': '取消',
-    'ant.save': '登记借支',
-    'ant.selectName': '请输入借款人姓名',
     'ant.logAdvance': '借支',
     'ant.logRepay': '归还借支',
-    'ant.added': '已登记借支给{name}：{amount}\u20AC',
-    'ant.repayTitle': '确认归还',
-    'ant.repayMsg': '确定将{name}的借支（{amount}\u20AC）标记为已归还？',
-    'ant.repaid': '{name}的借支已归还',
-    'ant.hasOpen': '\u26A0 {name}有未还借支 \u20AC{amount}',
-    'ant.deleteTitle': '删除借支',
-    'ant.deleteMsg': '确定删除{name}的借支（{amount}\u20AC）？如未归还，金额将退回余额。',
-    'ant.deleted': '{name}的借支已删除',
 
     // Rubriche page
     'rub.pageTitle': '名册',
@@ -887,7 +832,6 @@ const translations = {
     'search.typeMovimento': '流水记录',
     'search.typeFattura': '账单',
     'search.typeRubrica': '名册',
-    'search.typeAnticipo': '借支',
 
     // PDF Report
     'pdf.reportBtn': 'PDF报告',

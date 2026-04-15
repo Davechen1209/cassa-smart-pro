@@ -7,8 +7,6 @@ import {
 } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
 import { t } from './i18n.js';
-import { getOpenAnticipiForName } from './anticipi.js';
-
 export function openExpenseSheet() {
   setExpCat('fornitori');
   setExpSelectedVoice(null);
@@ -20,11 +18,6 @@ export function openExpenseSheet() {
   renderExpVoices();
   document.getElementById('expense-overlay').classList.add('show');
   setTimeout(() => document.getElementById('exp-amount').focus(), 350);
-}
-
-export function openExpenseAnticipo() {
-  openExpenseSheet();
-  switchExpCat('anticipo');
 }
 
 export function closeExpenseSheet() {
@@ -55,7 +48,7 @@ export function switchExpCat(cat) {
 
 export function updateExpSegments() {
   const btns = document.querySelectorAll('#exp-segments .segment-btn');
-  const cats = ['fornitori', 'stipendi', 'abit', 'anticipo', 'libera'];
+  const cats = ['fornitori', 'stipendi', 'abit', 'libera'];
   btns.forEach((btn, i) => btn.classList.toggle('active', cats[i] === expCat));
 
   // Render custom category chips
@@ -80,10 +73,6 @@ export function updateExpSegments() {
     voicesSection.style.display = 'none';
     freeWrap.classList.add('open');
     setTimeout(() => document.getElementById('exp-free-name').focus(), 100);
-  } else if (expCat === 'anticipo') {
-    voicesSection.style.display = 'block';
-    freeWrap.classList.add('open');
-    document.getElementById('exp-free-name').placeholder = t('ant.freeNamePlaceholder');
   } else {
     voicesSection.style.display = 'block';
     freeWrap.classList.remove('open');
@@ -93,7 +82,7 @@ export function updateExpSegments() {
 export function renderExpVoices() {
   if (expCat === 'libera') return;
 
-  const list = expCat === 'anticipo' ? (d.stipendi || []) : (d[expCat] || []);
+  const list = d[expCat] || [];
   const container = document.getElementById('exp-voices-select');
   if (!container) return;
 
@@ -106,28 +95,10 @@ export function renderExpVoices() {
 
 export function selectExpVoice(name) {
   setExpSelectedVoice(name || null);
-
-  // Show anticipi warning for stipendi
-  const warnEl = document.getElementById('exp-anticipi-warn');
-  if (warnEl) warnEl.remove();
-  if (expCat === 'stipendi' && expSelectedVoice) {
-    const openAnts = getOpenAnticipiForName(expSelectedVoice);
-    if (openAnts.length > 0) {
-      const total = openAnts.reduce((s, a) => s + a.importo, 0);
-      const warn = document.createElement('div');
-      warn.id = 'exp-anticipi-warn';
-      warn.className = 'anticipi-warn';
-      warn.textContent = t('ant.hasOpen', {
-        name: expSelectedVoice,
-        amount: total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      });
-      document.getElementById('exp-voices-section').appendChild(warn);
-    }
-  }
 }
 
 export function addNewVoiceFromSheet() {
-  const actualCat = expCat === 'anticipo' ? 'stipendi' : expCat;
+  const actualCat = expCat;
   setModalCat(actualCat);
   setEditingItem(null);
   const labels = { fornitori: t('rub.newFornitore'), stipendi: t('rub.newStipendio'), abit: t('rub.newVoce') };
@@ -153,14 +124,6 @@ export function addExpense() {
   } else if (expCat === 'libera') {
     name = document.getElementById('exp-free-name').value.trim() || t('exp.genericExpense');
     type = t('exp.expense');
-  } else if (expCat === 'anticipo') {
-    const freeName = document.getElementById('exp-free-name').value.trim();
-    name = expSelectedVoice || freeName;
-    if (!name) {
-      showToast(t('ant.selectName'), 'warn');
-      return;
-    }
-    type = t('ant.logAdvance');
   } else if (expSelectedVoice) {
     name = expSelectedVoice;
     type = expCat === 'fornitori' ? t('exp.fornitore') : (expCat === 'stipendi' ? t('exp.stipendio') : t('exp.expense'));
@@ -186,7 +149,7 @@ export function renderPendingList() {
   }
 
   const total = pendingExpenses.reduce((s, e) => s + e.amount, 0);
-  const iconLetters = { fornitori: 'F', stipendi: 'S', abit: 'A', anticipo: '$', libera: '?' };
+  const iconLetters = { fornitori: 'F', stipendi: 'S', abit: 'A', libera: '?' };
   // Build icon map for custom cats
   (d.customCats || []).forEach(cc => { iconLetters['custom:' + cc.name] = cc.emoji || '★'; });
 

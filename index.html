@@ -437,21 +437,6 @@
                     </button>
                 </div>
 
-                <!-- ANTICIPI APERTI (shown dynamically) -->
-                <div id="open-anticipi-section" style="display:none;">
-                    <div style="height:1px; background:var(--separator); margin:4px 0 20px;"></div>
-                    <div class="subsection">
-                        <div class="subsection-title">
-                            <div class="subsection-icon" style="background:rgba(255,149,0,0.15); color:var(--orange);">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><path d="M12 4v16"/></svg>
-                            </div>
-                            <span data-i18n="ant.titleOpen">Anticipi Aperti</span>
-                            <span class="anticipo-badge" id="open-ant-badge">0</span>
-                        </div>
-                        <div id="open-anticipi-list"></div>
-                    </div>
-                </div>
-
                 <button class="btn-main" id="btn-registra" data-action="registra" style="margin-top:16px;" data-i18n="uscite.registra">
                     Registra Chiusura
                 </button>
@@ -459,36 +444,8 @@
         </div>
     </div>
 
-    <!-- TAB 2: ANTICIPI -->
+    <!-- TAB 2: STORICO -->
     <div class="section" id="s2">
-        <!-- Summary card -->
-        <div class="card" style="text-align:center; padding:16px;">
-            <div style="font-size:11px; font-weight:600; color:var(--orange); text-transform:uppercase; letter-spacing:0.3px;" data-i18n="ant.totalOpen">Totale anticipi aperti</div>
-            <div id="ant-total" style="font-size:24px; font-weight:800; margin-top:4px;">&euro; 0,00</div>
-            <div style="font-size:12px; color:var(--gray); margin-top:2px;"><span id="ant-count">0</span> <span data-i18n="ant.count">anticipi aperti</span></div>
-        </div>
-
-        <!-- Filter -->
-        <div class="segment-control" id="ant-filter" style="margin-bottom:16px;">
-            <button class="segment-btn" data-action="filterAnticipi" data-filter="tutti" data-i18n="ant.filterAll">Tutti</button>
-            <button class="segment-btn active" data-action="filterAnticipi" data-filter="aperti" data-i18n="ant.filterOpen">Aperti</button>
-            <button class="segment-btn" data-action="filterAnticipi" data-filter="rimborsati" data-i18n="ant.filterRepaid">Rimborsati</button>
-        </div>
-
-        <!-- List -->
-        <div class="card" style="padding:12px 16px;">
-            <div id="anticipi-list"></div>
-        </div>
-
-        <!-- Add button (opens expense sheet with anticipo category) -->
-        <button class="add-expense-btn" data-action="openExpenseAnticipo" style="margin-top:16px; border-color:var(--orange); color:var(--orange);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
-            <span data-i18n="ant.new">Nuovo Anticipo</span>
-        </button>
-    </div>
-
-    <!-- TAB 3: STORICO -->
-    <div class="section" id="s3">
         <!-- Statistics -->
         <div class="card stats-card">
             <div class="stats-header" data-action="toggleStats">
@@ -516,8 +473,8 @@
         </div>
     </div>
 
-    <!-- TAB 4: FATTURE -->
-    <div class="section" id="s4">
+    <!-- TAB 3: FATTURE -->
+    <div class="section" id="s3">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
             <button class="add-expense-btn" data-action="openFatturaSheet" style="margin-bottom:0; flex:1; border-color:var(--blue); color:var(--blue);">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
@@ -570,14 +527,10 @@
         <span data-i18n="tab.registra">Registra</span>
     </button>
     <button class="tab-btn" data-action="tab" data-tab="2" id="tab2">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><path d="M12 4v16"/></svg>
-        <span data-i18n="tab.anticipi">Anticipi</span>
-    </button>
-    <button class="tab-btn" data-action="tab" data-tab="3" id="tab3">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span data-i18n="tab.storico">Storico</span>
     </button>
-    <button class="tab-btn" data-action="tab" data-tab="4" id="tab4">
+    <button class="tab-btn" data-action="tab" data-tab="3" id="tab3">
         <div style="position:relative;display:inline-flex;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span class="tab-notification-badge" id="fatture-tab-badge" style="display:none;"></span>
@@ -612,7 +565,6 @@
             <button class="segment-btn active" data-action="switchExpCat" data-cat="fornitori" data-i18n="exp.fornitori">Fornitori</button>
             <button class="segment-btn" data-action="switchExpCat" data-cat="stipendi" data-i18n="exp.stipendi">Stipendi</button>
             <button class="segment-btn" data-action="switchExpCat" data-cat="abit" data-i18n="exp.abitudinarie">Abitudinarie</button>
-            <button class="segment-btn" data-action="switchExpCat" data-cat="anticipo" data-i18n="ant.title">Anticipo</button>
             <button class="segment-btn" data-action="switchExpCat" data-cat="libera" data-i18n="exp.libera">Libera</button>
         </div>
         <div id="exp-custom-cats" class="exp-custom-cats" style="display:none;"></div>

@@ -9,7 +9,6 @@ import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './da
 import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
 import { renderFatture, updateFattureTabBadge } from './fatture.js';
-import { renderAnticipi } from './anticipi.js';
 import { t, getLang, translateLogDesc } from './i18n.js';
 
 export function updateDateDisplay() {
@@ -433,7 +432,6 @@ export function ui() {
   renderHistory();
   renderDaySummary();
   renderFatture();
-  renderAnticipi();
   updateFattureTabBadge();
   renderDashboard();
 }

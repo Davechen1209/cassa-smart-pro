@@ -35,7 +35,7 @@ import {
 } from './js/casse.js';
 
 import {
-  openExpenseSheet, openExpenseAnticipo, closeExpenseSheet, closeExpenseOutside,
+  openExpenseSheet, closeExpenseSheet, closeExpenseOutside,
   setQuickAmount, customAmount, switchExpCat,
   selectExpVoice, addNewVoiceFromSheet, addExpense,
   renderPendingList, removePending
@@ -44,10 +44,6 @@ import {
 import {
   toggleRubrica, toggleRubricaPage, deleteItem, editItem, openModalRubrica, modalConfirm
 } from './js/rubrica.js';
-
-import {
-  repayAnticipo, filterAnticipi, deleteAnticipo
-} from './js/anticipi.js';
 
 import {
   openFatturaSheet, closeFatturaSheet, closeFatturaOutside,
@@ -119,7 +115,6 @@ document.body.addEventListener('click', (e) => {
 
     // Expenses
     case 'openExpenseSheet': openExpenseSheet(); break;
-    case 'openExpenseAnticipo': openExpenseAnticipo(); break;
     case 'closeExpenseSheet': closeExpenseSheet(); break;
     case 'setQuickAmount': setQuickAmount(Number(btn.dataset.amount)); break;
     case 'customAmount': customAmount(); break;
@@ -182,11 +177,6 @@ document.body.addEventListener('click', (e) => {
       if (section) section.classList.toggle('open');
       break;
     }
-
-    // Anticipi
-    case 'repayAnticipo': repayAnticipo(Number(btn.dataset.id)); break;
-    case 'deleteAnticipo': deleteAnticipo(Number(btn.dataset.id)); break;
-    case 'filterAnticipi': filterAnticipi(btn.dataset.filter, btn); break;
 
     // PDF / AI
     case 'downloadFatturaPdf': downloadFatturaPdf(Number(btn.dataset.id)).catch(console.error); break;
