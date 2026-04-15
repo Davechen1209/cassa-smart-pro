@@ -409,6 +409,68 @@ function showFattureImportPreview() {
   document.getElementById('excel-overlay').classList.add('show');
 }
 
+export function exportFatture() {
+  if (!d.fatture || d.fatture.length === 0) { showToast(t('history.empty'), 'warn'); return; }
+
+  const rows = [['到货日期', '公司名', '发票号码', '金额', '现金支付', '支票/汇款', '未付', '已付', '付款周期', '货款到期日', '备注']];
+
+  d.fatture.forEach(f => {
+    const importo = f.importo || 0;
+    const pagata = !!f.pagata;
+    const tipo = (f.tipoPagamento || '').toLowerCase();
+
+    let cashPaid = 0;
+    let transferPaid = 0;
+    let unpaid = 0;
+    let paid = 0;
+
+    if (pagata) {
+      paid = importo;
+      if (tipo === 'contanti') {
+        cashPaid = importo;
+      } else {
+        transferPaid = importo;
+      }
+    } else {
+      unpaid = importo;
+    }
+
+    let cicloLabel = '';
+    if (f.ciclo === '30' || f.ciclo === '60' || f.ciclo === '90' || f.ciclo === '120') {
+      cicloLabel = f.ciclo + '天';
+    } else if (f.ciclo === 'custom') {
+      cicloLabel = '自定义';
+    }
+
+    rows.push([
+      f.dataArrivo || '',
+      f.azienda || '',
+      f.numero || '',
+      importo,
+      cashPaid || '',
+      transferPaid || '',
+      unpaid || '',
+      paid || '',
+      cicloLabel,
+      f.scadenza || '',
+      f.note || ''
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [
+    { wch: 12 }, { wch: 20 }, { wch: 14 }, { wch: 12 },
+    { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+    { wch: 10 }, { wch: 14 }, { wch: 20 }
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '发票');
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, '发票导出-' + dateStr + '.xlsx');
+  showToast(t('backup.exportDone'), 'check');
+}
+
 export function exportMovimenti() {
   if (d.log.length === 0) { showToast(t('history.empty'), 'warn'); return; }
 

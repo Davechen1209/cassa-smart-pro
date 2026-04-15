@@ -70,7 +70,7 @@ import {
   closeExcelImport, confirmFileImport,
   downloadBackup, importBackup,
   downloadFattureTemplate, importFattureExcel,
-  exportMovimenti,
+  exportMovimenti, exportFatture,
   checkAutoBackup, renderAutoBackupCard, triggerAutoBackupDownload, toggleAutoBackup
 } from './js/excel-utils.js';
 
@@ -208,6 +208,7 @@ document.body.addEventListener('click', (e) => {
     case 'downloadFattureTemplate': downloadFattureTemplate(); break;
     case 'triggerFattureFile': document.getElementById('fatture-excel-file').click(); break;
     case 'exportMovimenti': exportMovimenti(); break;
+    case 'exportFatture': exportFatture(); break;
     case 'openPdfReport': openPdfReportSheet(); break;
     case 'closePdfReport': closePdfReportSheet(); break;
     case 'printReport': printReport(); break;
@@ -227,6 +228,11 @@ document.getElementById('pdf-report-overlay').addEventListener('click', closePdf
 document.getElementById('share-preview-overlay').addEventListener('click', closeSharePreviewOutside);
 document.getElementById('photo-fullscreen-overlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closePhotoFullscreen();
+});
+
+// Voice select dropdown
+document.getElementById('exp-voices-select').addEventListener('change', function () {
+  selectExpVoice(this.value);
 });
 
 // Keyboard events

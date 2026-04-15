@@ -94,18 +94,18 @@ export function renderExpVoices() {
   if (expCat === 'libera') return;
 
   const list = expCat === 'anticipo' ? (d.stipendi || []) : (d[expCat] || []);
-  const container = document.getElementById('exp-voices');
+  const container = document.getElementById('exp-voices-select');
+  if (!container) return;
 
-  container.innerHTML = list.map(n => {
-    const sel = expSelectedVoice === n ? ' selected' : '';
-    return `<button class="voice-chip${sel}" data-action="selectExpVoice" data-name="${escapeHtml(n)}">${escapeHtml(n)}</button>`;
-  }).join('') +
-  `<button class="voice-chip new-voice" data-action="addNewVoiceFromSheet">${t('exp.newVoice')}</button>`;
+  container.innerHTML = '<option value="">' + escapeHtml(t('exp.selectVoice')) + '</option>' +
+    list.map(n => {
+      const sel = expSelectedVoice === n ? ' selected' : '';
+      return '<option value="' + escapeHtml(n) + '"' + sel + '>' + escapeHtml(n) + '</option>';
+    }).join('');
 }
 
 export function selectExpVoice(name) {
-  setExpSelectedVoice(expSelectedVoice === name ? null : name);
-  renderExpVoices();
+  setExpSelectedVoice(name || null);
 
   // Show anticipi warning for stipendi
   const warnEl = document.getElementById('exp-anticipi-warn');

@@ -518,10 +518,15 @@
 
     <!-- TAB 4: FATTURE -->
     <div class="section" id="s4">
-        <button class="add-expense-btn" data-action="openFatturaSheet" style="margin-bottom:16px; border-color:var(--blue); color:var(--blue);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
-            <span data-i18n="fatt.new">Nuova Fattura</span>
-        </button>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+            <button class="add-expense-btn" data-action="openFatturaSheet" style="margin-bottom:0; flex:1; border-color:var(--blue); color:var(--blue);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
+                <span data-i18n="fatt.new">Nuova Fattura</span>
+            </button>
+            <button class="history-export-btn" data-action="exportFatture" title="导出Excel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+        </div>
 
         <!-- Due Warning Card -->
         <div id="fatt-due-warning" class="card due-warning-card" style="display:none;border-left:3px solid var(--orange);margin-bottom:16px;"></div>
@@ -614,7 +619,10 @@
 
         <div class="voice-section" id="exp-voices-section">
             <div class="voice-label" data-i18n="exp.selectVoice">Seleziona voce</div>
-            <div class="voice-chips" id="exp-voices"></div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <select class="input-field" id="exp-voices-select" style="flex:1; margin:0;"></select>
+                <button class="voice-chip new-voice" data-action="addNewVoiceFromSheet" style="white-space:nowrap; margin:0;">+ Nuova</button>
+            </div>
         </div>
 
         <div class="free-name-wrap" id="free-name-wrap">
