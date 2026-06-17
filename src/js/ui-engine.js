@@ -329,6 +329,7 @@ export function toggleSettings() {
   renderCustomCatsSettings();
   renderAziendaSettings();
   renderOcrApiSettings();
+  renderGeminiApiSettings();
 }
 
 // ─── Dati Azienda Settings ───
@@ -379,6 +380,37 @@ export function saveOcrKey() {
 export function removeOcrKey() {
   localStorage.removeItem('cassa_openai_key');
   renderOcrApiSettings();
+}
+
+// ─── Gemini API Key Settings (contabile vocale gratis) ───
+
+export function renderGeminiApiSettings() {
+  const key = localStorage.getItem('cassa_gemini_key');
+  const configured = document.getElementById('gemini-configured');
+  const setup = document.getElementById('gemini-setup');
+  if (!configured || !setup) return;
+  if (key) {
+    configured.style.display = 'block';
+    setup.style.display = 'none';
+  } else {
+    configured.style.display = 'none';
+    setup.style.display = 'block';
+  }
+}
+
+export function saveGeminiKey() {
+  const input = document.getElementById('gemini-api-key');
+  const key = input.value.trim();
+  if (!key) return;
+  localStorage.setItem('cassa_gemini_key', key);
+  input.value = '';
+  renderGeminiApiSettings();
+  showToast(t('ocr.configured'), 'check');
+}
+
+export function removeGeminiKey() {
+  localStorage.removeItem('cassa_gemini_key');
+  renderGeminiApiSettings();
 }
 
 export function manualSaldo() {

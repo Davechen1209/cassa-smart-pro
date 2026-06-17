@@ -1,6 +1,7 @@
 // ─── Voice Accountant (AI) ───
-// "Premi e parla": registra audio → Whisper (STT) → GPT con strumenti per
-// eseguire operazioni o rispondere a domande → risposta vocale (TTS).
+// "Premi e parla": registra audio → Google Gemini (gratis) per trascrizione +
+// function calling → esegue operazioni o risponde a domande → voce di risposta
+// con la sintesi vocale del browser (TTS gratuito).
 
 import { d, fullSave } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
@@ -8,10 +9,10 @@ import { t, getLang } from './i18n.js';
 import { parseDateIT } from './date-utils.js';
 import { autoCreateFatturaIfNeeded, getFatturaStatus } from './fatture.js';
 
-const KEY_STORAGE = 'cassa_openai_key';
-const CHAT_MODEL = 'gpt-4o-mini';
-const STT_MODEL = 'whisper-1';
-const TTS_MODEL = 'tts-1';
+// Google Gemini (piano gratuito) — chiave separata da quella OpenAI delle foto fatture.
+const KEY_STORAGE = 'cassa_gemini_key';
+const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
 // ─── Stato runtime ───
 let mediaRecorder = null;
@@ -154,23 +155,88 @@ async function onRecordingStop() {
   }
 }
 
-// ─── Trascrizione (Whisper) ───
-async function transcribe(blob) {
-  const type = blob.type || '';
-  const ext = type.includes('mp4') || type.includes('aac') ? 'mp4'
-    : type.includes('ogg') ? 'ogg' : 'webm';
-  const form = new FormData();
-  form.append('file', blob, 'audio.' + ext);
-  form.append('model', STT_MODEL);
-  form.append('language', lang());
-  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+// ─── Chiamata Gemini ───
+function geminiUrl() {
+  return GEMINI_BASE + GEMINI_MODEL + ':generateContent?key=' + encodeURIComponent(getKey());
+}
+
+function geminiText(json) {
+  const parts = json?.candidates?.[0]?.content?.parts || [];
+  return parts.filter(p => typeof p.text === 'string').map(p => p.text).join(' ').trim();
+}
+
+async function callGemini(body) {
+  const res = await fetch(geminiUrl(), {
     method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + getKey() },
-    body: form
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error('STT ' + res.status);
-  const json = await res.json();
-  return json.text || '';
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json())?.error?.message || ''; } catch (_) {}
+    throw new Error('Gemini ' + res.status + (detail ? ': ' + detail : ''));
+  }
+  return res.json();
+}
+
+// ─── Audio → WAV (PCM 16-bit, mono): formato compatibile con Gemini su iPhone e desktop ───
+async function blobToWavBase64(blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AudioCtx();
+  let decoded;
+  try {
+    decoded = await ctx.decodeAudioData(arrayBuffer);
+  } finally {
+    try { ctx.close(); } catch (_) {}
+  }
+  const len = decoded.length;
+  const channels = [];
+  for (let c = 0; c < decoded.numberOfChannels; c++) channels.push(decoded.getChannelData(c));
+  const mono = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    let s = 0;
+    for (let c = 0; c < channels.length; c++) s += channels[c][i];
+    mono[i] = s / channels.length;
+  }
+  const sampleRate = decoded.sampleRate;
+  const dataSize = len * 2;
+  const ab = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(ab);
+  let o = 0;
+  const ws = (str) => { for (let i = 0; i < str.length; i++) view.setUint8(o++, str.charCodeAt(i)); };
+  ws('RIFF'); view.setUint32(o, 36 + dataSize, true); o += 4; ws('WAVE'); ws('fmt ');
+  view.setUint32(o, 16, true); o += 4; view.setUint16(o, 1, true); o += 2; view.setUint16(o, 1, true); o += 2;
+  view.setUint32(o, sampleRate, true); o += 4; view.setUint32(o, sampleRate * 2, true); o += 4;
+  view.setUint16(o, 2, true); o += 2; view.setUint16(o, 16, true); o += 2; ws('data');
+  view.setUint32(o, dataSize, true); o += 4;
+  for (let i = 0; i < len; i++) {
+    const s = Math.max(-1, Math.min(1, mono[i]));
+    view.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true); o += 2;
+  }
+  const bytes = new Uint8Array(ab);
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+
+// ─── Trascrizione (Gemini, audio multimodale) ───
+async function transcribe(blob) {
+  const b64 = await blobToWavBase64(blob);
+  const json = await callGemini({
+    contents: [{
+      role: 'user',
+      parts: [
+        { text: 'Trascrivi esattamente questo audio. Rispondi SOLO con il testo trascritto, senza virgolette né commenti.' },
+        { inlineData: { mimeType: 'audio/wav', data: b64 } }
+      ]
+    }],
+    generationConfig: { temperature: 0 }
+  });
+  return geminiText(json);
 }
 
 // ─── Snapshot dati per il contesto AI ───
@@ -313,39 +379,59 @@ function systemPrompt() {
     + 'Tutti gli importi sono in euro. Oggi e ' + todayIT() + '.';
 }
 
-// ─── "Cervello": chiamata al modello ───
+// Converte le definizioni strumenti (formato OpenAI) in functionDeclarations Gemini.
+function geminiFunctionDeclarations() {
+  return tools().map(tl => ({
+    name: tl.function.name,
+    description: tl.function.description,
+    parameters: upcaseSchemaTypes(tl.function.parameters)
+  }));
+}
+
+function upcaseSchemaTypes(schema) {
+  if (!schema || typeof schema !== 'object') return schema;
+  const out = Array.isArray(schema) ? [] : {};
+  for (const k in schema) {
+    if (k === 'type' && typeof schema[k] === 'string') out[k] = schema[k].toUpperCase();
+    else if (k === 'properties' && schema[k] && typeof schema[k] === 'object') {
+      out[k] = {};
+      for (const p in schema[k]) out[k][p] = upcaseSchemaTypes(schema[k][p]);
+    } else if (k === 'items') out[k] = upcaseSchemaTypes(schema[k]);
+    else out[k] = schema[k];
+  }
+  return out;
+}
+
+// ─── "Cervello": chiamata a Gemini con function calling ───
 async function think(userText) {
   history.push({ role: 'user', content: userText });
   if (history.length > 12) history = history.slice(-12);
 
-  const messages = [
-    { role: 'system', content: systemPrompt() },
-    { role: 'system', content: 'DATI CONTABILI ATTUALI (JSON):\n' + JSON.stringify(buildSnapshot()) },
-    ...history
-  ];
+  const contents = history.map(h => ({
+    role: h.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: h.content }]
+  }));
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getKey() },
-    body: JSON.stringify({ model: CHAT_MODEL, temperature: 0.2, messages, tools: tools(), tool_choice: 'auto' })
+  const json = await callGemini({
+    systemInstruction: {
+      parts: [{ text: systemPrompt() + '\n\nDATI CONTABILI ATTUALI (JSON):\n' + JSON.stringify(buildSnapshot()) }]
+    },
+    contents,
+    tools: [{ functionDeclarations: geminiFunctionDeclarations() }],
+    generationConfig: { temperature: 0.2 }
   });
-  if (!res.ok) throw new Error('chat ' + res.status);
-  const json = await res.json();
-  const msg = json.choices?.[0]?.message;
-  if (!msg) throw new Error('no message');
 
-  const calls = msg.tool_calls || [];
-  if (calls.length > 0) {
-    // Azioni proposte → richiedono conferma
-    const actions = calls.map(c => {
-      let args = {};
-      try { args = JSON.parse(c.function.arguments || '{}'); } catch (_) {}
-      return { name: c.function.name, args };
-    }).filter(a => a.name);
-    if (msg.content) addBubble('assistant', msg.content);
+  const parts = json?.candidates?.[0]?.content?.parts || [];
+  const actions = parts
+    .filter(p => p.functionCall && p.functionCall.name)
+    .map(p => ({ name: p.functionCall.name, args: p.functionCall.args || {} }));
+  const textMsg = parts.filter(p => typeof p.text === 'string').map(p => p.text).join(' ').trim();
+
+  if (actions.length > 0) {
+    if (textMsg) addBubble('assistant', textMsg);
     proposeActions(actions);
   } else {
-    const answer = (msg.content || '').trim() || t('voice.notUnderstood');
+    const answer = textMsg || t('voice.notUnderstood');
     history.push({ role: 'assistant', content: answer });
     addBubble('assistant', answer);
     speak(answer);

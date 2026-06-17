@@ -27,7 +27,8 @@ import {
   closeSharePreview, closeSharePreviewOutside, copyShareText, confirmShare,
   renderCustomCatsSettings, addCustomCat, removeCustomCat,
   toggleDashboard,
-  saveAziendaData, saveOcrKey, removeOcrKey
+  saveAziendaData, saveOcrKey, removeOcrKey,
+  saveGeminiKey, removeGeminiKey
 } from './js/ui-engine.js';
 
 import {
@@ -194,6 +195,8 @@ document.body.addEventListener('click', (e) => {
     case 'saveAziendaData': saveAziendaData(); break;
     case 'saveOcrKey': saveOcrKey(); break;
     case 'removeOcrKey': removeOcrKey(); break;
+    case 'saveGeminiKey': saveGeminiKey(); break;
+    case 'removeGeminiKey': removeGeminiKey(); break;
 
     // Cloud
     case 'connectCloud': connectCloud(); break;

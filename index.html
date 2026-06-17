@@ -180,6 +180,27 @@
                 </div>
                 <div class="settings-card">
                     <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                        <span data-i18n="gemini.title">Contabile Vocale (AI gratis)</span>
+                    </div>
+                    <div class="cloud-info" data-i18n="gemini.info">Usa Google Gemini (gratis) per il contabile vocale. Crea una chiave gratuita su Google AI Studio e incollala qui.</div>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="cloud-info" style="display:inline-block; color:var(--blue); text-decoration:underline; margin-top:4px;" data-i18n="gemini.getKey">Ottieni una chiave gratuita →</a>
+                    <div id="gemini-setup">
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <input type="text" class="input-field" id="gemini-api-key" placeholder="AIza..." style="flex:1;">
+                            <button class="btn-sm blue" data-action="saveGeminiKey" data-i18n="ocr.save">Salva</button>
+                        </div>
+                    </div>
+                    <div id="gemini-configured" style="display:none; margin-top:10px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                            <div style="width:8px; height:8px; border-radius:50%; background:var(--green);"></div>
+                            <span style="font-size:13px; font-weight:600;" data-i18n="ocr.configured">Configurato</span>
+                        </div>
+                        <button class="btn-sm red" data-action="removeGeminiKey" style="width:100%;" data-i18n="ocr.remove">Rimuovi</button>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <div class="settings-card-title">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
                         <span data-i18n="customCats.title">Categorie Personalizzate</span>
                     </div>
