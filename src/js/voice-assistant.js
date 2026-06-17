@@ -11,8 +11,10 @@ import { autoCreateFatturaIfNeeded, getFatturaStatus } from './fatture.js';
 
 // Google Gemini (piano gratuito) — chiave separata da quella OpenAI delle foto fatture.
 const KEY_STORAGE = 'cassa_gemini_key';
-const GEMINI_MODEL = 'gemini-2.0-flash';
+// Modelli provati in ordine: se il primo non è disponibile sulla chiave, prova il successivo.
+const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash'];
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/';
+let workingModel = null; // memorizza il primo modello che ha funzionato
 
 // ─── Stato runtime ───
 let mediaRecorder = null;
@@ -134,6 +136,7 @@ async function onRecordingStop() {
   if (!blob.size) { setMicState('idle'); setStatus(t('voice.tapToSpeak')); return; }
 
   busy = true;
+  let step = 'STT';
   try {
     const text = await transcribe(blob);
     if (!text || !text.trim()) {
@@ -144,10 +147,12 @@ async function onRecordingStop() {
     }
     addBubble('user', text.trim());
     setStatus(t('voice.thinking'));
+    step = 'AI';
     await think(text.trim());
   } catch (e) {
-    console.error('[voice] error:', e);
-    addBubble('assistant', t('voice.error'));
+    console.error('[voice] error (' + step + '):', e);
+    const where = step === 'STT' ? t('voice.transcribing') : t('voice.thinking');
+    addBubble('assistant', t('voice.error') + '\n\n⚠️ [' + where + '] ' + ((e && e.message) || 'errore sconosciuto'));
     setStatus(t('voice.tapToSpeak'));
   } finally {
     setMicState('idle');
@@ -155,28 +160,53 @@ async function onRecordingStop() {
   }
 }
 
-// ─── Chiamata Gemini ───
-function geminiUrl() {
-  return GEMINI_BASE + GEMINI_MODEL + ':generateContent?key=' + encodeURIComponent(getKey());
-}
-
+// ─── Chiamata Gemini (con fallback di modello) ───
 function geminiText(json) {
   const parts = json?.candidates?.[0]?.content?.parts || [];
   return parts.filter(p => typeof p.text === 'string').map(p => p.text).join(' ').trim();
 }
 
-async function callGemini(body) {
-  const res = await fetch(geminiUrl(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) {
-    let detail = '';
-    try { detail = (await res.json())?.error?.message || ''; } catch (_) {}
-    throw new Error('Gemini ' + res.status + (detail ? ': ' + detail : ''));
+async function postGemini(model, body) {
+  const url = GEMINI_BASE + model + ':generateContent?key=' + encodeURIComponent(getKey());
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch (e) {
+    // Errore di rete / CORS / offline
+    const err = new Error('Rete non raggiungibile (Gemini). Controlla la connessione.');
+    err.network = true;
+    throw err;
   }
-  return res.json();
+  if (res.ok) return res.json();
+  let detail = '';
+  try { detail = (await res.json())?.error?.message || ''; } catch (_) {}
+  const err = new Error(detail || ('HTTP ' + res.status));
+  err.status = res.status;
+  err.modelIssue = res.status === 404 || /not found|not supported|unsupported|model/i.test(detail);
+  throw err;
+}
+
+async function callGemini(body) {
+  // Se conosciamo già un modello funzionante, usiamo quello.
+  const order = workingModel ? [workingModel, ...GEMINI_MODELS.filter(m => m !== workingModel)] : GEMINI_MODELS;
+  let lastErr = null;
+  for (const model of order) {
+    try {
+      const json = await postGemini(model, body);
+      workingModel = model;
+      return json;
+    } catch (e) {
+      lastErr = e;
+      // Riprova con un altro modello solo se è un problema di disponibilità del modello.
+      if (e.modelIssue) continue;
+      throw e;
+    }
+  }
+  throw lastErr || new Error('Gemini error');
 }
 
 // ─── Audio → WAV (PCM 16-bit, mono): formato compatibile con Gemini su iPhone e desktop ───
