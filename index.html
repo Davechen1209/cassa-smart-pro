@@ -539,6 +539,39 @@
     </button>
 </div>
 
+<!-- Voice Accountant FAB -->
+<button class="voice-fab" id="voice-fab" data-action="openVoiceAssistant" data-i18n-title="voice.fab" title="Contabile vocale" aria-label="Contabile vocale">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+    </svg>
+</button>
+
+<!-- Voice Accountant Panel -->
+<div class="voice-overlay" id="voice-overlay">
+    <div class="voice-sheet">
+        <div class="sheet-handle"></div>
+        <div class="voice-header">
+            <div class="voice-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--blue);"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                <span data-i18n="voice.title">Contabile</span>
+            </div>
+            <button class="voice-close" data-action="closeVoiceAssistant" aria-label="Chiudi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="voice-conversation" id="voice-conversation"></div>
+        <div class="voice-confirm" id="voice-confirm" style="display:none;"></div>
+        <div class="voice-status" id="voice-status" data-i18n="voice.tapToSpeak">Tocca il microfono e parla</div>
+        <button class="voice-mic-btn" id="voice-mic-btn" data-action="toggleVoiceRecording" aria-label="Microfono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
 <!-- Expense Bottom Sheet -->
 <div class="expense-overlay" id="expense-overlay">
     <div class="expense-sheet">

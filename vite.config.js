@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   root: '.',
-  base: '/cassa-smart-pro/',
+  // In produzione (build per GitHub Pages) l'app sta in /cassa-smart-pro/.
+  // In sviluppo gira sulla radice, così http://localhost:5173 funziona subito.
+  base: command === 'build' ? '/cassa-smart-pro/' : '/',
   build: {
     outDir: 'dist',
   },
@@ -59,4 +61,4 @@ export default defineConfig({
       }
     })
   ]
-});
+}));

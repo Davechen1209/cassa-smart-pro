@@ -58,6 +58,10 @@ import {
 
 import { toggleStats } from './js/statistics.js';
 import { initOfflineMode } from './js/offline-mode.js';
+import {
+  openVoiceAssistant, closeVoiceAssistant, closeVoiceOutside,
+  toggleVoiceRecording, confirmVoiceAction, cancelVoiceAction
+} from './js/voice-assistant.js';
 import { openSearch, closeSearch, onSearchInput, searchResultTap } from './js/search.js';
 import { openPdfReportSheet, closePdfReportSheet, closePdfReportOutside, printReport } from './js/pdf-report.js';
 
@@ -150,6 +154,13 @@ document.body.addEventListener('click', (e) => {
     case 'deleteLog': deleteLog(Number(btn.dataset.index), btn.dataset.name); break;
     case 'toggleStats': toggleStats(); break;
 
+    // Voice accountant
+    case 'openVoiceAssistant': openVoiceAssistant(); break;
+    case 'closeVoiceAssistant': closeVoiceAssistant(); break;
+    case 'toggleVoiceRecording': toggleVoiceRecording(); break;
+    case 'confirmVoiceAction': confirmVoiceAction(); break;
+    case 'cancelVoiceAction': cancelVoiceAction(); break;
+
     // Fatture
     case 'openFatturaSheet': openFatturaSheet(btn.dataset.id ? Number(btn.dataset.id) : undefined).catch(console.error); break;
     case 'addFornitoreFromFattura': addFornitoreFromFattura(); break;
@@ -219,6 +230,7 @@ document.getElementById('share-preview-overlay').addEventListener('click', close
 document.getElementById('photo-fullscreen-overlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closePhotoFullscreen();
 });
+document.getElementById('voice-overlay').addEventListener('click', closeVoiceOutside);
 
 // Voice select dropdown
 document.getElementById('exp-voices-select').addEventListener('change', function () {
