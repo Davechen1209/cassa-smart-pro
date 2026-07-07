@@ -11,6 +11,18 @@ import {
 import { showToast, showConfirm } from './modals.js';
 import { t } from './i18n.js';
 
+// Configurazione Firebase integrata: usata di default su ogni nuova
+// installazione, così non serve reincollarla su ogni telefono.
+const EMBEDDED_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDdD88qV7hXldbqfRonoh0DFUf_FuiyZco",
+  authDomain: "project-7840969229916873441.firebaseapp.com",
+  projectId: "project-7840969229916873441",
+  storageBucket: "project-7840969229916873441.firebasestorage.app",
+  messagingSenderId: "693204890581",
+  appId: "1:693204890581:web:bcfb36e341dfb0b53dc35c",
+  measurementId: "G-18L69PJ1KW"
+};
+
 let _uiCallback = null;
 export function setUiCallback(fn) { _uiCallback = fn; }
 
@@ -186,14 +198,11 @@ export async function forceSyncFromCloud() {
 
 export async function initFirebase() {
   const storedConfig = localStorage.getItem('cassa_firebase_config');
-  if (!storedConfig) {
-    updateCloudUI(false);
-    setSyncStatus('disconnected');
-    return;
-  }
 
   try {
-    const config = JSON.parse(storedConfig);
+    // Se l'utente ha salvato una config personalizzata la usa, altrimenti
+    // ricade su quella integrata nell'app.
+    const config = storedConfig ? JSON.parse(storedConfig) : EMBEDDED_FIREBASE_CONFIG;
 
     let app;
     if (getApps().length === 0) {
