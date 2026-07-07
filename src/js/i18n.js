@@ -22,6 +22,10 @@ const translations = {
     'pin.invalidLength': 'Il PIN deve essere tra 4 e 8 cifre',
     'pin.noMatch': 'I PIN non corrispondono',
     'pin.changed': 'PIN cambiato con successo',
+    'pin.chooseTitle': 'Benvenuto',
+    'pin.chooseNew': 'Scegli il tuo PIN',
+    'pin.confirmNew': 'Conferma il tuo PIN',
+    'pin.mismatchRetry': 'I PIN non corrispondono, riprova',
 
     // Tabs
     'tab.registra': 'Registra',
@@ -496,6 +500,10 @@ const translations = {
     'pin.invalidLength': '密码必须为4-8位数字',
     'pin.noMatch': '两次输入的密码不一致',
     'pin.changed': '密码修改成功',
+    'pin.chooseTitle': '欢迎',
+    'pin.chooseNew': '设置您的密码',
+    'pin.confirmNew': '确认您的密码',
+    'pin.mismatchRetry': '两次密码不一致，请重试',
 
     // Tabs
     'tab.registra': '收银',

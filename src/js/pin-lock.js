@@ -8,14 +8,31 @@ const PIN_KEY = 'cassa_pin';
 const MAX_ATTEMPTS = 5;
 const STORAGE_KEY = 'cassa_pin_blocked';
 const ATTEMPTS_KEY = 'cassa_pin_attempts';
+// Lunghezza del PIN scelto al primo accesso.
+const SETUP_PIN_LEN = 6;
 
 function getPin() {
   return localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
 }
 
+// Primo accesso su questo dispositivo: nessun PIN ancora scelto.
+function isFirstAccess() {
+  return localStorage.getItem(PIN_KEY) === null;
+}
+
 let currentInput = '';
 let attempts = parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0');
 let blocked = localStorage.getItem(STORAGE_KEY) === 'true';
+
+// Stato della scelta PIN al primo accesso.
+let setupMode = false;
+let setupStage = 0; // 0 = scegli, 1 = conferma
+let firstPin = '';
+
+// Cifre attese in base alla fase (scelta PIN vs inserimento normale).
+function targetLen() {
+  return setupMode ? SETUP_PIN_LEN : getPin().length;
+}
 
 export function initPinLock() {
   const overlay = document.getElementById('pin-overlay');
@@ -32,7 +49,13 @@ export function initPinLock() {
     return;
   }
 
+  // Primo accesso: l'utente sceglie il proprio PIN invece di inserirne uno.
+  setupMode = isFirstAccess();
+  setupStage = 0;
+  firstPin = '';
+
   overlay.classList.add('show');
+  if (setupMode) enterSetupUI();
   rebuildDots();
   updateDots();
   updateAttemptsDisplay();
@@ -54,7 +77,7 @@ export function initPinLock() {
     const key = btn.dataset.key;
     if (key === undefined) return;
 
-    const pinLen = getPin().length;
+    const pinLen = targetLen();
     if (currentInput.length < pinLen) {
       currentInput += key;
       updateDots();
@@ -67,7 +90,7 @@ export function initPinLock() {
 
       if (currentInput.length === pinLen) {
         // Check immediately, no artificial delay
-        requestAnimationFrame(checkPin);
+        requestAnimationFrame(onComplete);
       }
     }
   }, { passive: false });
@@ -85,11 +108,11 @@ export function initPinLock() {
   // Keyboard support
   document.addEventListener('keydown', (e) => {
     if (!overlay.classList.contains('show') || blocked) return;
-    const pinLen = getPin().length;
+    const pinLen = targetLen();
     if (e.key >= '0' && e.key <= '9' && currentInput.length < pinLen) {
       currentInput += e.key;
       updateDots();
-      if (currentInput.length === pinLen) requestAnimationFrame(checkPin);
+      if (currentInput.length === pinLen) requestAnimationFrame(onComplete);
     } else if (e.key === 'Backspace') {
       currentInput = currentInput.slice(0, -1);
       updateDots();
@@ -97,12 +120,72 @@ export function initPinLock() {
   });
 }
 
+// Instrada il PIN completo verso la scelta (primo accesso) o la verifica.
+function onComplete() {
+  if (setupMode) handleSetup();
+  else checkPin();
+}
+
+// Prepara i testi della schermata di scelta PIN al primo accesso.
+function enterSetupUI() {
+  const title = document.querySelector('.pin-title');
+  if (title) title.textContent = t('pin.chooseTitle');
+  const subtitle = document.getElementById('pin-subtitle');
+  if (subtitle) subtitle.textContent = t('pin.chooseNew');
+  const attemptsEl = document.getElementById('pin-attempts');
+  if (attemptsEl) attemptsEl.textContent = '';
+}
+
+// Gestisce la scelta e la conferma del PIN al primo accesso.
+function handleSetup() {
+  const overlay = document.getElementById('pin-overlay');
+  const dotsContainer = document.getElementById('pin-dots');
+  const subtitle = document.getElementById('pin-subtitle');
+
+  if (setupStage === 0) {
+    // Prima immissione: memorizza e chiedi conferma.
+    firstPin = currentInput;
+    setupStage = 1;
+    currentInput = '';
+    updateDots();
+    if (subtitle) subtitle.textContent = t('pin.confirmNew');
+    return;
+  }
+
+  // Seconda immissione: deve combaciare con la prima.
+  if (currentInput === firstPin) {
+    localStorage.setItem(PIN_KEY, firstPin);
+    setupMode = false;
+    setupStage = 0;
+    firstPin = '';
+    attempts = 0;
+    localStorage.setItem(ATTEMPTS_KEY, '0');
+    sessionStorage.setItem('pin_unlocked', 'true');
+    dotsContainer.classList.add('success');
+    setTimeout(() => {
+      overlay.classList.add('fade-out');
+      setTimeout(() => overlay.remove(), 300);
+    }, 300);
+  } else {
+    // Non combaciano: ricomincia dalla scelta.
+    dotsContainer.classList.add('shake');
+    setTimeout(() => {
+      dotsContainer.classList.remove('shake');
+      setupStage = 0;
+      firstPin = '';
+      currentInput = '';
+      updateDots();
+      if (subtitle) subtitle.textContent = t('pin.mismatchRetry');
+    }, 400);
+  }
+}
+
 function checkPin() {
   const overlay = document.getElementById('pin-overlay');
   const dotsContainer = document.getElementById('pin-dots');
 
   if (currentInput === getPin()) {
-    // Success — fast unlock
+    // Success — azzera il contatore dei tentativi errati e sblocca.
     attempts = 0;
     localStorage.setItem(ATTEMPTS_KEY, '0');
     sessionStorage.setItem('pin_unlocked', 'true');
@@ -149,7 +232,7 @@ function showBlocked() {
 function rebuildDots() {
   const container = document.getElementById('pin-dots');
   if (!container) return;
-  const pinLen = getPin().length;
+  const pinLen = targetLen();
   container.innerHTML = '';
   for (let i = 0; i < pinLen; i++) {
     const dot = document.createElement('span');
