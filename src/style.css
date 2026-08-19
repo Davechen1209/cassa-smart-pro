@@ -1815,3 +1815,71 @@ body {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.45); }
     50% { box-shadow: 0 0 0 16px rgba(255,59,48,0); }
 }
+
+/* ─── Condivisione dati / sola lettura ─── */
+.readonly-banner {
+    position: sticky; top: 0; z-index: 99;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: rgba(0,122,255,0.12);
+    border-bottom: 0.5px solid rgba(0,122,255,0.25);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    padding: 10px 20px;
+    font-size: 13px; font-weight: 500; color: var(--blue);
+    line-height: 1.4;
+}
+.readonly-banner-text {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.readonly-banner .btn-sm { flex-shrink: 0; }
+
+/* Nasconde i comandi di modifica; il blocco reale delle azioni sta in main.js */
+body.readonly-mode #voice-fab,
+body.readonly-mode [data-action="openExpenseSheet"],
+body.readonly-mode [data-action="openVoiceAssistant"],
+body.readonly-mode [data-action="registra"],
+body.readonly-mode [data-action="addCassa"],
+body.readonly-mode [data-action="startEditDay"],
+body.readonly-mode [data-action="openModalRubrica"],
+body.readonly-mode [data-action="confirmReset"],
+body.readonly-mode [data-action="manualSaldo"] {
+    display: none !important;
+}
+body.readonly-mode [data-action="openFatturaSheet"]:not([data-id]) { display: none !important; }
+
+.share-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.share-add-row .btn-sm { flex-shrink: 0; }
+.share-email-input {
+    flex: 1; min-width: 0; padding: 10px 12px;
+    border: 1.5px solid var(--gray4); border-radius: var(--radius-sm);
+    background: var(--bg); color: var(--text);
+    font-size: 13px; outline: none;
+    transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.share-email-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.share-email-input::placeholder { color: var(--gray3); }
+
+.share-subtitle {
+    margin: 18px 0 8px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.4px; color: var(--gray);
+}
+.share-empty { font-size: 12px; color: var(--gray); padding: 6px 0; line-height: 1.4; }
+.share-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--separator);
+}
+.share-row:last-child { border-bottom: none; }
+.share-row-email {
+    flex: 1; min-width: 0;
+    font-size: 13px; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.share-row-email small { display: block; font-size: 11px; color: var(--gray); }
+.share-row-role { font-size: 11px; color: var(--gray); flex-shrink: 0; }
+.share-row-remove {
+    flex-shrink: 0; width: 26px; height: 26px; border: none;
+    border-radius: 50%; background: rgba(255,59,48,0.12); color: var(--red);
+    font-size: 18px; line-height: 1; cursor: pointer;
+}
+.share-row-remove:active { transform: scale(0.92); }

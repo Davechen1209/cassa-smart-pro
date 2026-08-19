@@ -3,7 +3,7 @@
 import * as XLSX from 'xlsx';
 import {
   d, fullSave, pendingExpenses, parsedImportData, importMode,
-  setParsedImportData, setImportMode
+  setParsedImportData, setImportMode, isReadOnly
 } from './state.js';
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { parseFlexDate } from './date-utils.js';
@@ -541,6 +541,8 @@ export function toggleAutoBackup() {
 
 export function checkAutoBackup() {
   if (!isAutoBackupEnabled()) return;
+  // In vista condivisa il dataset non e' nostro: niente backup automatico.
+  if (isReadOnly()) return;
   const lastTs = parseInt(localStorage.getItem('cassa_auto_backup_ts') || '0', 10);
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
   if (Date.now() - lastTs > sevenDays && d.log.length > 0) {

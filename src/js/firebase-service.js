@@ -2,13 +2,17 @@
 
 import { initializeApp, getApps, deleteApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, enableIndexedDbPersistence } from 'firebase/firestore';
 import {
-  d, save, STORAGE_KEY,
+  getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs,
+  arrayUnion, arrayRemove, serverTimestamp, enableIndexedDbPersistence
+} from 'firebase/firestore';
+import {
+  d, save, STORAGE_KEY, SHARED_CACHE_KEY,
   firebaseDb, firebaseUser, cloudSyncEnabled, syncDebounceTimer,
-  setFirebaseDb, setFirebaseUser, setCloudSyncEnabled, setSyncDebounceTimer
+  setFirebaseDb, setFirebaseUser, setCloudSyncEnabled, setSyncDebounceTimer,
+  isReadOnly, getSharedView, setSharedView, replaceData
 } from './state.js';
-import { showToast, showConfirm } from './modals.js';
+import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { t } from './i18n.js';
 
 // Configurazione Firebase integrata: usata di default su ogni nuova
@@ -102,11 +106,15 @@ export function updateLastSyncTime() {
 
 export async function syncToCloud() {
   if (!cloudSyncEnabled || !firebaseDb || !firebaseUser) return;
+  // In vista condivisa i dati non sono nostri: non si scrive mai.
+  if (isReadOnly()) return;
 
   clearTimeout(syncDebounceTimer);
   setSyncDebounceTimer(setTimeout(async () => {
     setSyncStatus('syncing');
     try {
+      // merge: true — cosi' il campo sharedWith (gestito a parte) non viene
+      // mai cancellato da un salvataggio dei dati.
       await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
         saldo: d.saldo,
         fornitori: d.fornitori,
@@ -118,9 +126,11 @@ export async function syncToCloud() {
         customCats: d.customCats || [],
         aziendaData: d.aziendaData || {},
         shopName: d.shopName || '',
+        ownerEmail: normalizeEmail(firebaseUser.email),
+        ownerName: firebaseUser.displayName || '',
         lastUpdate: serverTimestamp(),
         updatedAt: new Date().toISOString()
-      });
+      }, { merge: true });
       setSyncStatus('synced');
       updateLastSyncTime();
     } catch (err) {
@@ -132,11 +142,13 @@ export async function syncToCloud() {
 
 export async function loadFromCloud() {
   if (!firebaseDb || !firebaseUser) return;
+  if (isReadOnly()) return;
 
   try {
     const docSnap = await getDoc(doc(firebaseDb, 'users', firebaseUser.uid));
     if (docSnap.exists()) {
       const cloud = docSnap.data();
+      mySharedWith = (cloud.sharedWith || []).slice();
       const cloudLogLen = (cloud.log || []).length;
       const localLogLen = d.log.length;
 
@@ -166,6 +178,7 @@ export async function loadFromCloud() {
 
 export async function forceSyncFromCloud() {
   if (!firebaseDb || !firebaseUser) return;
+  if (isReadOnly()) { showToast(t('share.readOnlyBlocked'), 'warn'); return; }
 
   setSyncStatus('syncing');
   try {
@@ -226,14 +239,7 @@ export async function initFirebase() {
     try {
       const result = await getRedirectResult(auth);
       if (result && result.user) {
-        setFirebaseUser(result.user);
-        setCloudSyncEnabled(true);
-        updateCloudUI(true);
-        updateUserDisplay(result.user);
-        setSyncStatus('syncing');
-        await loadFromCloud();
-        setSyncStatus('synced');
-        updateLastSyncTime();
+        await afterSignIn(result.user);
         showToast(t('cloud.connectedAs') + result.user.displayName, 'check');
         return;
       }
@@ -246,17 +252,12 @@ export async function initFirebase() {
       if (user) {
         // Session restored — user is already signed in
         if (firebaseUser && firebaseUser.uid === user.uid) return; // already handled
-        setFirebaseUser(user);
-        setCloudSyncEnabled(true);
-        updateCloudUI(true);
-        updateUserDisplay(user);
-        setSyncStatus('syncing');
-        await loadFromCloud();
-        setSyncStatus('synced');
-        updateLastSyncTime();
+        await afterSignIn(user);
       } else if (!firebaseUser) {
         // No session — show sign-in UI
+        stopSharedListener();
         updateCloudUI(false);
+        applyReadOnlyUI();
         showLoginUI();
       }
     });
@@ -305,14 +306,7 @@ export async function googleSignIn() {
   try {
     // Try popup first (works on desktop)
     const result = await signInWithPopup(auth, provider);
-    setFirebaseUser(result.user);
-    setCloudSyncEnabled(true);
-    updateCloudUI(true);
-    updateUserDisplay(result.user);
-    setSyncStatus('syncing');
-    await loadFromCloud();
-    setSyncStatus('synced');
-    updateLastSyncTime();
+    await afterSignIn(result.user);
     showToast(t('cloud.connectedAs') + result.user.displayName, 'check');
   } catch (err) {
     if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
@@ -343,6 +337,11 @@ export function connectCloud() {
 export function disconnectCloud() {
   showConfirm(t('cloud.disconnectTitle'), t('cloud.disconnectMsg'), () => {
     localStorage.removeItem('cassa_firebase_config');
+    stopSharedListener();
+    if (isReadOnly()) setSharedView(null);
+    mySharedWith = [];
+    receivedShares = [];
+    applyReadOnlyUI();
     setCloudSyncEnabled(false);
     setFirebaseDb(null);
     setFirebaseUser(null);
@@ -352,4 +351,283 @@ export function disconnectCloud() {
     updateCloudUI(false);
     showToast(t('cloud.disconnected'), 'check');
   });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Condivisione dati: il proprietario autorizza altri account Google
+// per email; gli invitati vedono i dati in tempo reale, in sola lettura.
+// ─────────────────────────────────────────────────────────────
+
+// Email autorizzate da me (io proprietario).
+let mySharedWith = [];
+// Dataset che altri hanno condiviso con me: [{ uid, email, name, shopName }]
+let receivedShares = [];
+// Disiscrizione dal listener realtime della vista condivisa.
+let sharedUnsub = null;
+
+function normalizeEmail(email) {
+  return (email || '').trim().toLowerCase();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Sequenza comune a tutti i percorsi di login (popup, redirect, sessione
+// ripristinata): stato cloud, dati, elenco condivisioni, UI.
+async function afterSignIn(user) {
+  setFirebaseUser(user);
+  setCloudSyncEnabled(true);
+  updateCloudUI(true);
+  updateUserDisplay(user);
+  setSyncStatus('syncing');
+
+  const view = getSharedView();
+  if (view) {
+    // Stavamo guardando i dati di un altro utente: riaggancia il listener.
+    startSharedListener(view);
+  } else {
+    await loadFromCloud();
+  }
+
+  setSyncStatus('synced');
+  updateLastSyncTime();
+  applyReadOnlyUI();
+  await loadReceivedShares();
+  renderShareUI();
+}
+
+// ─── Lato proprietario: gestione degli invitati ───
+
+export async function addSharedEmail() {
+  if (!firebaseDb || !firebaseUser) return;
+  if (isReadOnly()) { showToast(t('share.readOnlyBlocked'), 'warn'); return; }
+
+  const input = document.getElementById('share-email-input');
+  const email = normalizeEmail(input ? input.value : '');
+
+  if (!isValidEmail(email)) { showToast(t('share.invalidEmail'), 'warn'); return; }
+  if (email === normalizeEmail(firebaseUser.email)) { showToast(t('share.cannotShareSelf'), 'warn'); return; }
+  if (mySharedWith.includes(email)) { showToast(t('share.alreadyShared'), 'warn'); return; }
+
+  try {
+    await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
+      sharedWith: arrayUnion(email),
+      ownerEmail: normalizeEmail(firebaseUser.email),
+      ownerName: firebaseUser.displayName || ''
+    }, { merge: true });
+    mySharedWith.push(email);
+    if (input) input.value = '';
+    renderShareUI();
+    showToast(t('share.added'), 'check');
+  } catch (err) {
+    console.error('Add share error:', err);
+    showToast(t('share.error') + err.message, 'warn');
+  }
+}
+
+export function removeSharedEmail(email) {
+  if (!firebaseDb || !firebaseUser) return;
+  if (isReadOnly()) { showToast(t('share.readOnlyBlocked'), 'warn'); return; }
+
+  showConfirm(t('share.removeTitle'), t('share.removeMsg') + email, async () => {
+    try {
+      await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
+        sharedWith: arrayRemove(email)
+      }, { merge: true });
+      mySharedWith = mySharedWith.filter(e => e !== email);
+      renderShareUI();
+      showToast(t('share.removed'), 'check');
+    } catch (err) {
+      console.error('Remove share error:', err);
+      showToast(t('share.error') + err.message, 'warn');
+    }
+  });
+}
+
+// ─── Lato invitato: dataset condivisi con me ───
+
+async function loadReceivedShares() {
+  receivedShares = [];
+  if (!firebaseDb || !firebaseUser) return;
+
+  const myEmail = normalizeEmail(firebaseUser.email);
+  if (!myEmail) return;
+
+  try {
+    const q = query(collection(firebaseDb, 'users'), where('sharedWith', 'array-contains', myEmail));
+    const snap = await getDocs(q);
+    snap.forEach(docSnap => {
+      if (docSnap.id === firebaseUser.uid) return;
+      const data = docSnap.data();
+      receivedShares.push({
+        uid: docSnap.id,
+        email: data.ownerEmail || '',
+        name: data.ownerName || '',
+        shopName: data.shopName || ''
+      });
+    });
+  } catch (err) {
+    // Regole Firestore non ancora aggiornate, o offline: non è fatale.
+    console.warn('Load received shares error:', err);
+  }
+}
+
+export async function refreshShares() {
+  await loadReceivedShares();
+  renderShareUI();
+  showToast(t('share.refreshed'), 'check');
+}
+
+// I PDF/foto delle fatture stanno solo nell'IndexedDB di chi le ha caricate,
+// non nel cloud: in vista condivisa il flag va tolto per non offrire
+// allegati che su questo dispositivo non esistono.
+function stripLocalOnlyFlags(data) {
+  const copy = { ...data };
+  copy.fatture = (data.fatture || []).map(f => {
+    const { hasPdf, ...rest } = f;
+    return rest;
+  });
+  return copy;
+}
+
+export function viewSharedData(uid) {
+  const owner = receivedShares.find(s => s.uid === uid);
+  if (!owner) return;
+
+  setSharedView({ uid: owner.uid, email: owner.email, name: owner.name, shopName: owner.shopName });
+  applyReadOnlyUI();
+  setSyncStatus('syncing');
+  startSharedListener(getSharedView());
+  renderShareUI();
+  callUi();
+  showToast(t('share.nowViewing') + (owner.shopName || owner.name || owner.email), 'check');
+}
+
+export function exitSharedView() {
+  if (!isReadOnly()) return;
+  stopSharedListener();
+  setSharedView(null);
+  applyReadOnlyUI();
+  renderShareUI();
+  callUi();
+  setSyncStatus('syncing');
+  loadFromCloud().then(() => {
+    setSyncStatus('synced');
+    updateLastSyncTime();
+    callUi();
+  });
+  showToast(t('share.backToMine'), 'check');
+}
+
+function stopSharedListener() {
+  if (sharedUnsub) { sharedUnsub(); sharedUnsub = null; }
+}
+
+// Listener realtime sul documento del proprietario: ogni modifica che lui
+// salva arriva qui senza bisogno di riaprire l'app.
+function startSharedListener(view) {
+  stopSharedListener();
+  if (!firebaseDb || !view) return;
+
+  sharedUnsub = onSnapshot(doc(firebaseDb, 'users', view.uid), (snap) => {
+    if (!snap.exists()) {
+      showToast(t('share.revoked'), 'warn');
+      exitSharedView();
+      return;
+    }
+    replaceData(stripLocalOnlyFlags(snap.data()));
+    localStorage.setItem(SHARED_CACHE_KEY, JSON.stringify(d));
+    const titleEl = document.getElementById('app-title');
+    if (titleEl) titleEl.textContent = d.shopName || t('app.title');
+    setSyncStatus('synced');
+    updateLastSyncTime();
+    callUi();
+  }, (err) => {
+    console.error('Shared listener error:', err);
+    // Permesso revocato dal proprietario, o regole non aggiornate.
+    if (err.code === 'permission-denied') {
+      showToast(t('share.revoked'), 'warn');
+      exitSharedView();
+    } else {
+      setSyncStatus('error');
+    }
+  });
+}
+
+// ─── UI ───
+
+// Banner + classe sul body: la classe serve al CSS per nascondere i comandi
+// di modifica, il blocco vero delle azioni è nel guard di main.js.
+export function applyReadOnlyUI() {
+  const view = getSharedView();
+  document.body.classList.toggle('readonly-mode', !!view);
+
+  const banner = document.getElementById('readonly-banner');
+  if (!banner) return;
+
+  if (view) {
+    const who = view.shopName || view.name || view.email || '';
+    banner.style.display = 'flex';
+    banner.innerHTML = `
+      <span class="readonly-banner-text">${escapeHtml(t('share.viewingBanner') + who)}</span>
+      <button class="btn-sm gray" data-action="exitSharedView">${escapeHtml(t('share.exit'))}</button>
+    `;
+  } else {
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+  }
+}
+
+export function renderShareUI() {
+  const card = document.getElementById('share-card');
+  if (!card) return;
+
+  if (!firebaseUser) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const ownerUi = document.getElementById('share-owner-ui');
+  const receivedUi = document.getElementById('share-received-ui');
+  const readOnly = isReadOnly();
+
+  if (ownerUi) {
+    // In vista condivisa la lista degli invitati non è la nostra: si nasconde
+    // per non far credere di stare modificando i permessi altrui.
+    ownerUi.style.display = readOnly ? 'none' : 'block';
+    const list = document.getElementById('share-list');
+    if (list) {
+      list.innerHTML = mySharedWith.length === 0
+        ? `<div class="share-empty">${escapeHtml(t('share.noneYet'))}</div>`
+        : mySharedWith.map(email => `
+            <div class="share-row">
+              <span class="share-row-email">${escapeHtml(email)}</span>
+              <span class="share-row-role">${escapeHtml(t('share.roleViewer'))}</span>
+              <button class="share-row-remove" data-action="removeSharedEmail" data-email="${escapeHtml(email)}" aria-label="${escapeHtml(t('share.remove'))}">&times;</button>
+            </div>`).join('');
+    }
+  }
+
+  if (receivedUi) {
+    const view = getSharedView();
+    let html = `<div class="share-subtitle">${escapeHtml(t('share.receivedTitle'))}</div>`;
+
+    if (receivedShares.length === 0) {
+      html += `<div class="share-empty">${escapeHtml(t('share.noneReceived'))}</div>`;
+    } else {
+      html += receivedShares.map(sh => {
+        const label = sh.shopName || sh.name || sh.email;
+        const active = view && view.uid === sh.uid;
+        return `
+          <div class="share-row">
+            <span class="share-row-email">${escapeHtml(label)}${sh.email && label !== sh.email ? `<small>${escapeHtml(sh.email)}</small>` : ''}</span>
+            ${active
+              ? `<button class="btn-sm gray" data-action="exitSharedView">${escapeHtml(t('share.exit'))}</button>`
+              : `<button class="btn-sm blue" data-action="viewSharedData" data-uid="${escapeHtml(sh.uid)}">${escapeHtml(t('share.view'))}</button>`}
+          </div>`;
+      }).join('');
+    }
+
+    html += `<div class="cloud-actions"><button class="btn-sm gray" data-action="refreshShares">${escapeHtml(t('share.refresh'))}</button></div>`;
+    receivedUi.innerHTML = html;
+  }
 }
