@@ -1,0 +1,44 @@
+rules_version = '2';
+
+// Regole di sicurezza Firestore per Cassa Smart Pro.
+//
+// Vanno incollate nella console Firebase:
+//   Firestore Database > Regole > incolla > Pubblica
+//
+// Modello: ogni utente possiede il documento users/{suo uid}, che contiene
+// tutti i suoi dati. Il campo `sharedWith` elenca (in minuscolo) le email
+// degli account Google autorizzati a LEGGERE quel documento. La scrittura
+// resta sempre e solo del proprietario.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function myEmail() {
+        return request.auth != null && request.auth.token.email != null
+          ? request.auth.token.email.lower()
+          : '';
+      }
+
+      // Lettura di un singolo documento: il proprietario, oppure un account
+      // la cui email compare in sharedWith.
+      allow get: if isOwner()
+        || (request.auth != null && myEmail() in resource.data.get('sharedWith', []));
+
+      // Query: usata solo per trovare i dataset condivisi con me. La regola
+      // passa unicamente per i documenti che mi elencano in sharedWith,
+      // quindi la query deve essere vincolata con
+      //   where('sharedWith', 'array-contains', <la mia email in minuscolo>)
+      allow list: if isOwner()
+        || (request.auth != null && myEmail() in resource.data.sharedWith);
+
+      // Scrittura: solo il proprietario. Gli invitati sono in sola lettura.
+      allow write: if isOwner();
+    }
+  }
+}

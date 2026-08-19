@@ -3,8 +3,33 @@
 import { openDb, migrateFromFatture } from './pdf-storage.js';
 
 const STORAGE_KEY = 'cassa_v6';
+// Cache locale dei dati di un altro utente, mostrati in sola lettura.
+// Tenuta separata da STORAGE_KEY per non toccare mai i dati propri.
+const SHARED_CACHE_KEY = 'cassa_v6_shared';
+const SHARED_VIEW_KEY = 'cassa_shared_view';
 
-let d = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+// Quando valorizzato: { uid, email, name } del proprietario di cui stiamo
+// guardando i dati. Null = stiamo guardando i nostri (modifica consentita).
+let sharedView = null;
+try {
+  const raw = localStorage.getItem(SHARED_VIEW_KEY);
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.uid) sharedView = parsed;
+  }
+} catch (e) {
+  localStorage.removeItem(SHARED_VIEW_KEY);
+}
+
+function activeStorageKey() {
+  return sharedView ? SHARED_CACHE_KEY : STORAGE_KEY;
+}
+
+export function isReadOnly() {
+  return !!sharedView;
+}
+
+let d = JSON.parse(localStorage.getItem(activeStorageKey())) || {
   saldo: 0, fornitori: [], stipendi: [], abit: ['Pranzo', 'Treno'], log: [], fatture: []
 };
 if (!d.fatture) d.fatture = [];
@@ -39,14 +64,42 @@ let _onSaveCallback = null;
 export function setOnSaveCallback(fn) { _onSaveCallback = fn; }
 
 function save() {
+  const key = activeStorageKey();
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+    localStorage.setItem(key, JSON.stringify(d));
   } catch (e) {
     // localStorage full — emergency: strip any remaining PDF blobs
     console.warn('[save] localStorage full, stripping blobs...', e);
     (d.fatture || []).forEach(f => { delete f.pdf; delete f.foto; });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+    localStorage.setItem(key, JSON.stringify(d));
   }
+}
+
+// Sostituisce l'intero dataset in place: `d` e' importato come binding vivo
+// da mezza applicazione, quindi non va mai riassegnato.
+export function replaceData(obj) {
+  Object.keys(d).forEach(k => delete d[k]);
+  Object.assign(d, {
+    saldo: 0, fornitori: [], stipendi: [], abit: [], log: [],
+    fatture: [], anticipi: [], customCats: [], aziendaData: {}
+  }, obj || {});
+}
+
+// Entra/esce dalla vista dei dati condivisi da un altro utente.
+// `view` = { uid, email, name } oppure null per tornare ai propri dati.
+export function setSharedView(view) {
+  sharedView = view && view.uid ? view : null;
+  if (sharedView) {
+    localStorage.setItem(SHARED_VIEW_KEY, JSON.stringify(sharedView));
+  } else {
+    localStorage.removeItem(SHARED_VIEW_KEY);
+    localStorage.removeItem(SHARED_CACHE_KEY);
+  }
+  replaceData(JSON.parse(localStorage.getItem(activeStorageKey())) || {});
+}
+
+export function getSharedView() {
+  return sharedView;
 }
 
 export function fullSave() {
@@ -79,7 +132,8 @@ export {
   selectedDate, editingDay,
   fattureFilter, fattureSort, editingFatturaId,
   parsedImportData, importMode,
-  firebaseDb, firebaseUser, cloudSyncEnabled, syncDebounceTimer
+  firebaseDb, firebaseUser, cloudSyncEnabled, syncDebounceTimer,
+  SHARED_CACHE_KEY
 };
 
 // Setters for reassignable variables

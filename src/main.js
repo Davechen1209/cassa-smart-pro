@@ -7,16 +7,18 @@ import { setLang, applyLanguage, getLang, t } from './js/i18n.js';
 import {
   d, fullSave,
   selectedDate, setSelectedDate, setEditingDay, setOnSaveCallback,
-  initPdfStorage
+  initPdfStorage, isReadOnly
 } from './js/state.js';
 
-import { closeConfirm, closeModal, closeModalOutside } from './js/modals.js';
+import { closeConfirm, closeModal, closeModalOutside, showToast } from './js/modals.js';
 
 import { toISODate } from './js/date-utils.js';
 
 import {
   initFirebase, connectCloud, disconnectCloud, forceSyncFromCloud,
-  googleSignIn, setUiCallback as setFirebaseUiCallback, syncToCloud
+  googleSignIn, setUiCallback as setFirebaseUiCallback, syncToCloud,
+  addSharedEmail, removeSharedEmail, viewSharedData, exitSharedView,
+  refreshShares, applyReadOnlyUI, renderShareUI
 } from './js/firebase-service.js';
 
 import {
@@ -79,12 +81,40 @@ import {
 setOnSaveCallback(() => { syncToCloud(); ui(); });
 setFirebaseUiCallback(ui);
 
+// ─── Read-only guard ───
+// Quando si guardano i dati condivisi da un altro utente ogni azione che
+// modifica il dataset viene bloccata qui, in un punto solo.
+const WRITE_ACTIONS = new Set([
+  'manualSaldo', 'confirmReset', 'addCustomCat', 'removeCustomCat',
+  'addCassa', 'removeCassa', 'registra',
+  'openExpenseSheet', 'setQuickAmount', 'customAmount', 'switchExpCat',
+  'selectExpVoice', 'addNewVoiceFromSheet', 'addExpense', 'removePending',
+  'editItem', 'deleteItem', 'openModalRubrica', 'modalConfirm',
+  'startEditDay', 'deleteDayLog', 'deleteLog',
+  'openVoiceAssistant', 'toggleVoiceRecording', 'confirmVoiceAction',
+  'openFatturaSheet', 'addFornitoreFromFattura', 'saveFattura', 'deleteFattura',
+  'markFatturaPaid', 'markFatturaUnpaid', 'editFattura',
+  'triggerFatturaPhoto', 'removeFatturaPhoto',
+  'saveAziendaData',
+  'triggerImportFile', 'triggerExcelFile', 'triggerFattureFile',
+  'confirmFileImport', 'toggleAutoBackup',
+  'forceSyncFromCloud',
+  'addSharedEmail', 'removeSharedEmail'
+]);
+
+function blockedInReadOnly(action) {
+  if (!isReadOnly() || !WRITE_ACTIONS.has(action)) return false;
+  showToast(t('share.readOnlyBlocked'), 'warn');
+  return true;
+}
+
 // ─── Event Delegation ───
 document.body.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
 
   const action = btn.dataset.action;
+  if (blockedInReadOnly(action)) return;
 
   switch (action) {
     // Tabs
@@ -94,7 +124,7 @@ document.body.addEventListener('click', (e) => {
     case 'toggleSettings': toggleSettings(); break;
     case 'manualSaldo': manualSaldo(); break;
     case 'confirmReset': confirmReset(); break;
-    case 'setLang': setLang(btn.dataset.lang); updateHeaderDate(); updateDateDisplay(); renderCasse(); ui(); break;
+    case 'setLang': setLang(btn.dataset.lang); updateHeaderDate(); updateDateDisplay(); renderCasse(); applyReadOnlyUI(); renderShareUI(); ui(); break;
     case 'changePin': changePin(); break;
     case 'toggleDashboard': toggleDashboard(); break;
     case 'openSearch': openSearch(); break;
@@ -204,6 +234,13 @@ document.body.addEventListener('click', (e) => {
     case 'forceSyncFromCloud': forceSyncFromCloud(); break;
     case 'googleSignIn': googleSignIn(); break;
 
+    // Condivisione dati
+    case 'addSharedEmail': addSharedEmail().catch(console.error); break;
+    case 'removeSharedEmail': removeSharedEmail(btn.dataset.email); break;
+    case 'viewSharedData': viewSharedData(btn.dataset.uid); break;
+    case 'exitSharedView': exitSharedView(); break;
+    case 'refreshShares': refreshShares().catch(console.error); break;
+
     // Backup
     case 'downloadBackup': downloadBackup().catch(console.error); break;
     case 'triggerImportFile': document.getElementById('import-file').click(); break;
@@ -237,16 +274,17 @@ document.getElementById('voice-overlay').addEventListener('click', closeVoiceOut
 
 // Voice select dropdown
 document.getElementById('exp-voices-select').addEventListener('change', function () {
+  if (isReadOnly()) return;
   selectExpVoice(this.value);
 });
 
 // Keyboard events
 document.getElementById('modal-input').addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') modalConfirm();
+  if (e.key === 'Enter' && !blockedInReadOnly('modalConfirm')) modalConfirm();
 });
 
 document.getElementById('exp-free-name').addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') addExpense();
+  if (e.key === 'Enter' && !blockedInReadOnly('addExpense')) addExpense();
 });
 
 // Date picker
@@ -274,9 +312,15 @@ document.getElementById('fatt-ciclo').addEventListener('change', function () {
 });
 
 // File inputs
-document.getElementById('import-file').addEventListener('change', importBackup);
-document.getElementById('excel-file').addEventListener('change', importExcel);
-document.getElementById('fatture-excel-file').addEventListener('change', importFattureExcel);
+document.getElementById('import-file').addEventListener('change', (e) => {
+  if (!blockedInReadOnly('triggerImportFile')) importBackup(e);
+});
+document.getElementById('excel-file').addEventListener('change', (e) => {
+  if (!blockedInReadOnly('triggerExcelFile')) importExcel(e);
+});
+document.getElementById('fatture-excel-file').addEventListener('change', (e) => {
+  if (!blockedInReadOnly('triggerFattureFile')) importFattureExcel(e);
+});
 document.getElementById('history-search').addEventListener('input', () => renderHistory());
 document.getElementById('search-input').addEventListener('input', onSearchInput);
 
@@ -285,6 +329,7 @@ const appTitleEl = document.getElementById('app-title');
 if (d.shopName) appTitleEl.textContent = d.shopName;
 
 appTitleEl.addEventListener('click', () => {
+  if (isReadOnly()) return;
   appTitleEl.contentEditable = 'true';
   appTitleEl.style.borderBottom = '1px dashed var(--blue)';
   appTitleEl.style.outline = 'none';
@@ -298,6 +343,7 @@ appTitleEl.addEventListener('click', () => {
 });
 
 function saveTitle() {
+  if (isReadOnly()) return;
   appTitleEl.contentEditable = 'false';
   appTitleEl.style.borderBottom = '1px dashed transparent';
   const name = appTitleEl.textContent.trim();
@@ -323,6 +369,7 @@ appTitleEl.addEventListener('keydown', (e) => {
 (async () => {
   initPinLock();
   applyLanguage();
+  applyReadOnlyUI();
   if (d.shopName) appTitleEl.textContent = d.shopName;
   updateHeaderDate();
   updateDateDisplay();

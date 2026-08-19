@@ -65,6 +65,9 @@
     </div>
 </div>
 
+<!-- Read-only Banner (vista dati condivisi da un altro utente) -->
+<div id="readonly-banner" class="readonly-banner" style="display:none;"></div>
+
 <!-- Offline Banner -->
 <div id="offline-banner" class="offline-banner" style="display:none;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0;">
@@ -256,6 +259,21 @@
                             <button class="btn-sm blue" data-action="connectCloud" style="flex:1;" data-i18n="cloud.connect">Connetti al Cloud</button>
                         </div>
                     </div>
+                </div>
+                <div class="settings-card" id="share-card" style="display:none;">
+                    <div class="settings-card-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        <span data-i18n="share.title">Condivisione dati</span>
+                    </div>
+                    <div id="share-owner-ui">
+                        <div class="cloud-info" data-i18n="share.ownerInfo">Aggiungi l'email dell'account Google delle persone che possono vedere i tuoi dati. Loro vedranno tutto in tempo reale ma in sola lettura: solo tu puoi modificare.</div>
+                        <div class="share-add-row">
+                            <input type="email" id="share-email-input" class="share-email-input" placeholder="nome@gmail.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+                            <button class="btn-sm blue" data-action="addSharedEmail" data-i18n="share.add">Aggiungi</button>
+                        </div>
+                        <div id="share-list"></div>
+                    </div>
+                    <div id="share-received-ui"></div>
                 </div>
                 <div class="settings-card">
                     <div class="settings-card-title">
