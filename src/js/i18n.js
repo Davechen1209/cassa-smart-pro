@@ -31,6 +31,28 @@ const translations = {
     'tab.registra': 'Registra',
     'tab.rubriche': 'Rubriche',
     'tab.storico': 'Storico',
+    'tab.report': 'Report',
+    'report.preset.thisMonth': 'Questo mese',
+    'report.preset.lastMonth': 'Mese scorso',
+    'report.preset.last3': 'Ultimi 3 mesi',
+    'report.preset.thisYear': "Quest'anno",
+    'report.preset.custom': 'Personalizzato',
+    'report.from': 'Dal',
+    'report.to': 'Al',
+    'report.comparedTo': 'confronto con',
+    'report.noChange': 'invariato',
+    'report.monthByMonth': 'Mese per mese',
+    'report.month': 'Mese',
+    'report.total': 'Totale',
+    'report.dailyTrend': 'Andamento giornaliero',
+    'report.averages': 'Medie e giorni',
+    'report.avgIncome': 'Incasso medio',
+    'report.avgExpense': 'Uscita media',
+    'report.workedDays': 'Giorni con movimenti',
+    'report.bestDay': 'Giorno migliore',
+    'report.worstDay': 'Giorno peggiore',
+    'report.byWeekday': 'Incasso medio per giorno della settimana',
+    'report.emptyPeriod': 'Nessun movimento nel periodo selezionato.',
     'tab.fatture': 'Fatture',
 
     // Saldo
@@ -100,6 +122,9 @@ const translations = {
     'share.roleViewer': 'sola lettura',
     'share.noneYet': 'Non hai ancora condiviso i tuoi dati con nessuno.',
     'share.receivedTitle': 'Dati condivisi con te',
+    'share.switchLabel': 'Quali dati vuoi vedere',
+    'share.myData': 'I miei dati',
+    'share.rename': 'Rinomina attività',
     'share.noneReceived': 'Nessuno ha ancora condiviso dei dati con te.',
     'share.view': 'Apri',
     'share.exit': 'Torna ai miei dati',
@@ -167,6 +192,16 @@ const translations = {
     'stats.net': 'Netto',
     'stats.monthlyTrend': 'Andamento mensile',
     'stats.categories': 'Categorie spese (mese corrente)',
+    'report.categories': 'Spese per categoria',
+    'report.totalTakings': 'Totale incassi',
+    'report.ofWhichPos': 'di cui POS',
+    'report.mix': 'Contanti e POS',
+    'report.cash': 'Contanti',
+    'report.posBefore': 'Nel periodo precedente il POS era il',
+    'report.compareLabel': 'Confronta con',
+    'report.compare.previous': 'Periodo precedente',
+    'report.compare.lastYear': 'Anno prima',
+    'report.compare.customCompare': 'Scegli periodo',
 
     // Excel import preview
     'excel.previewTitle': 'Anteprima Importazione',
@@ -536,6 +571,28 @@ const translations = {
     'tab.registra': '收银',
     'tab.rubriche': '名册',
     'tab.storico': '记录',
+    'tab.report': '报表',
+    'report.preset.thisMonth': '本月',
+    'report.preset.lastMonth': '上月',
+    'report.preset.last3': '近三个月',
+    'report.preset.thisYear': '今年',
+    'report.preset.custom': '自定义',
+    'report.from': '从',
+    'report.to': '到',
+    'report.comparedTo': '对比',
+    'report.noChange': '无变化',
+    'report.monthByMonth': '逐月对比',
+    'report.month': '月份',
+    'report.total': '合计',
+    'report.dailyTrend': '每日走势',
+    'report.averages': '平均值与单日',
+    'report.avgIncome': '平均收入',
+    'report.avgExpense': '平均支出',
+    'report.workedDays': '有记录的天数',
+    'report.bestDay': '最佳单日',
+    'report.worstDay': '最差单日',
+    'report.byWeekday': '各星期平均收入',
+    'report.emptyPeriod': '所选期间没有记录。',
     'tab.fatture': '账单',
 
     // Saldo
@@ -605,6 +662,9 @@ const translations = {
     'share.roleViewer': '只读',
     'share.noneYet': '你还没有把数据分享给任何人。',
     'share.receivedTitle': '共享给你的数据',
+    'share.switchLabel': '查看哪份数据',
+    'share.myData': '我的数据',
+    'share.rename': '重命名店铺',
     'share.noneReceived': '还没有人把数据分享给你。',
     'share.view': '打开',
     'share.exit': '返回我的数据',
@@ -672,6 +732,16 @@ const translations = {
     'stats.net': '净额',
     'stats.monthlyTrend': '月度走势',
     'stats.categories': '本月支出分类',
+    'report.categories': '按类别支出',
+    'report.totalTakings': '总收入',
+    'report.ofWhichPos': '其中POS',
+    'report.mix': '现金与POS',
+    'report.cash': '现金',
+    'report.posBefore': '上期POS占比为',
+    'report.compareLabel': '对比',
+    'report.compare.previous': '上一期',
+    'report.compare.lastYear': '去年同期',
+    'report.compare.customCompare': '自选期间',
 
     // Excel
     'excel.previewTitle': '导入预览',
@@ -1018,10 +1088,25 @@ const typeKeys = [
   { itVal: 'Anticipo', zhVal: '借支', key: 'ant.logAdvance' },
   { itVal: 'Spesa generica', zhVal: '其他支出', key: 'exp.genericExpense' },
 ];
-const incassoPatterns = [
-  /^(.*?)Incasso Contanti\s*\(TOTALE:([\d.,]+)\s*POS:([\d.,]+)\)$/,
-  /^(.*?)现金收入\s*\(总计:([\d.,]+)\s*POS:([\d.,]+)\)$/,
-];
+// Le entrate sono state scritte in forme diverse nel tempo: etichetta "Z" nelle
+// versioni vecchie e "TOTALE" in quelle nuove, in italiano o in cinese, con o
+// senza il prefisso della cassa. I due pattern separati per lingua ne
+// riconoscevano solo una parte (130 su 551 nello storico reale), lasciando le
+// altre non tradotte. Qui l'etichetta del totale non viene piu' guardata: conta
+// che dentro le parentesi ci siano un importo e un POS.
+const INCASSO_RE = /^(.*?)(?:Incasso Contanti|Incasso Cash|现金收入)\s*\(\s*[^:：()]+\s*[:：]\s*([\d.]+)\s+POS\s*[:：]\s*([\d.]+)\s*\)$/;
+
+// { prefix, totale, pos, cash } oppure null se non e' un incasso.
+// `totale` e' il battuto di giornata, `cash` la sola parte in contanti: e'
+// quest'ultima a muovere il saldo, ma i report ragionano sul totale.
+export function parseIncasso(desc) {
+  const m = String(desc || '').match(INCASSO_RE);
+  if (!m) return null;
+  const totale = parseFloat(m[2]);
+  const pos = parseFloat(m[3]);
+  if (!isFinite(totale) || !isFinite(pos)) return null;
+  return { prefix: m[1].trim(), totale, pos, cash: totale - pos };
+}
 const repayPatterns = [
   /^Rimborso anticipo:\s*(.+)$/,
   /^归还借支:\s*(.+)$/,
@@ -1030,13 +1115,11 @@ const repayPatterns = [
 export function translateLogDesc(desc) {
   if (!desc) return desc;
 
-  // Match income entries: "[cassa] Incasso Contanti (TOTALE:X POS:Y)"
-  for (const re of incassoPatterns) {
-    const m = desc.match(re);
-    if (m) {
-      const prefix = m[1] ? m[1].trim() + ' ' : '';
-      return prefix + t('fatt.incassoCash') + ' (' + t('incassi.totaleLabel') + ':' + m[2] + ' POS:' + m[3] + ')';
-    }
+  // Incasso: si riscrive nella lingua e nelle etichette correnti.
+  const inc = parseIncasso(desc);
+  if (inc) {
+    const prefix = inc.prefix ? inc.prefix + ' ' : '';
+    return prefix + t('fatt.incassoCash') + ' (' + t('incassi.totaleLabel') + ':' + inc.totale + ' POS:' + inc.pos + ')';
   }
 
   // Match anticipi repay: "Rimborso anticipo: NAME"

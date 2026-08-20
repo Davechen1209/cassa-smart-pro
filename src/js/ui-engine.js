@@ -10,6 +10,7 @@ import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
 import { renderFatture, updateFattureTabBadge } from './fatture.js';
 import { t, getLang, translateLogDesc } from './i18n.js';
+import { renderReport } from './report.js';
 
 export function updateDateDisplay() {
   document.getElementById('date-display-text').textContent = formatDateDisplay(selectedDate);
@@ -320,7 +321,7 @@ export function deleteLog(index, name) {
 export function tab(n) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('s' + n).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i + 1 === n));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.tab) === n));
   ui();
 }
 
@@ -466,6 +467,10 @@ export function ui() {
   renderFatture();
   updateFattureTabBadge();
   renderDashboard();
+
+  // Il Report ricalcola su tutto lo storico: si rigenera solo quando la sua
+  // tab e' davvero a schermo, non a ogni salvataggio.
+  if (document.getElementById('s4')?.classList.contains('active')) renderReport();
 }
 
 export function updateHeaderDate() {

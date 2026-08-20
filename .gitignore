@@ -3,3 +3,4 @@ dist
 .DS_Store
 *.log
 index.html.bak
+.claude/settings.local.json

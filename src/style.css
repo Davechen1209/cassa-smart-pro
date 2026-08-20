@@ -314,8 +314,19 @@ body {
 }
 .date-nav:active { transform: scale(0.88); background: var(--gray5); border-color: var(--gray3); }
 .date-nav svg { width: 18px; height: 18px; }
+.date-display-wrap { flex: 1; min-width: 0; position: relative; display: flex; }
+/* Trasparente ma reale: e' questo che riceve il tocco e apre il calendario
+   nativo. Nessuna API di mezzo, quindi funziona su ogni browser. */
+.date-input-overlay {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    margin: 0; padding: 0; border: none; background: none;
+    opacity: 0; cursor: pointer; z-index: 2;
+    -webkit-appearance: none; appearance: none;
+}
+/* :active risale agli antenati: il pulsante sotto reagisce comunque al tocco. */
+.date-display-wrap:active .date-display { transform: scale(0.97); background: var(--gray5); }
 .date-display {
-    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
     padding: 11px 16px;
     background: var(--gray6); border: 1px solid var(--separator); border-radius: 10px;
     font-size: 14px; font-weight: 600; color: var(--text);
@@ -639,93 +650,6 @@ body {
 }
 .history-export-btn:active { opacity: 0.7; }
 
-/* Statistics */
-.stats-card { padding: 14px 16px; margin-bottom: 10px; }
-.stats-header {
-    display: flex; align-items: center; justify-content: space-between;
-    cursor: pointer; user-select: none;
-}
-.stats-header-left {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 15px; font-weight: 700; color: var(--text);
-}
-.stats-summary {
-    display: flex; gap: 8px; margin-top: 14px;
-}
-.stats-sum-card {
-    flex: 1; text-align: center; padding: 10px 6px;
-    border-radius: 10px; background: var(--bg);
-}
-.stats-sum-card.green { border-left: 3px solid var(--green); }
-.stats-sum-card.red { border-left: 3px solid var(--red); }
-.stats-sum-card.blue { border-left: 3px solid var(--blue); }
-.stats-sum-card.orange { border-left: 3px solid var(--orange); }
-.stats-sum-label {
-    font-size: 10px; font-weight: 600; text-transform: uppercase;
-    color: var(--gray); letter-spacing: 0.3px;
-}
-.stats-sum-value {
-    font-size: 16px; font-weight: 800; margin-top: 2px; color: var(--text);
-}
-.stats-section-title {
-    font-size: 12px; font-weight: 700; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.3px;
-    margin: 16px 0 10px; padding-top: 12px;
-    border-top: 0.5px solid var(--separator);
-}
-.stats-chart {
-    display: flex; gap: 4px; align-items: flex-end;
-    height: 100px; padding: 0 4px;
-}
-.stats-bar-group { flex: 1; text-align: center; }
-.stats-bars {
-    display: flex; gap: 2px; justify-content: center;
-    align-items: flex-end; height: 80px;
-}
-.stats-bar {
-    width: 14px; border-radius: 4px 4px 0 0;
-    min-height: 2px; transition: height 0.3s ease;
-}
-.stats-bar.green { background: var(--green); }
-.stats-bar.red { background: var(--red); }
-.stats-bar-label {
-    font-size: 10px; color: var(--gray); margin-top: 4px;
-    font-weight: 600; text-transform: uppercase;
-}
-.stats-legend {
-    display: flex; justify-content: center; gap: 16px;
-    margin-top: 8px; font-size: 11px; color: var(--gray);
-}
-.stats-legend-item { display: flex; align-items: center; gap: 4px; }
-.stats-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-}
-.stats-dot.green { background: var(--green); }
-.stats-dot.red { background: var(--red); }
-.stats-cat-row {
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 0;
-}
-.stats-cat-name {
-    font-size: 12px; font-weight: 600; color: var(--text);
-    min-width: 80px; white-space: nowrap; overflow: hidden;
-    text-overflow: ellipsis;
-}
-.stats-cat-bar-wrap {
-    flex: 1; height: 8px; background: var(--bg);
-    border-radius: 4px; overflow: hidden;
-}
-.stats-cat-bar {
-    height: 100%; border-radius: 4px;
-    transition: width 0.3s ease;
-}
-.stats-cat-amount {
-    font-size: 12px; font-weight: 700; color: var(--text);
-    min-width: 70px; text-align: right; white-space: nowrap;
-}
-.stats-cat-pct {
-    font-size: 10px; font-weight: 500; color: var(--gray);
-}
 
 .history-date-header {
     font-size: 13px; font-weight: 700; color: var(--text3);
@@ -1832,19 +1756,11 @@ body {
 }
 .readonly-banner .btn-sm { flex-shrink: 0; }
 
-/* Nasconde i comandi di modifica; il blocco reale delle azioni sta in main.js */
-body.readonly-mode #voice-fab,
-body.readonly-mode [data-action="openExpenseSheet"],
-body.readonly-mode [data-action="openVoiceAssistant"],
-body.readonly-mode [data-action="registra"],
-body.readonly-mode [data-action="addCassa"],
-body.readonly-mode [data-action="startEditDay"],
-body.readonly-mode [data-action="openModalRubrica"],
-body.readonly-mode [data-action="confirmReset"],
-body.readonly-mode [data-action="manualSaldo"] {
-    display: none !important;
-}
-body.readonly-mode [data-action="openFatturaSheet"]:not([data-id]) { display: none !important; }
+/* In sola lettura i comandi di modifica spariscono, non restano visibili
+   a rispondere con un rifiuto. Il selettore su [data-action] e' generato da
+   WRITE_ACTIONS in main.js, per non tenere due elenchi allineati a mano;
+   qui restano solo i contenitori che non hanno una data-action propria. */
+body.readonly-mode [data-owner-only] { display: none !important; }
 
 .share-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .share-add-row .btn-sm { flex-shrink: 0; }
@@ -1883,3 +1799,327 @@ body.readonly-mode [data-action="openFatturaSheet"]:not([data-id]) { display: no
     font-size: 18px; line-height: 1; cursor: pointer;
 }
 .share-row-remove:active { transform: scale(0.92); }
+
+/* ─── Selettore dataset ancorato al titolo ───
+   Il chevron compare solo quando c'e' davvero qualcosa fra cui scegliere:
+   senza dataset condivisi il titolo resta il campo per rinominare l'attivita'. */
+.app-title-tap {
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer; border-radius: var(--radius-sm);
+    transition: opacity 0.15s ease;
+}
+.app-title-tap:active { opacity: 0.55; }
+.app-title-chevron {
+    width: 14px; height: 14px; flex-shrink: 0;
+    color: var(--gray2); margin-top: 2px;
+    transition: transform 0.2s var(--ease-out-quart);
+}
+.app-title-tap.open .app-title-chevron { transform: rotate(180deg); }
+
+.dataset-menu-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    display: none;
+    background: rgba(0,0,0,0.12);
+    animation: fadeIn 0.15s ease;
+}
+.dataset-menu-overlay.show { display: block; }
+
+.dataset-menu {
+    position: absolute;
+    top: calc(max(16px, env(safe-area-inset-top)) + 46px);
+    left: 16px; right: 16px;
+    max-width: 340px;
+    max-height: min(60vh, 440px); overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--card);
+    border: 0.5px solid var(--separator);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.06);
+    padding: 6px;
+    transform-origin: top left;
+    animation: datasetMenuIn 0.2s var(--spring);
+}
+@keyframes datasetMenuIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dataset-menu-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--gray);
+    padding: 8px 12px 6px;
+}
+.dataset-menu-item {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 11px 12px;
+    background: none; border: none; text-align: left;
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text); font-size: 15px; font-weight: 500;
+    font-family: inherit;
+    transition: background 0.15s ease;
+}
+.dataset-menu-item:active { background: rgba(0,122,255,0.1); }
+.dataset-menu-item.active { color: var(--blue); font-weight: 600; }
+.dataset-menu-item .dataset-menu-check {
+    width: 18px; height: 18px; flex-shrink: 0; color: var(--blue);
+}
+.dataset-menu-item .dataset-menu-check.hidden { visibility: hidden; }
+.dataset-menu-text { min-width: 0; flex: 1; }
+.dataset-menu-text small {
+    display: block; font-size: 12px; font-weight: 400;
+    color: var(--gray); margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dataset-menu-sep { height: 0.5px; background: var(--separator); margin: 6px 12px; }
+.dataset-menu-item.secondary { color: var(--text3); font-size: 14px; font-weight: 500; }
+.dataset-menu-empty {
+    padding: 10px 12px 12px; font-size: 13px; color: var(--gray); line-height: 1.45;
+}
+
+/* ═══════════════════════════════════════════════════
+   REPORT
+   ═══════════════════════════════════════════════════ */
+.report-period-card { padding: 14px 16px; }
+.report-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.report-chip {
+    background: var(--gray6); border: none;
+    color: var(--text3); font-family: inherit;
+    font-size: 13px; font-weight: 600;
+    padding: 8px 13px; border-radius: var(--radius-pill);
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.12s var(--spring);
+}
+.report-chip:active { transform: scale(0.93); }
+.report-chip.active { background: var(--blue); color: #fff; }
+
+.report-custom-range { display: flex; gap: 10px; margin-top: 12px; }
+.report-custom-range label {
+    flex: 1; min-width: 0;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.4px;
+    text-transform: uppercase; color: var(--gray);
+    display: flex; flex-direction: column; gap: 4px;
+}
+.report-custom-range .input-field { width: 100%; }
+.report-range-label {
+    margin-top: 10px; font-size: 12px; font-weight: 500; color: var(--gray);
+}
+
+.report-summary { display: flex; gap: 8px; margin-bottom: 6px; }
+.report-sum-card {
+    flex: 1; min-width: 0;
+    background: var(--card); border: 0.5px solid var(--separator);
+    border-radius: var(--radius-lg); padding: 12px 7px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.report-sum-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--gray); margin-bottom: 5px;
+}
+.report-sum-value {
+    font-size: 17px; font-weight: 800; letter-spacing: -0.6px;
+    white-space: nowrap;
+}
+.report-sum-card.green .report-sum-value { color: var(--green); }
+.report-sum-card.red .report-sum-value { color: var(--red); }
+.report-sum-card.blue .report-sum-value { color: var(--blue); }
+.report-sum-card.orange .report-sum-value { color: var(--orange); }
+.report-delta { margin-top: 5px; font-size: 11px; font-weight: 600; }
+.report-delta.good { color: var(--green); }
+.report-delta.bad { color: var(--red); }
+.report-delta.flat { color: var(--gray2); font-weight: 500; }
+/* La nota dice a cosa si riferiscono le frecce nelle card sopra: deve
+   leggersi, non sparire in un grigio da didascalia. */
+
+.report-section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--gray);
+    margin-bottom: 12px;
+}
+.report-section-title.sub { margin-top: 18px; }
+
+.report-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.report-table th {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+    text-transform: uppercase; color: var(--gray);
+    padding: 0 8px 8px; text-align: left; white-space: nowrap;
+}
+.report-table td { padding: 9px 8px; border-top: 0.5px solid var(--separator); white-space: nowrap; }
+.report-table .report-num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.report-table .report-th-month { font-weight: 600; text-transform: capitalize; }
+.report-table tfoot td { border-top: 1.5px solid var(--separator); font-weight: 800; }
+.report-table .green { color: var(--green); }
+.report-table .red { color: var(--red); }
+.report-table .blue { color: var(--blue); }
+.report-table .orange { color: var(--orange); }
+
+.report-chart {
+    display: flex; align-items: flex-end; justify-content: space-around;
+    gap: 4px; height: 130px; padding-top: 8px;
+}
+.report-chart.small { height: 84px; }
+.report-bar-group { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
+.report-bars { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 3px; width: 100%; }
+.report-bar {
+    width: 9px; min-height: 2px; border-radius: 3px 3px 0 0;
+    transition: height 0.4s var(--ease-out-quart);
+}
+.report-bar.green { background: var(--green); }
+.report-bar.red { background: var(--red); }
+.report-bar.blue { background: var(--blue); width: 14px; }
+.report-bar-label {
+    margin-top: 6px; font-size: 10px; font-weight: 600; color: var(--gray);
+    text-transform: capitalize; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.report-legend { display: flex; justify-content: center; gap: 16px; margin-top: 12px; }
+.report-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--gray); font-weight: 500; }
+.report-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.report-dot.green { background: var(--green); }
+.report-dot.red { background: var(--red); }
+
+.report-cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.report-cat-row:last-child { margin-bottom: 0; }
+.report-cat-name {
+    width: 88px; flex-shrink: 0; font-size: 13px; font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.report-cat-bar-wrap { flex: 1; min-width: 0; height: 7px; background: var(--gray6); border-radius: 4px; overflow: hidden; }
+.report-cat-bar { height: 100%; border-radius: 4px; transition: width 0.4s var(--ease-out-quart); }
+.report-cat-amount {
+    width: 92px; flex-shrink: 0; text-align: right;
+    font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.report-cat-pct { font-size: 10px; font-weight: 600; color: var(--gray); }
+
+.report-avg-row { display: flex; gap: 8px; }
+.report-avg {
+    flex: 1; min-width: 0; background: var(--gray6);
+    border-radius: var(--radius-sm); padding: 10px 8px; text-align: center;
+}
+.report-avg span {
+    display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+    text-transform: uppercase; color: var(--gray); margin-bottom: 4px;
+}
+.report-avg strong { font-size: 14px; font-weight: 800; letter-spacing: -0.3px; }
+.report-avg strong.green { color: var(--green); }
+.report-avg strong.red { color: var(--red); }
+
+.report-days { display: flex; gap: 8px; margin-top: 10px; }
+.report-day-card {
+    flex: 1; min-width: 0; border: 0.5px solid var(--separator);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+}
+.report-day-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+    text-transform: uppercase; color: var(--gray);
+}
+.report-day-date { font-size: 13px; font-weight: 600; margin-top: 3px; text-transform: capitalize; }
+.report-day-value { font-size: 16px; font-weight: 800; margin-top: 2px; letter-spacing: -0.4px; }
+.report-day-value.green { color: var(--green); }
+.report-day-value.orange { color: var(--orange); }
+
+.report-empty { text-align: center; color: var(--gray); font-size: 13px; padding: 28px 20px; }
+
+/* Composizione incassi: contanti vs POS */
+.report-mix-bar {
+    display: flex; height: 12px; border-radius: 6px; overflow: hidden;
+    background: var(--gray6); margin-bottom: 14px;
+}
+.report-mix-seg { height: 100%; transition: width 0.4s var(--ease-out-quart); }
+.report-mix-seg.cash { background: var(--green); }
+.report-mix-seg.pos { background: var(--blue); }
+.report-mix-rows { display: flex; gap: 10px; }
+.report-mix-row {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 500;
+}
+.report-mix-name { flex-shrink: 0; }
+.report-mix-val {
+    margin-left: auto; text-align: right;
+    font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.report-mix-val small {
+    display: block; font-size: 10px; font-weight: 600; color: var(--gray);
+}
+.report-mix-shift { margin-top: 12px; font-size: 11px; color: var(--gray); }
+.report-dot.cash { background: var(--green); }
+.report-dot.pos { background: var(--blue); }
+.report-table .report-num.pos { color: var(--blue); }
+.report-table .report-num small {
+    display: block; font-size: 10px; font-weight: 600; color: var(--gray);
+}
+
+/* Etichette delle due scelte nella card del periodo */
+.report-chip.small { font-size: 12px; padding: 7px 12px; }
+
+/* Preset del periodo: una riga sola che scorre. La sfumatura a destra fa
+   capire che oltre il bordo c'e' dell'altro, senza barra di scorrimento. */
+.report-chips-scroll {
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 -16px; padding: 0 16px;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+}
+.report-chips-scroll::-webkit-scrollbar { display: none; }
+.report-chips { display: flex; flex-wrap: nowrap; gap: 6px; width: max-content; padding-right: 24px; }
+
+/* Il badge del confronto e' anche il pulsante che lo cambia. */
+.report-compare-note { display: flex; justify-content: center; margin: 0 0 14px; }
+.report-compare-wrap { position: relative; z-index: 60; }
+.report-compare-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(0,122,255,0.09);
+    border: 0.5px solid rgba(0,122,255,0.22);
+    border-radius: var(--radius-pill);
+    padding: 7px 12px 7px 14px;
+    font-family: inherit; font-size: 12px; font-weight: 500; color: var(--text3);
+    line-height: 1.35; text-align: center; cursor: pointer;
+    transition: background 0.2s ease, transform 0.12s var(--spring);
+}
+.report-compare-badge:active { transform: scale(0.96); background: rgba(0,122,255,0.16); }
+.report-compare-badge svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--blue); }
+.report-compare-badge strong { font-weight: 700; color: var(--blue); white-space: nowrap; }
+.report-compare-caret { width: 12px !important; height: 12px !important; opacity: 0.7; transition: transform 0.2s var(--ease-out-quart); }
+.report-compare-wrap.open .report-compare-caret { transform: rotate(180deg); }
+
+.report-compare-menu {
+    display: none;
+    position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    min-width: 210px;
+    background: var(--card);
+    border: 0.5px solid var(--separator);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.06);
+    padding: 6px;
+    animation: datasetMenuIn 0.18s var(--spring);
+}
+.report-compare-wrap.open .report-compare-menu { display: block; }
+.report-compare-menu-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--gray);
+    padding: 7px 10px 5px;
+}
+.report-compare-item {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 10px;
+    background: none; border: none; text-align: left;
+    border-radius: var(--radius-sm); cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 500; color: var(--text);
+    white-space: nowrap;
+}
+.report-compare-item:active { background: rgba(0,122,255,0.1); }
+.report-compare-item.active { color: var(--blue); font-weight: 600; }
+.report-compare-check { width: 16px; height: 16px; flex-shrink: 0; color: var(--blue); }
+.report-compare-check.hidden { visibility: hidden; }
+
+.report-compare-dates { margin: -6px 0 14px; }
+.report-compare-dates .report-custom-range { justify-content: center; }
+
+/* Il form di registrazione e' interamente di scrittura: in sola lettura sparisce
+   tutto, non solo i pulsanti. I campi TOTALE/POS delle casse non hanno una
+   data-action propria e restavano scrivibili nei giorni ancora senza movimenti. */
+body.readonly-mode #registration-form { display: none !important; }

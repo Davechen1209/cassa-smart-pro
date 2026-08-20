@@ -42,3 +42,19 @@ export function parseFlexDate(str) {
   if (m) return m[3].padStart(2, '0') + '/' + m[2].padStart(2, '0') + '/' + m[1];
   return str;
 }
+
+// Le date del log sono sempre in formato DD/MM/YYYY. Chi deve raggruppare per
+// mese usa questo helper: `substring(0, 7)` sembra dare "YYYY-MM" ma su
+// "01/06/2025" produce "01/06/2", una chiave per giorno invece che per mese.
+export function monthKeyOf(dateStr) {
+  const p = String(dateStr || '').split('/');
+  if (p.length !== 3) return null;
+  return p[2] + '-' + p[1];
+}
+
+// "DD/MM/YYYY" -> "YYYY-MM-DD", per confronti e ordinamenti lessicografici.
+export function isoOf(dateStr) {
+  const p = String(dateStr || '').split('/');
+  if (p.length !== 3) return null;
+  return p[2] + '-' + p[1] + '-' + p[0];
+}
