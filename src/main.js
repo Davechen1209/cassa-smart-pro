@@ -18,7 +18,8 @@ import {
   initFirebase, connectCloud, disconnectCloud, forceSyncFromCloud,
   googleSignIn, setUiCallback as setFirebaseUiCallback, syncToCloud,
   addSharedEmail, removeSharedEmail, viewSharedData, exitSharedView,
-  refreshShares, applyReadOnlyUI, renderShareUI
+  refreshShares, applyReadOnlyUI, renderShareUI,
+  hasSharedDatasets, openDatasetMenu, closeDatasetMenu, updateDatasetSwitcher, updateAppTitle
 } from './js/firebase-service.js';
 
 import {
@@ -59,7 +60,7 @@ import {
   addFornitoreFromFattura
 } from './js/fatture.js';
 
-import { toggleStats } from './js/statistics.js';
+import { setReportPreset, setReportCompare, toggleCompareMenu, closeCompareMenu } from './js/report.js';
 import { initOfflineMode } from './js/offline-mode.js';
 import {
   openVoiceAssistant, closeVoiceAssistant, closeVoiceOutside,
@@ -99,8 +100,18 @@ const WRITE_ACTIONS = new Set([
   'triggerImportFile', 'triggerExcelFile', 'triggerFattureFile',
   'confirmFileImport', 'toggleAutoBackup',
   'forceSyncFromCloud',
-  'addSharedEmail', 'removeSharedEmail'
+  'addSharedEmail', 'removeSharedEmail', 'renameShop'
 ]);
+
+// I comandi di scrittura non vanno solo bloccati: in sola lettura spariscono,
+// cosi' il lettore non vede pulsanti che rispondono con un rifiuto. La regola
+// e' generata qui da WRITE_ACTIONS perche' l'elenco resti uno solo, e come CSS
+// (non come classe sui nodi) per sopravvivere ai re-render dinamici.
+const readOnlyHideRule = document.createElement('style');
+readOnlyHideRule.textContent =
+  [...WRITE_ACTIONS].map(a => `body.readonly-mode [data-action="${a}"]`).join(',') +
+  '{display:none !important;}';
+document.head.appendChild(readOnlyHideRule);
 
 function blockedInReadOnly(action) {
   if (!isReadOnly() || !WRITE_ACTIONS.has(action)) return false;
@@ -115,6 +126,9 @@ document.body.addEventListener('click', (e) => {
 
   const action = btn.dataset.action;
   if (blockedInReadOnly(action)) return;
+
+  // Ogni voce del selettore dataset chiude il menu che l'ha lanciata.
+  if (btn.closest('#dataset-menu')) closeDatasetMenu();
 
   switch (action) {
     // Tabs
@@ -138,9 +152,6 @@ document.body.addEventListener('click', (e) => {
       setEditingDay(false);
       selectedDate.setDate(selectedDate.getDate() + Number(btn.dataset.days));
       updateDateDisplay();
-      break;
-    case 'openDatePicker':
-      document.getElementById('date-input-hidden').showPicker();
       break;
 
     // Casse
@@ -183,7 +194,9 @@ document.body.addEventListener('click', (e) => {
 
     // History
     case 'deleteLog': deleteLog(Number(btn.dataset.index), btn.dataset.name); break;
-    case 'toggleStats': toggleStats(); break;
+    case 'reportPreset': setReportPreset(btn.dataset.preset); break;
+    case 'reportCompare': setReportCompare(btn.dataset.mode); break;
+    case 'toggleCompareMenu': toggleCompareMenu(); break;
 
     // Voice accountant
     case 'openVoiceAssistant': openVoiceAssistant(); break;
@@ -239,6 +252,7 @@ document.body.addEventListener('click', (e) => {
     case 'removeSharedEmail': removeSharedEmail(btn.dataset.email); break;
     case 'viewSharedData': viewSharedData(btn.dataset.uid); break;
     case 'exitSharedView': exitSharedView(); break;
+    case 'renameShop': startRenameTitle(); break;
     case 'refreshShares': refreshShares().catch(console.error); break;
 
     // Backup
@@ -324,11 +338,14 @@ document.getElementById('fatture-excel-file').addEventListener('change', (e) => 
 document.getElementById('history-search').addEventListener('input', () => renderHistory());
 document.getElementById('search-input').addEventListener('input', onSearchInput);
 
-// ─── Editable App Title ───
+// ─── Titolo: selettore dataset + rinomina ───
+// Con dei dataset condivisi disponibili il titolo diventa il selettore di
+// "quali dati sto guardando"; la rinomina resta, dentro quel menu. Senza
+// condivisioni non c'e' niente da scegliere e il tap rinomina come prima.
 const appTitleEl = document.getElementById('app-title');
-if (d.shopName) appTitleEl.textContent = d.shopName;
+updateAppTitle();
 
-appTitleEl.addEventListener('click', () => {
+function startRenameTitle() {
   if (isReadOnly()) return;
   appTitleEl.contentEditable = 'true';
   appTitleEl.style.borderBottom = '1px dashed var(--blue)';
@@ -340,6 +357,23 @@ appTitleEl.addEventListener('click', () => {
   const sel = window.getSelection();
   sel.removeAllRanges();
   sel.addRange(range);
+}
+
+document.getElementById('app-title-tap').addEventListener('click', () => {
+  // Durante la rinomina il tap serve a posizionare il cursore, non a riaprire.
+  if (appTitleEl.isContentEditable) return;
+  if (hasSharedDatasets()) { openDatasetMenu(); return; }
+  startRenameTitle();
+});
+
+document.getElementById('dataset-menu-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeDatasetMenu();
+});
+
+// Il menu del confronto vive dentro il report, non ha un overlay proprio:
+// si chiude al primo click che cade fuori dal suo contenitore.
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.report-compare-wrap')) closeCompareMenu();
 });
 
 function saveTitle() {
@@ -370,7 +404,8 @@ appTitleEl.addEventListener('keydown', (e) => {
   initPinLock();
   applyLanguage();
   applyReadOnlyUI();
-  if (d.shopName) appTitleEl.textContent = d.shopName;
+  updateDatasetSwitcher();
+  updateAppTitle();
   updateHeaderDate();
   updateDateDisplay();
   renderCasse();

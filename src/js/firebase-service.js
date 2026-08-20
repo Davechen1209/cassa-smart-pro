@@ -538,8 +538,7 @@ function startSharedListener(view) {
     }
     replaceData(stripLocalOnlyFlags(snap.data()));
     localStorage.setItem(SHARED_CACHE_KEY, JSON.stringify(d));
-    const titleEl = document.getElementById('app-title');
-    if (titleEl) titleEl.textContent = d.shopName || t('app.title');
+    updateAppTitle();
     setSyncStatus('synced');
     updateLastSyncTime();
     callUi();
@@ -560,6 +559,7 @@ function startSharedListener(view) {
 // Banner + classe sul body: la classe serve al CSS per nascondere i comandi
 // di modifica, il blocco vero delle azioni è nel guard di main.js.
 export function applyReadOnlyUI() {
+  updateAppTitle();
   const view = getSharedView();
   document.body.classList.toggle('readonly-mode', !!view);
 
@@ -580,6 +580,9 @@ export function applyReadOnlyUI() {
 }
 
 export function renderShareUI() {
+  // Il selettore sul titolo mostra lo stesso elenco: si aggiorna insieme.
+  updateDatasetSwitcher();
+
   const card = document.getElementById('share-card');
   if (!card) return;
 
@@ -630,4 +633,95 @@ export function renderShareUI() {
     html += `<div class="cloud-actions"><button class="btn-sm gray" data-action="refreshShares">${escapeHtml(t('share.refresh'))}</button></div>`;
     receivedUi.innerHTML = html;
   }
+}
+
+// ─── Selettore dataset ancorato al titolo ───
+// Scegliere quali dati guardare e' l'azione piu' frequente per chi legge dati
+// altrui: sta sul titolo, non in fondo alle impostazioni.
+
+const CHECK_SVG = '<svg class="dataset-menu-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+export function hasSharedDatasets() {
+  return receivedShares.length > 0;
+}
+
+// Il nome della propria attivita' vive in localStorage: in vista condivisa `d`
+// contiene i dati del proprietario, non i nostri.
+function myShopName() {
+  try {
+    const mine = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    return mine.shopName || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+// Il chevron appare solo se c'e' davvero una scelta da fare; altrimenti il
+// titolo resta quello che era, un campo per rinominare l'attivita'.
+export function updateDatasetSwitcher() {
+  const chevron = document.getElementById('app-title-chevron');
+  if (chevron) chevron.style.display = hasSharedDatasets() ? 'inline-block' : 'none';
+}
+
+export function renderDatasetMenu() {
+  const menu = document.getElementById('dataset-menu');
+  if (!menu) return;
+
+  const view = getSharedView();
+  let html = `<div class="dataset-menu-label">${escapeHtml(t('share.switchLabel'))}</div>`;
+
+  const mineActive = !view;
+  html += `
+    <button class="dataset-menu-item${mineActive ? ' active' : ''}" role="menuitem" data-action="exitSharedView">
+      ${CHECK_SVG.replace('dataset-menu-check', 'dataset-menu-check' + (mineActive ? '' : ' hidden'))}
+      <span class="dataset-menu-text">${escapeHtml(t('share.myData'))}${myShopName() ? `<small>${escapeHtml(myShopName())}</small>` : ''}</span>
+    </button>`;
+
+  receivedShares.forEach(sh => {
+    const label = sh.shopName || sh.name || sh.email;
+    const active = !!view && view.uid === sh.uid;
+    html += `
+      <button class="dataset-menu-item${active ? ' active' : ''}" role="menuitem" data-action="viewSharedData" data-uid="${escapeHtml(sh.uid)}">
+        ${CHECK_SVG.replace('dataset-menu-check', 'dataset-menu-check' + (active ? '' : ' hidden'))}
+        <span class="dataset-menu-text">${escapeHtml(label)}${sh.email && label !== sh.email ? `<small>${escapeHtml(sh.email)}</small>` : ''}</span>
+      </button>`;
+  });
+
+  if (receivedShares.length === 0) {
+    html += `<div class="dataset-menu-empty">${escapeHtml(t('share.noneReceived'))}</div>`;
+  }
+
+  html += '<div class="dataset-menu-sep"></div>';
+  if (!isReadOnly()) {
+    html += `<button class="dataset-menu-item secondary" role="menuitem" data-action="renameShop">${escapeHtml(t('share.rename'))}</button>`;
+  }
+  html += `<button class="dataset-menu-item secondary" role="menuitem" data-action="refreshShares">${escapeHtml(t('share.refresh'))}</button>`;
+
+  menu.innerHTML = html;
+}
+
+export function openDatasetMenu() {
+  const overlay = document.getElementById('dataset-menu-overlay');
+  if (!overlay) return;
+  renderDatasetMenu();
+  overlay.classList.add('show');
+  document.getElementById('app-title-tap')?.classList.add('open');
+}
+
+export function closeDatasetMenu() {
+  document.getElementById('dataset-menu-overlay')?.classList.remove('show');
+  document.getElementById('app-title-tap')?.classList.remove('open');
+}
+
+
+// Il titolo e' anche il selettore del dataset: deve dire quali dati stai
+// guardando. Se il proprietario non ha dato un nome all'attivita' si ricade
+// sul suo nome o sulla sua email, non sul nome generico dell'app.
+export function updateAppTitle() {
+  const el = document.getElementById('app-title');
+  if (!el) return;
+  const view = getSharedView();
+  el.textContent = d.shopName
+    || (view ? (view.shopName || view.name || view.email) : '')
+    || t('app.title');
 }

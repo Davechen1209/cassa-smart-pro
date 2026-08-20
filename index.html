@@ -45,7 +45,7 @@
 <!-- Header -->
 <div class="header">
     <div>
-        <div class="header-title"><span id="app-title" style="cursor:pointer; border-bottom:1px dashed transparent;" data-i18n="app.title">Cassa Smart Pro</span> <span class="sync-dot" id="sync-dot" style="display:none;" data-i18n-title="app.cloudDisconnected" title="Cloud non connesso"></span><span class="offline-dot" id="offline-dot" style="display:none;"></span></div>
+        <div class="header-title"><span class="app-title-tap" id="app-title-tap"><span id="app-title" style="cursor:pointer; border-bottom:1px dashed transparent;" data-i18n="app.title">Cassa Smart Pro</span><svg class="app-title-chevron" id="app-title-chevron" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span> <span class="sync-dot" id="sync-dot" style="display:none;" data-i18n-title="app.cloudDisconnected" title="Cloud non connesso"></span><span class="offline-dot" id="offline-dot" style="display:none;"></span></div>
         <div class="header-date" id="header-date"></div>
     </div>
     <div style="display:flex; gap:4px;">
@@ -63,6 +63,12 @@
             </svg>
         </button>
     </div>
+</div>
+
+<!-- Selettore dataset: dal titolo si sceglie quali dati guardare, senza
+     passare dalle impostazioni. Popolato da renderDatasetMenu(). -->
+<div class="dataset-menu-overlay" id="dataset-menu-overlay">
+    <div class="dataset-menu" id="dataset-menu" role="menu"></div>
 </div>
 
 <!-- Read-only Banner (vista dati condivisi da un altro utente) -->
@@ -125,7 +131,7 @@
                         <button class="btn-sm blue" data-action="changePin" style="flex:1; text-align:center;" data-i18n="pin.save">Salva</button>
                     </div>
                 </div>
-                <div class="settings-card">
+                <div class="settings-card" data-owner-only>
                     <div class="settings-card-title" data-i18n="settings.saldo">Saldo manuale</div>
                     <div class="input-group">
                         <label data-i18n="settings.saldoLabel">Imposta il saldo corrente</label>
@@ -145,7 +151,7 @@
                 <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <div class="settings-section-body">
-                <div class="settings-card">
+                <div class="settings-card" data-owner-only>
                     <div class="settings-card-title">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                         <span data-i18n="azienda.title">Dati Azienda</span>
@@ -202,7 +208,7 @@
                         <button class="btn-sm red" data-action="removeGeminiKey" style="width:100%;" data-i18n="ocr.remove">Rimuovi</button>
                     </div>
                 </div>
-                <div class="settings-card">
+                <div class="settings-card" data-owner-only>
                     <div class="settings-card-title">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
                         <span data-i18n="customCats.title">Categorie Personalizzate</span>
@@ -275,7 +281,7 @@
                     </div>
                     <div id="share-received-ui"></div>
                 </div>
-                <div class="settings-card">
+                <div class="settings-card" data-owner-only>
                     <div class="settings-card-title">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
                         <span data-i18n="autoBackup.title">Backup Automatico</span>
@@ -296,8 +302,8 @@
                         </button>
                         <input type="file" id="import-file" accept=".json" style="display:none;">
                     </div>
-                    <div class="cloud-divider" data-i18n="backup.excelTitle">importa dati da Excel</div>
-                    <div style="display:flex; gap:8px;">
+                    <div data-owner-only class="cloud-divider" data-i18n="backup.excelTitle">importa dati da Excel</div>
+                    <div data-owner-only style="display:flex; gap:8px;">
                         <button class="btn-sm gray" data-action="downloadTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
@@ -308,8 +314,8 @@
                         </button>
                     </div>
                     <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
-                    <div class="cloud-divider" data-i18n="backup.excelFattureTitle">Importa Fatture da Excel</div>
-                    <div style="display:flex; gap:8px;">
+                    <div data-owner-only class="cloud-divider" data-i18n="backup.excelFattureTitle">Importa Fatture da Excel</div>
+                    <div data-owner-only style="display:flex; gap:8px;">
                         <button class="btn-sm gray" data-action="downloadFattureTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
@@ -331,7 +337,7 @@
                 <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <div class="settings-section-body">
-                <div class="settings-danger">
+                <div class="settings-danger" data-owner-only>
                     <div class="settings-card-title" style="color:var(--red);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         <span data-i18n="settings.dangerZone">Zona pericolosa</span>
@@ -426,16 +432,22 @@
                 <button class="date-nav" data-action="shiftDate" data-days="-1">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-                <button class="date-display" data-action="openDatePicker">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px;opacity:0.5;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                    <span id="date-display-text"></span>
-                    <span class="date-badge" id="date-badge"></span>
-                </button>
+                <!-- L'input vero sta sopra al pulsante, trasparente: il tocco lo
+                     raggiunge e il calendario nativo si apre da solo, senza
+                     dipendere da showPicker() (assente su Safari iOS < 16 e
+                     soggetta alle regole sui gesti utente). -->
+                <div class="date-display-wrap">
+                    <button class="date-display" tabindex="-1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px;opacity:0.5;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                        <span id="date-display-text"></span>
+                        <span class="date-badge" id="date-badge"></span>
+                    </button>
+                    <input type="date" id="date-input-hidden" class="date-input-overlay" aria-label="Scegli data">
+                </div>
                 <button class="date-nav" data-action="shiftDate" data-days="1">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
             </div>
-            <input type="date" id="date-input-hidden" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
 
             <!-- DAY SUMMARY -->
             <div id="day-summary" style="display:none;"></div>
@@ -485,17 +497,6 @@
 
     <!-- TAB 2: STORICO -->
     <div class="section" id="s2">
-        <!-- Statistics -->
-        <div class="card stats-card">
-            <div class="stats-header" data-action="toggleStats">
-                <div class="stats-header-left">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-                    <span data-i18n="stats.title">Statistiche</span>
-                </div>
-                <svg class="rubrica-chevron" id="stats-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
-            </div>
-            <div id="stats-content" style="display:none;"></div>
-        </div>
 
         <div class="history-search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;opacity:0.4;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -557,6 +558,11 @@
         </div>
 
     </div>
+
+    <!-- TAB 4: REPORT -->
+    <div class="section" id="s4">
+        <div id="report-content"></div>
+    </div>
 </div>
 
 <!-- Bottom Tab Bar -->
@@ -569,12 +575,18 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span data-i18n="tab.storico">Storico</span>
     </button>
+    <!-- Tab Fatture nascosta dalla tab bar (codice fatture intatto, sezione #s3 non piu raggiungibile dalla barra)
     <button class="tab-btn" data-action="tab" data-tab="3" id="tab3">
         <div style="position:relative;display:inline-flex;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span class="tab-notification-badge" id="fatture-tab-badge" style="display:none;"></span>
         </div>
         <span data-i18n="tab.fatture">Fatture</span>
+    </button>
+    -->
+    <button class="tab-btn" data-action="tab" data-tab="4" id="tab4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        <span data-i18n="tab.report">Report</span>
     </button>
 </div>
 

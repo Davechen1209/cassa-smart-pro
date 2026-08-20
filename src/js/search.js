@@ -52,18 +52,10 @@ function performSearch(query) {
     }
   });
 
-  // Search d.fatture
-  (d.fatture || []).forEach(f => {
-    if ((f.azienda || '').toLowerCase().includes(q) || (f.numero || '').toLowerCase().includes(q)) {
-      results.push({
-        type: 'fattura',
-        label: f.azienda || '-',
-        sub: (f.numero ? 'N° ' + f.numero + ' · ' : '') +
-          '€ ' + (f.importo || 0).toLocaleString('it-IT', { minimumFractionDigits: 2 }),
-        tab: 3
-      });
-    }
-  });
+  // Fatture escluse: la tab e' nascosta dalla barra, un risultato porterebbe
+  // a una sezione senza pulsante per tornarci. Ripristinando la tab in
+  // index.html, riattivare anche questo blocco.
+  // (d.fatture || []).forEach(f => { ... tab: 3 ... });
 
   // Search rubriche
   ['fornitori', 'stipendi', 'abit'].forEach(cat => {
