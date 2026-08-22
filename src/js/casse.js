@@ -5,7 +5,6 @@ import {
   setCasseList, setCasseNextId
 } from './state.js';
 import { showToast } from './modals.js';
-import { autoCreateFatturaIfNeeded } from './fatture.js';
 import { renderPendingList } from './expense.js';
 import { t } from './i18n.js';
 
@@ -82,9 +81,6 @@ export function registra() {
     if (e.fatturaNum) logEntry.fatt = e.fatturaNum;
     d.log.push(logEntry);
 
-    if (e.cat === 'fornitori' && e.name) {
-      autoCreateFatturaIfNeeded(e.name, e.amount, oggi, e.fatturaNum);
-    }
 
   });
 

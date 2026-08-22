@@ -30,20 +30,6 @@ const EMBEDDED_FIREBASE_CONFIG = {
 let _uiCallback = null;
 export function setUiCallback(fn) { _uiCallback = fn; }
 
-// Merge cloud fatture with local fatture (preserve hasPdf flag from local)
-function mergeFattureLocal(cloudFatture, localFatture) {
-  const localMap = {};
-  (localFatture || []).forEach(f => {
-    if (f.id) localMap[f.id] = f;
-  });
-  return cloudFatture.map(f => {
-    const local = f.id ? localMap[f.id] : null;
-    if (local && local.hasPdf && !f.hasPdf) {
-      return { ...f, hasPdf: true };
-    }
-    return f;
-  });
-}
 
 function callUi() {
   if (_uiCallback) _uiCallback();
@@ -121,7 +107,6 @@ export async function syncToCloud() {
         stipendi: d.stipendi,
         abit: d.abit,
         log: d.log,
-        fatture: d.fatture || [],
         anticipi: d.anticipi || [],
         customCats: d.customCats || [],
         aziendaData: d.aziendaData || {},
@@ -158,7 +143,6 @@ export async function loadFromCloud() {
         d.stipendi = cloud.stipendi || d.stipendi;
         d.abit = cloud.abit || d.abit;
         d.log = cloud.log || d.log;
-        d.fatture = mergeFattureLocal(cloud.fatture || d.fatture, d.fatture);
         d.anticipi = cloud.anticipi || d.anticipi;
         d.customCats = cloud.customCats || d.customCats;
         d.aziendaData = cloud.aziendaData || d.aziendaData;
@@ -190,7 +174,6 @@ export async function forceSyncFromCloud() {
       d.stipendi = cloud.stipendi || [];
       d.abit = cloud.abit || [];
       d.log = cloud.log || [];
-      d.fatture = mergeFattureLocal(cloud.fatture || [], d.fatture);
       d.anticipi = cloud.anticipi || [];
       d.customCats = cloud.customCats || [];
       d.aziendaData = cloud.aziendaData || {};
@@ -479,17 +462,6 @@ export async function refreshShares() {
   showToast(t('share.refreshed'), 'check');
 }
 
-// I PDF/foto delle fatture stanno solo nell'IndexedDB di chi le ha caricate,
-// non nel cloud: in vista condivisa il flag va tolto per non offrire
-// allegati che su questo dispositivo non esistono.
-function stripLocalOnlyFlags(data) {
-  const copy = { ...data };
-  copy.fatture = (data.fatture || []).map(f => {
-    const { hasPdf, ...rest } = f;
-    return rest;
-  });
-  return copy;
-}
 
 export function viewSharedData(uid) {
   const owner = receivedShares.find(s => s.uid === uid);
@@ -536,7 +508,7 @@ function startSharedListener(view) {
       exitSharedView();
       return;
     }
-    replaceData(stripLocalOnlyFlags(snap.data()));
+    replaceData(snap.data());
     localStorage.setItem(SHARED_CACHE_KEY, JSON.stringify(d));
     updateAppTitle();
     setSyncStatus('synced');

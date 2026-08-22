@@ -169,26 +169,6 @@
                 </div>
                 <div class="settings-card">
                     <div class="settings-card-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                        <span data-i18n="ocr.title">Riconoscimento Fatture (AI)</span>
-                    </div>
-                    <div class="cloud-info" data-i18n="ocr.info">Inserisci la tua API key OpenAI per compilare automaticamente i campi delle fatture dalla foto.</div>
-                    <div id="ocr-setup">
-                        <div style="display:flex; gap:8px; margin-top:10px;">
-                            <input type="text" class="input-field" id="ocr-api-key" data-i18n-placeholder="ocr.keyPlaceholder" placeholder="sk-..." style="flex:1;">
-                            <button class="btn-sm blue" data-action="saveOcrKey" data-i18n="ocr.save">Salva</button>
-                        </div>
-                    </div>
-                    <div id="ocr-configured" style="display:none; margin-top:10px;">
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                            <div style="width:8px; height:8px; border-radius:50%; background:var(--green);"></div>
-                            <span style="font-size:13px; font-weight:600;" data-i18n="ocr.configured">Configurato</span>
-                        </div>
-                        <button class="btn-sm red" data-action="removeOcrKey" style="width:100%;" data-i18n="ocr.remove">Rimuovi</button>
-                    </div>
-                </div>
-                <div class="settings-card">
-                    <div class="settings-card-title">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--blue);vertical-align:-2px;"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
                         <span data-i18n="gemini.title">Contabile Vocale (AI gratis)</span>
                     </div>
@@ -314,18 +294,6 @@
                         </button>
                     </div>
                     <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
-                    <div data-owner-only class="cloud-divider" data-i18n="backup.excelFattureTitle">Importa Fatture da Excel</div>
-                    <div data-owner-only style="display:flex; gap:8px;">
-                        <button class="btn-sm gray" data-action="downloadFattureTemplate" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            <span data-i18n="backup.downloadTemplate">1. Scarica Template</span>
-                        </button>
-                        <button class="btn-sm blue" data-action="triggerFattureFile" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            <span data-i18n="backup.uploadFile">2. Carica File</span>
-                        </button>
-                    </div>
-                    <input type="file" id="fatture-excel-file" accept=".xlsx,.xls,.csv" style="display:none;">
                 </div>
             </div>
         </div>
@@ -513,51 +481,6 @@
         </div>
     </div>
 
-    <!-- TAB 3: FATTURE -->
-    <div class="section" id="s3">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-            <button class="add-expense-btn" data-action="openFatturaSheet" style="margin-bottom:0; flex:1; border-color:var(--blue); color:var(--blue);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
-                <span data-i18n="fatt.new">Nuova Fattura</span>
-            </button>
-            <button class="history-export-btn" data-action="exportFatture" title="导出Excel">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            </button>
-        </div>
-
-        <!-- Due Warning Card -->
-        <div id="fatt-due-warning" class="card due-warning-card" style="display:none;border-left:3px solid var(--orange);margin-bottom:16px;"></div>
-
-        <div style="display:flex; gap:10px; margin-bottom:16px;">
-            <div class="card" style="flex:1; text-align:center; padding:14px; margin-bottom:0;">
-                <div style="font-size:11px; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:0.3px;" data-i18n="fatt.daPagare">Da pagare</div>
-                <div id="fatt-da-pagare" style="font-size:20px; font-weight:800; margin-top:4px;">€ 0</div>
-            </div>
-            <div class="card" style="flex:1; text-align:center; padding:14px; margin-bottom:0;">
-                <div style="font-size:11px; font-weight:600; color:var(--orange); text-transform:uppercase; letter-spacing:0.3px;" data-i18n="fatt.inScadenza">In scadenza</div>
-                <div id="fatt-scadenza-count" style="font-size:20px; font-weight:800; margin-top:4px;">0</div>
-            </div>
-        </div>
-
-        <div class="segment-control" id="fatt-filter" style="margin-bottom:8px;">
-            <button class="segment-btn active" data-action="filterFatture" data-filter="tutte" data-i18n="fatt.filterAll">Tutte</button>
-            <button class="segment-btn" data-action="filterFatture" data-filter="aperte" data-i18n="fatt.filterOpen">Da pagare</button>
-            <button class="segment-btn" data-action="filterFatture" data-filter="pagate" data-i18n="fatt.filterPaid">Pagate</button>
-            <button class="segment-btn" data-action="filterFatture" data-filter="scadute" data-i18n="fatt.filterExpired">Scadute</button>
-        </div>
-
-        <button id="fatt-sort-btn" data-action="cycleFattureSort" style="display:flex; align-items:center; gap:6px; margin-bottom:16px; padding:8px 14px; border-radius:10px; border:1px solid var(--border); background:var(--card-bg); color:var(--text); font-size:13px; font-weight:600; cursor:pointer;">
-            <span id="fatt-sort-icon" style="display:flex; align-items:center;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M12 5v14m-4-4 4 4 4-4"/></svg>
-            </span>
-            <span id="fatt-sort-label">Data</span>
-        </button>
-
-        <div class="card" style="padding:12px 16px;">
-            <div id="fatture-list"></div>
-        </div>
-
-    </div>
 
     <!-- TAB 4: REPORT -->
     <div class="section" id="s4">
@@ -607,15 +530,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span data-i18n="tab.storico">Storico</span>
     </button>
-    <!-- Tab Fatture nascosta dalla tab bar (codice fatture intatto, sezione #s3 non piu raggiungibile dalla barra)
-    <button class="tab-btn" data-action="tab" data-tab="3" id="tab3">
-        <div style="position:relative;display:inline-flex;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            <span class="tab-notification-badge" id="fatture-tab-badge" style="display:none;"></span>
-        </div>
-        <span data-i18n="tab.fatture">Fatture</span>
-    </button>
-    -->
     <button class="tab-btn" data-action="tab" data-tab="4" id="tab4">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
         <span data-i18n="tab.report">Report</span>
@@ -763,119 +677,8 @@
     </div>
 </div>
 
-<!-- Fattura Bottom Sheet -->
-<div class="fattura-overlay" id="fattura-overlay">
-    <div class="fattura-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-title" id="fattura-sheet-title" data-i18n="fatt.new">Nuova Fattura</div>
 
-        <div class="input-row">
-            <div class="input-group">
-                <label data-i18n="fatt.data">Data</label>
-                <input type="date" class="input-field" id="fatt-data-arrivo">
-            </div>
-            <div class="input-group">
-                <label data-i18n="fatt.numero">N° Fattura</label>
-                <input type="text" class="input-field" id="fatt-numero" data-i18n-placeholder="fatt.numeroPlaceholder" placeholder="N° fattura">
-            </div>
-        </div>
 
-        <div class="input-group">
-            <label data-i18n="fatt.fornitore">Fornitore</label>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <select class="input-field" id="fatt-azienda" style="flex:1;">
-                    <option value="" data-i18n="fatt.fornitorePlaceholder">Seleziona fornitore</option>
-                </select>
-                <button type="button" id="fatt-add-fornitore-btn" data-action="addFornitoreFromFattura" style="width:40px; height:40px; border-radius:10px; border:1.5px dashed var(--blue); background:transparent; color:var(--blue); font-size:22px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">+</button>
-            </div>
-        </div>
-
-        <div class="input-group">
-            <label data-i18n="fatt.importo">Importo</label>
-            <input type="number" class="input-field" id="fatt-importo" placeholder="0,00" inputmode="decimal" step="0.01">
-        </div>
-
-        <div class="input-group">
-            <label data-i18n="fatt.tipo">Tipo di pagamento</label>
-            <select class="input-field" id="fatt-tipo-pagamento">
-                <option value="" data-i18n="fatt.select">Seleziona...</option>
-                <option value="contanti" data-i18n="fatt.contanti">Contanti</option>
-                <option value="bonifico" data-i18n="fatt.bonifico">Bonifico</option>
-                <option value="assegno" data-i18n="fatt.assegno">Assegno</option>
-            </select>
-        </div>
-
-        <div class="input-group" id="fatt-assegno-group" style="display:none;">
-            <label data-i18n="fatt.numAssegno">Numero assegno</label>
-            <input type="text" class="input-field" id="fatt-numero-assegno" data-i18n-placeholder="fatt.numAssegnoPlaceholder" placeholder="N° assegno">
-        </div>
-
-        <div class="input-row">
-            <div class="input-group">
-                <label data-i18n="fatt.ciclo">Ciclo pagamento</label>
-                <select class="input-field" id="fatt-ciclo">
-                    <option value="" data-i18n="fatt.select">Seleziona...</option>
-                    <option value="30" data-i18n="fatt.30days">30 giorni</option>
-                    <option value="60" data-i18n="fatt.60days">60 giorni</option>
-                    <option value="90" data-i18n="fatt.90days">90 giorni</option>
-                    <option value="120" data-i18n="fatt.120days">120 giorni</option>
-                    <option value="custom" data-i18n="fatt.custom">Personalizzato</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label data-i18n="fatt.scadenza">Scadenza</label>
-                <input type="date" class="input-field" id="fatt-scadenza">
-            </div>
-        </div>
-
-        <div class="input-group">
-            <label data-i18n="fatt.note">Note</label>
-            <input type="text" class="input-field" id="fatt-note" data-i18n-placeholder="fatt.notePlaceholder" placeholder="Note opzionali...">
-        </div>
-
-        <div class="input-group">
-            <label data-i18n="fatt.foto">Foto fattura</label>
-            <div class="photo-upload">
-                <input type="file" accept="image/*" capture="environment" id="fatt-photo-input" style="display:none;">
-                <button type="button" class="btn-sm gray" data-action="triggerFatturaPhoto" data-i18n="fatt.attachPhoto">📷 Allega foto</button>
-                <div class="scan-spinner" id="scan-spinner" style="display:none;">
-                    <div class="ocr-spinner-circle"></div>
-                    <div class="ocr-spinner-text" data-i18n="fatt.scanning">Scansione in corso...</div>
-                </div>
-                <div class="pdf-preview" id="fatt-pdf-preview" style="display:none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:20px;height:20px;color:var(--red);flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                    <span data-i18n="fatt.pdfAttached">PDF allegato</span>
-                    <button type="button" class="photo-remove" data-action="removeFatturaPhoto">✕</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="sheet-actions">
-            <button class="btn-sm gray" data-action="closeFatturaSheet" data-i18n="fatt.cancel">Annulla</button>
-            <button class="btn-sm blue" id="fatt-save-btn" data-action="saveFattura" data-i18n="fatt.save">Salva</button>
-        </div>
-    </div>
-</div>
-
-<!-- Fattura Detail Sheet -->
-<div class="fattura-detail-overlay" id="fattura-detail-overlay">
-    <div class="fattura-detail-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-title" id="fattura-detail-title" data-i18n="fatt.detail">Dettaglio Fattura</div>
-        <div id="fattura-detail-content"></div>
-    </div>
-</div>
-
-<!-- Photo Fullscreen Overlay -->
-<div class="photo-fullscreen-overlay" id="photo-fullscreen-overlay">
-    <button class="photo-fullscreen-close" data-action="closePhotoFullscreen">&times;</button>
-    <div class="photo-fullscreen-container" id="photo-fullscreen-container">
-        <img id="photo-fullscreen-img" src="" alt="">
-    </div>
-    <div class="photo-fullscreen-actions">
-        <button class="btn-sm blue" id="photo-fullscreen-download" data-action="downloadFatturaPdf" data-i18n="fatt.downloadPdf">Scarica PDF</button>
-    </div>
-</div>
 
 <!-- Share Preview -->
 <div class="expense-overlay" id="share-preview-overlay">

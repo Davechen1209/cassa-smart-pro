@@ -8,7 +8,7 @@ import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './date-utils.js';
 import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
-import { renderFatture, updateFattureTabBadge } from './fatture.js';
+import { Store as HkStore } from './fatture-app/hk-store.js';
 import { t, getLang, translateLogDesc } from './i18n.js';
 import { renderReport } from './report.js';
 import { FattureApp } from './fatture-app/hk-app.js';
@@ -438,7 +438,6 @@ export function confirmReset() {
       d.stipendi = [];
       d.abit = [];
       d.log = [];
-      d.fatture = [];
       d.anticipi = [];
       fullSave();
       ui();
@@ -468,8 +467,6 @@ export function ui() {
   renderRubriche();
   renderHistory();
   renderDaySummary();
-  renderFatture();
-  updateFattureTabBadge();
   renderDashboard();
 
   // Il Report ricalcola su tutto lo storico: si rigenera solo quando la sua
@@ -502,16 +499,22 @@ export function renderDashboard() {
   // 1. Totale in cassa
   const saldo = d.saldo;
 
-  // 2. Fatture da pagare con scadenza questo mese
-  const fattureMese = (d.fatture || []).filter(f => {
-    if (f.pagata) return false;
-    if (!f.scadenza) return false;
-    const dt = new Date(f.scadenza);
-    return dt.getMonth() === curMonth && dt.getFullYear() === curYear;
-  });
-  const fattureTotal = fattureMese.reduce((s, f) => s + (f.importo || 0), 0);
+  // 2. e 4. Fatture: i dati non stanno piu' in d.fatture ma nell'archivio
+  // dell'app fatture, che tiene anche i pagamenti parziali. Il residuo e' cio'
+  // che conta qui, non l'importo pieno della fattura.
+  const oggiISO = new Date().getFullYear() + '-' +
+    String(new Date().getMonth() + 1).padStart(2, '0') + '-' +
+    String(new Date().getDate()).padStart(2, '0');
+  const daPagare = HkStore.records().filter(r => HkStore.computeStatus(r, oggiISO) !== 'paid');
+  const residuo = r => HkStore.fromCents(HkStore.recCents(r).unpaid);
 
-  // 3. Spese del mese (al di fuori delle fatture)
+  const fattureMese = daPagare.filter(r => (r.dueDate || '').slice(0, 7) === curMonthKey);
+  const fattureTotal = fattureMese.reduce((s, r) => s + residuo(r), 0);
+
+  const fattureScadute = daPagare.filter(r => HkStore.computeStatus(r, oggiISO) === 'overdue');
+  const scaduteTotal = fattureScadute.reduce((s, r) => s + residuo(r), 0);
+
+  // 3. Spese del mese
   let speseExtra = 0;
   d.log.forEach(l => {
     if (!l.d || l.a >= 0) return;
@@ -521,16 +524,6 @@ export function renderDashboard() {
       if (lm === curMonthKey) speseExtra += Math.abs(l.a);
     }
   });
-
-  // 4. Fatture scadute non saldate
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const fattureScadute = (d.fatture || []).filter(f => {
-    if (f.pagata) return false;
-    if (!f.scadenza) return false;
-    const dt = new Date(f.scadenza); dt.setHours(0, 0, 0, 0);
-    return dt < today;
-  });
-  const scaduteTotal = fattureScadute.reduce((s, f) => s + (f.importo || 0), 0);
 
   const fmt = n => '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

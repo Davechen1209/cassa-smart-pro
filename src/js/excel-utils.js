@@ -8,7 +8,6 @@ import {
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { parseFlexDate } from './date-utils.js';
 import { t } from './i18n.js';
-import { getAllPdfs, storePdf } from './pdf-storage.js';
 
 export function downloadTemplate() {
   const ws_data = [
@@ -202,273 +201,14 @@ export function closeExcelImport() {
 export function confirmFileImport() {
   if (parsedImportData.length === 0) return;
 
-  if (importMode === 'fatture') {
-    parsedImportData.forEach(r => {
-      d.fatture.push({
-        id: Date.now() + Math.floor(Math.random() * 1000),
-        dataArrivo: r.dataArrivo || '',
-        azienda: r.azienda || '',
-        numero: r.numero || '',
-        importo: r.importo || 0,
-        tipoPagamento: r.tipoPagamento || '',
-        numeroAssegno: '',
-        ciclo: '',
-        scadenza: r.scadenza || '',
-        note: r.note || '',
-        pagata: !!r.tipoPagamento,
-        hasPdf: false
-      });
-    });
-    const count = parsedImportData.length;
-    fullSave();
-    closeExcelImport();
-    showToast(t('backup.importedFatture', { n: count }), 'check');
-  } else {
-    parsedImportData.forEach(r => {
-      d.saldo += r.amount;
-      d.log.push({ d: r.date, v: r.desc, a: r.amount });
-    });
-    const count = parsedImportData.length;
-    fullSave();
-    closeExcelImport();
-    showToast(t('backup.imported', { n: count }), 'check');
-  }
-}
-
-// ─── Fatture Excel Import ───
-
-export function downloadFattureTemplate() {
-  const ws_data = [
-    [t('excel.colArrivalDate'), t('excel.colNumber'), t('excel.colSupplier'), t('excel.colAmount'), t('excel.colPaymentType'), t('excel.colDueDate'), t('excel.colNotes'), t('excel.colPaid')],
-    ['2026-02-17', 'FT-001', 'Fornitore Rossi S.r.l.', 1500.00, 'bonifico', '2026-03-17', '', 'TRUE'],
-    ['2026-02-18', 'FT-002', 'Azienda Bianchi', 800.50, '', '', 'Da pagare', ''],
-    ['2026-02-19', 'FT-003', 'Trasporti Verdi', 2300.00, 'assegno', '2026-04-19', '', 'TRUE'],
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  ws['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 20 }, { wch: 10 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Fatture');
-  XLSX.writeFile(wb, 'template-fatture.xlsx');
-  showToast(t('backup.templateDone'), 'check');
-}
-
-export function importFattureExcel(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  event.target.value = '';
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-      if (rows.length === 0) { showToast(t('backup.fileEmpty'), 'warn'); return; }
-
-      const headers = Object.keys(rows[0]);
-      const newData = [];
-
-      const colData = findCol(headers, ['data arrivo', 'data', 'date', 'giorno', '\u65E5\u671F']);
-      const colNumero = findCol(headers, ['numero', 'num', 'n.', 'fattura']);
-      const colAzienda = findCol(headers, ['azienda', 'fornitore', 'ragione sociale', 'nome', 'supplier']);
-      const colImporto = findCol(headers, ['importo', 'amount', 'totale', 'valore']);
-      const colTipo = findCol(headers, ['tipo pagamento', 'tipo', 'pagamento', 'payment']);
-      const colScadenza = findCol(headers, ['scadenza', 'due date', 'deadline']);
-      const colNote = findCol(headers, ['note', 'notes', 'descrizione', 'desc']);
-      const colPagata = findCol(headers, ['pagata', 'paid', 'pagato', 'saldato']);
-
-      if (!colAzienda && !colImporto) {
-        showToast(t('backup.noValidData'), 'warn');
-        return;
-      }
-
-      rows.forEach(row => {
-        const azienda = colAzienda ? String(row[colAzienda] || '').trim() : '';
-        const importo = parseNumber(colImporto ? row[colImporto] : 0);
-        if (!azienda && importo === 0) return;
-
-        const rawDate = colData ? row[colData] : null;
-        let dataArrivo = '';
-        if (rawDate) {
-          if (rawDate instanceof Date) {
-            dataArrivo = rawDate.toISOString().slice(0, 10);
-          } else if (typeof rawDate === 'number') {
-            const dt = new Date((rawDate - 25569) * 86400 * 1000);
-            dataArrivo = dt.toISOString().slice(0, 10);
-          } else {
-            const s = String(rawDate).trim();
-            if (s.match(/^\d{4}-\d{2}-\d{2}$/)) {
-              dataArrivo = s;
-            } else {
-              const parsed = parseFlexDate(s);
-              if (parsed) {
-                const parts = parsed.split('/');
-                dataArrivo = parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
-              }
-            }
-          }
-        }
-
-        let tipoPagamento = colTipo ? String(row[colTipo] || '').trim().toLowerCase() : '';
-        if (tipoPagamento && !['contanti', 'bonifico', 'assegno'].includes(tipoPagamento)) {
-          if (tipoPagamento.includes('bonif') || tipoPagamento.includes('bank')) tipoPagamento = 'bonifico';
-          else if (tipoPagamento.includes('cont') || tipoPagamento.includes('cash')) tipoPagamento = 'contanti';
-          else if (tipoPagamento.includes('asseg') || tipoPagamento.includes('check')) tipoPagamento = 'assegno';
-          else tipoPagamento = '';
-        }
-
-        // Flag "Pagata": if TRUE and no tipoPagamento, default to contanti
-        if (!tipoPagamento && colPagata) {
-          const pagVal = String(row[colPagata] || '').trim().toLowerCase();
-          if (pagVal === 'true' || pagVal === 'si' || pagVal === 'sì' || pagVal === '1' || pagVal === 'x' || pagVal === 'yes') {
-            tipoPagamento = 'contanti';
-          }
-        }
-
-        let scadenza = '';
-        if (colScadenza && row[colScadenza]) {
-          const rawScad = row[colScadenza];
-          if (rawScad instanceof Date) {
-            scadenza = rawScad.toISOString().slice(0, 10);
-          } else if (typeof rawScad === 'number') {
-            const dt = new Date((rawScad - 25569) * 86400 * 1000);
-            scadenza = dt.toISOString().slice(0, 10);
-          } else {
-            const s = String(rawScad).trim();
-            if (s.match(/^\d{4}-\d{2}-\d{2}$/)) {
-              scadenza = s;
-            } else {
-              const parsed = parseFlexDate(s);
-              if (parsed) {
-                const parts = parsed.split('/');
-                scadenza = parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
-              }
-            }
-          }
-        }
-
-        newData.push({
-          dataArrivo,
-          numero: colNumero ? String(row[colNumero] || '').trim() : '',
-          azienda,
-          importo: Math.abs(importo),
-          tipoPagamento,
-          scadenza,
-          note: colNote ? String(row[colNote] || '').trim() : ''
-        });
-      });
-
-      setImportMode('fatture');
-      setParsedImportData(newData);
-
-      if (newData.length === 0) {
-        showToast(t('backup.noValidData'), 'warn');
-        return;
-      }
-
-      showFattureImportPreview();
-    } catch (err) {
-      showToast(t('backup.fileError') + err.message, 'warn');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function showFattureImportPreview() {
-  const preview = document.getElementById('import-preview');
-  const summary = document.getElementById('import-summary');
-  const total = parsedImportData.reduce((s, r) => s + r.importo, 0);
-
-  let html = '<div style="overflow-x:auto;"><table class="edit-table" style="margin-bottom:8px;"><thead><tr>';
-  html += '<th>' + t('excel.colDate') + '</th><th>' + t('fatt.fornitore') + '</th><th>' + t('fatt.numero') + '</th><th style="text-align:right;">' + t('excel.colAmount') + '</th></tr></thead><tbody>';
-
-  const showRows = parsedImportData.slice(0, 8);
-  showRows.forEach(r => {
-    html += '<tr>';
-    html += '<td style="padding:8px; font-size:13px;">' + escapeHtml(r.dataArrivo) + '</td>';
-    html += '<td style="padding:8px; font-size:13px;">' + escapeHtml(r.azienda) + '</td>';
-    html += '<td style="padding:8px; font-size:13px;">' + escapeHtml(r.numero) + '</td>';
-    html += '<td style="padding:8px; font-size:13px; text-align:right; font-weight:600;">' + r.importo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC</td>';
-    html += '</tr>';
+  parsedImportData.forEach(r => {
+    d.saldo += r.amount;
+    d.log.push({ d: r.date, v: r.desc, a: r.amount });
   });
-  html += '</tbody></table></div>';
-
-  if (parsedImportData.length > 8) {
-    html += '<div style="text-align:center; font-size:12px; color:var(--gray); margin-bottom:8px;">' + t('backup.moreItems', { n: parsedImportData.length - 8 }) + '</div>';
-  }
-
-  preview.innerHTML = html;
-
-  summary.style.display = 'block';
-  summary.innerHTML = '<div>' + t('backup.totalFatture', { n: parsedImportData.length }) + '</div>' +
-    '<div style="font-size:13px; margin-top:4px; color:var(--text3);">' +
-    t('excel.colAmount') + ': <span style="font-weight:600;">' + total.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC</span></div>';
-
-  document.getElementById('excel-overlay').classList.add('show');
-}
-
-export function exportFatture() {
-  if (!d.fatture || d.fatture.length === 0) { showToast(t('history.empty'), 'warn'); return; }
-
-  const rows = [['到货日期', '公司名', '发票号码', '金额', '现金支付', '支票/汇款', '未付', '已付', '付款周期', '货款到期日', '备注']];
-
-  d.fatture.forEach(f => {
-    const importo = f.importo || 0;
-    const pagata = !!f.pagata;
-    const tipo = (f.tipoPagamento || '').toLowerCase();
-
-    let cashPaid = 0;
-    let transferPaid = 0;
-    let unpaid = 0;
-    let paid = 0;
-
-    if (pagata) {
-      paid = importo;
-      if (tipo === 'contanti') {
-        cashPaid = importo;
-      } else {
-        transferPaid = importo;
-      }
-    } else {
-      unpaid = importo;
-    }
-
-    let cicloLabel = '';
-    if (f.ciclo === '30' || f.ciclo === '60' || f.ciclo === '90' || f.ciclo === '120') {
-      cicloLabel = f.ciclo + '天';
-    } else if (f.ciclo === 'custom') {
-      cicloLabel = '自定义';
-    }
-
-    rows.push([
-      f.dataArrivo || '',
-      f.azienda || '',
-      f.numero || '',
-      importo,
-      cashPaid || '',
-      transferPaid || '',
-      unpaid || '',
-      paid || '',
-      cicloLabel,
-      f.scadenza || '',
-      f.note || ''
-    ]);
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [
-    { wch: 12 }, { wch: 20 }, { wch: 14 }, { wch: 12 },
-    { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
-    { wch: 10 }, { wch: 14 }, { wch: 20 }
-  ];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '发票');
-
-  const dateStr = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, '发票导出-' + dateStr + '.xlsx');
-  showToast(t('backup.exportDone'), 'check');
+  const count = parsedImportData.length;
+  fullSave();
+  closeExcelImport();
+  showToast(t('backup.imported', { n: count }), 'check');
 }
 
 export function exportMovimenti() {
@@ -490,17 +230,6 @@ export function exportMovimenti() {
 }
 
 export async function downloadBackup() {
-  // Fetch all PDFs from IndexedDB and reattach to fatture copy for backup
-  let pdfMap = new Map();
-  try { pdfMap = await getAllPdfs(); } catch (e) { /* IDB unavailable */ }
-
-  const fattureWithPdfs = (d.fatture || []).map(f => {
-    if (f.hasPdf && pdfMap.has(f.id)) {
-      return { ...f, pdf: pdfMap.get(f.id) };
-    }
-    return { ...f };
-  });
-
   const backup = {
     _app: 'CassaSmartPro',
     _version: 6,
@@ -510,7 +239,6 @@ export async function downloadBackup() {
     stipendi: d.stipendi,
     abit: d.abit,
     log: d.log,
-    fatture: fattureWithPdfs,
     anticipi: d.anticipi,
     customCats: d.customCats || []
   };
@@ -593,24 +321,11 @@ export function importBackup(event) {
         t('backup.restoreTitle'),
         t('backup.restoreMsg', { date: dateStr, n: movCount }),
         async () => {
-          // Store PDFs from backup into IndexedDB, strip from fatture
-          const fatture = backup.fatture || [];
-          for (const f of fatture) {
-            const blob = f.pdf || f.foto;
-            if (blob && f.id) {
-              try { await storePdf(f.id, blob); } catch (e) { /* IDB error */ }
-              f.hasPdf = true;
-              delete f.pdf;
-              delete f.foto;
-            }
-          }
-
           d.saldo = backup.saldo ?? 0;
           d.fornitori = backup.fornitori || [];
           d.stipendi = backup.stipendi || [];
           d.abit = backup.abit || [];
           d.log = backup.log || [];
-          d.fatture = fatture;
           d.anticipi = backup.anticipi || [];
           d.customCats = backup.customCats || [];
           pendingExpenses.length = 0;

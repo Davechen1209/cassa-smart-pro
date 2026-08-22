@@ -9,7 +9,7 @@ import { setLang, applyLanguage, getLang, t } from './js/i18n.js';
 import {
   d, fullSave,
   selectedDate, setSelectedDate, setEditingDay, setOnSaveCallback,
-  initPdfStorage, isReadOnly
+  isReadOnly
 } from './js/state.js';
 
 import { closeConfirm, closeModal, closeModalOutside, showToast } from './js/modals.js';
@@ -32,7 +32,7 @@ import {
   closeSharePreview, closeSharePreviewOutside, copyShareText, confirmShare,
   renderCustomCatsSettings, addCustomCat, removeCustomCat,
   toggleDashboard,
-  saveAziendaData, saveOcrKey, removeOcrKey,
+  saveAziendaData,
   saveGeminiKey, removeGeminiKey
 } from './js/ui-engine.js';
 
@@ -51,17 +51,6 @@ import {
   toggleRubrica, toggleRubricaPage, deleteItem, editItem, openModalRubrica, modalConfirm
 } from './js/rubrica.js';
 
-import {
-  openFatturaSheet, closeFatturaSheet, closeFatturaOutside,
-  saveFattura, deleteFattura, filterFatture, cycleFattureSort,
-  markFatturaPaid, markFatturaUnpaid,
-  openFatturaDetail, closeFatturaDetail, closeFatturaDetailOutside,
-  triggerFatturaPhoto, handleFatturaPhoto, removeFatturaPhoto,
-  toggleAssegnoGroup, downloadFatturaPdf,
-  openPhotoFullscreen, closePhotoFullscreen,
-  addFornitoreFromFattura
-} from './js/fatture.js';
-
 import { setReportPreset, setReportCompare, toggleCompareMenu, closeCompareMenu } from './js/report.js';
 import { FattureApp } from './js/fatture-app/hk-app.js';
 import { initOfflineMode } from './js/offline-mode.js';
@@ -76,8 +65,7 @@ import {
   downloadTemplate, importExcel,
   closeExcelImport, confirmFileImport,
   downloadBackup, importBackup,
-  downloadFattureTemplate, importFattureExcel,
-  exportMovimenti, exportFatture,
+  exportMovimenti,
   checkAutoBackup, renderAutoBackupCard, triggerAutoBackupDownload, toggleAutoBackup
 } from './js/excel-utils.js';
 
@@ -96,11 +84,8 @@ const WRITE_ACTIONS = new Set([
   'editItem', 'deleteItem', 'openModalRubrica', 'modalConfirm',
   'startEditDay', 'deleteDayLog', 'deleteLog',
   'openVoiceAssistant', 'toggleVoiceRecording', 'confirmVoiceAction',
-  'openFatturaSheet', 'addFornitoreFromFattura', 'saveFattura', 'deleteFattura',
-  'markFatturaPaid', 'markFatturaUnpaid', 'editFattura',
-  'triggerFatturaPhoto', 'removeFatturaPhoto',
   'saveAziendaData',
-  'triggerImportFile', 'triggerExcelFile', 'triggerFattureFile',
+  'triggerImportFile', 'triggerExcelFile',
   'confirmFileImport', 'toggleAutoBackup',
   'forceSyncFromCloud',
   'addSharedEmail', 'removeSharedEmail', 'renameShop'
@@ -207,28 +192,6 @@ document.body.addEventListener('click', (e) => {
     case 'toggleVoiceRecording': toggleVoiceRecording(); break;
     case 'confirmVoiceAction': confirmVoiceAction(); break;
     case 'cancelVoiceAction': cancelVoiceAction(); break;
-
-    // Fatture
-    case 'openFatturaSheet': openFatturaSheet(btn.dataset.id ? Number(btn.dataset.id) : undefined).catch(console.error); break;
-    case 'addFornitoreFromFattura': addFornitoreFromFattura(); break;
-    case 'closeFatturaSheet': closeFatturaSheet(); break;
-    case 'saveFattura': saveFattura().catch(console.error); break;
-    case 'deleteFattura': deleteFattura(Number(btn.dataset.id)); break;
-    case 'markFatturaPaid': markFatturaPaid(Number(btn.dataset.id)); break;
-    case 'markFatturaUnpaid': markFatturaUnpaid(Number(btn.dataset.id)); break;
-    case 'filterFatture': filterFatture(btn.dataset.filter, btn); break;
-    case 'cycleFattureSort': cycleFattureSort(); break;
-    case 'openFatturaDetail': openFatturaDetail(Number(btn.dataset.id)); break;
-    case 'closeFatturaDetail': closeFatturaDetail(); break;
-    case 'editFattura':
-      openFatturaSheet(Number(btn.dataset.id)).catch(console.error);
-      closeFatturaDetail();
-      break;
-    case 'triggerFatturaPhoto': triggerFatturaPhoto(); break;
-    case 'removeFatturaPhoto': removeFatturaPhoto(); break;
-    case 'openPhotoFullscreen': openPhotoFullscreen(Number(btn.dataset.id)).catch(console.error); break;
-    case 'closePhotoFullscreen': closePhotoFullscreen(); break;
-
     // Settings sections
     case 'toggleSettingsSection': {
       const section = btn.closest('.settings-section');
@@ -237,10 +200,7 @@ document.body.addEventListener('click', (e) => {
     }
 
     // PDF / AI
-    case 'downloadFatturaPdf': downloadFatturaPdf(Number(btn.dataset.id)).catch(console.error); break;
     case 'saveAziendaData': saveAziendaData(); break;
-    case 'saveOcrKey': saveOcrKey(); break;
-    case 'removeOcrKey': removeOcrKey(); break;
     case 'saveGeminiKey': saveGeminiKey(); break;
     case 'removeGeminiKey': removeGeminiKey(); break;
 
@@ -263,10 +223,7 @@ document.body.addEventListener('click', (e) => {
     case 'triggerImportFile': document.getElementById('import-file').click(); break;
     case 'downloadTemplate': downloadTemplate(); break;
     case 'triggerExcelFile': document.getElementById('excel-file').click(); break;
-    case 'downloadFattureTemplate': downloadFattureTemplate(); break;
-    case 'triggerFattureFile': document.getElementById('fatture-excel-file').click(); break;
     case 'exportMovimenti': exportMovimenti(); break;
-    case 'exportFatture': exportFatture(); break;
     case 'openPdfReport': openPdfReportSheet(); break;
     case 'closePdfReport': closePdfReportSheet(); break;
     case 'printReport': printReport(); break;
@@ -280,13 +237,8 @@ document.body.addEventListener('click', (e) => {
 // Overlay click-to-close
 document.getElementById('expense-overlay').addEventListener('click', closeExpenseOutside);
 document.getElementById('modal-overlay').addEventListener('click', closeModalOutside);
-document.getElementById('fattura-overlay').addEventListener('click', closeFatturaOutside);
-document.getElementById('fattura-detail-overlay').addEventListener('click', closeFatturaDetailOutside);
 document.getElementById('pdf-report-overlay').addEventListener('click', closePdfReportOutside);
 document.getElementById('share-preview-overlay').addEventListener('click', closeSharePreviewOutside);
-document.getElementById('photo-fullscreen-overlay').addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) closePhotoFullscreen();
-});
 document.getElementById('voice-overlay').addEventListener('click', closeVoiceOutside);
 
 // Voice select dropdown
@@ -314,29 +266,12 @@ document.getElementById('date-input-hidden').addEventListener('change', function
   }
 });
 
-// Fattura: toggle assegno group + photo input + ciclo auto-calc
-document.getElementById('fatt-tipo-pagamento').addEventListener('change', toggleAssegnoGroup);
-document.getElementById('fatt-photo-input').addEventListener('change', handleFatturaPhoto);
-document.getElementById('fatt-ciclo').addEventListener('change', function () {
-  if (this.value && this.value !== 'custom') {
-    const arrivo = document.getElementById('fatt-data-arrivo').value;
-    if (arrivo) {
-      const dt = new Date(arrivo);
-      dt.setDate(dt.getDate() + parseInt(this.value));
-      document.getElementById('fatt-scadenza').value = toISODate(dt);
-    }
-  }
-});
-
 // File inputs
 document.getElementById('import-file').addEventListener('change', (e) => {
   if (!blockedInReadOnly('triggerImportFile')) importBackup(e);
 });
 document.getElementById('excel-file').addEventListener('change', (e) => {
   if (!blockedInReadOnly('triggerExcelFile')) importExcel(e);
-});
-document.getElementById('fatture-excel-file').addEventListener('change', (e) => {
-  if (!blockedInReadOnly('triggerFattureFile')) importFattureExcel(e);
 });
 document.getElementById('history-search').addEventListener('input', () => renderHistory());
 document.getElementById('search-input').addEventListener('input', onSearchInput);
@@ -412,7 +347,6 @@ appTitleEl.addEventListener('keydown', (e) => {
   updateHeaderDate();
   updateDateDisplay();
   renderCasse();
-  await initPdfStorage();
   initFirebase();
   initOfflineMode();
   renderAutoBackupCard();
