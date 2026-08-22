@@ -324,11 +324,19 @@ export const FattureApp = (function () {
       '<div class="toolbar">' +
       '<input type="search" class="search" id="movSearch" placeholder="' + esc(t("search.placeholder")) + '" value="' + esc(filters.search) + '">' +
       '<div class="chips">' + chips + "</div>" +
+      // I filtri di dettaglio stanno dentro un interruttore di sole regole CSS:
+      // su schermo largo il contenitore sparisce (display:contents) e restano
+      // figli diretti della barra come prima; su telefono si aprono a richiesta,
+      // altrimenti da soli occupano un quarto dello schermo.
+      '<input type="checkbox" id="movAdvToggle" class="adv-toggle">' +
+      '<label class="adv-summary" for="movAdvToggle">' + esc(t("filter.more")) + "</label>" +
+      '<div class="adv-body">' +
       '<select id="movSupplier"><option value="">' + esc(t("filter.supplierAll")) + "</option>" + supplierOptions + "</select>" +
       '<label class="inline">' + esc(t("filter.from")) + ' <input type="date" id="movFrom" value="' + esc(filters.from) + '"></label>' +
       '<label class="inline">' + esc(t("filter.to")) + ' <input type="date" id="movTo" value="' + esc(filters.to) + '"></label>' +
       '<label class="inline"><input type="checkbox" id="movOldDebt"' + (filters.oldDebtOnly ? " checked" : "") + "> " + esc(t("filter.oldDebtOnly")) + "</label>" +
       '<button type="button" class="btn btn-sm" data-action="clear-filters">⟳ ' + esc(t("action.clearFilters")) + "</button>" +
+      "</div>" +
       "</div>" +
       '<div id="movTableWrap"></div>' +
       '<div id="movTotals"></div>' +
