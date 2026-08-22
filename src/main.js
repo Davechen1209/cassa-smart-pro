@@ -112,6 +112,11 @@ document.body.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
 
+  // L'app fatture innestata ha una sua delega su document e usa nomi di
+  // azione propri: 'tab' e' anche il suo (le viste interne), e finiva qui
+  // dentro con data-tab assente, disattivando tutte le sezioni.
+  if (btn.closest('.hk-app')) return;
+
   const action = btn.dataset.action;
   if (blockedInReadOnly(action)) return;
 

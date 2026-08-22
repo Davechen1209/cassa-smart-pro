@@ -37,3 +37,131 @@ body.tab-fatture .content { max-width: none; padding: 0; }
    fatture ha la sua striscia di totali, e a piena larghezza il riquadro
    diventava una fascia sproporzionata. */
 body.tab-fatture #dashboard-card { display: none; }
+
+/* ═══════════════════════════════════════════════════
+   APP FATTURE SU TELEFONO
+   L'app nasce per il desktop: sotto i 760px le tabelle diventano schede
+   impilate, cosi' la tab si usa come le altre invece di scorrere di lato.
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+
+  /* niente piu' larghezza forzata: si sta dentro lo schermo */
+  .hk-scroll { overflow-x: visible; }
+  .hk-scroll > .app { min-width: 0; }
+  .hk-app .view { padding: 12px; }
+  .hk-app .table-wrap { overflow-x: auto; }
+  .hk-app #movTableWrap .table-wrap { overflow: visible; }
+
+  /* la striscia dei totali scorre invece di comprimersi */
+  .hk-app .cashstrip-inner { overflow-x: auto; scrollbar-width: none; }
+  .hk-app .cashstrip-inner::-webkit-scrollbar { display: none; }
+
+  /* barra dei filtri: va a capo invece di tagliarsi */
+  .hk-app .toolbar { flex-wrap: wrap; gap: 8px; }
+  .hk-app .toolbar > * { flex: 0 1 auto; }
+  .hk-app .chip-filter { flex-wrap: wrap; }
+  .hk-app .tabs-inner { overflow-x: auto; scrollbar-width: none; }
+  .hk-app .tabs-inner::-webkit-scrollbar { display: none; }
+
+  /* ── tabella movimenti → schede ── */
+  .hk-app #movTableWrap table.grid,
+  .hk-app #movTableWrap table.grid tbody { display: block; width: 100%; }
+  .hk-app #movTableWrap table.grid thead { display: none; }
+
+  .hk-app #movTableWrap table.grid tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  }
+  .hk-app #movTableWrap table.grid tbody td {
+    display: block; border: none; padding: 0;
+    white-space: normal; word-break: break-word;
+  }
+
+  /* Ordine delle celle: selezione, arrivo, fornitore, fattura, importo,
+     pagato, residuo, stato, termini, scadenza, azioni. */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(1) { display: none; }          /* casella di selezione */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(3) {                            /* fornitore */
+    grid-column: 1; grid-row: 1; font-size: 15px; line-height: 1.25;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(7) {                            /* residuo */
+    grid-column: 2; grid-row: 1; text-align: right;
+    font-size: 17px; font-weight: 800; white-space: nowrap;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(4) {                            /* n. fattura */
+    grid-column: 1; grid-row: 2; color: var(--ink2); font-size: 13px;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(8) {                            /* stato */
+    grid-column: 2; grid-row: 2; text-align: right;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(10) {                           /* scadenza */
+    grid-column: 1 / -1; grid-row: 3;
+    font-size: 12px; color: var(--ink2); margin-top: 4px;
+  }
+  /* Una riga esplicita per ogni cella: mescolare posizionamento esplicito e
+     automatico lasciava buchi nella scheda. */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2)  { grid-row: 4; }   /* arrivo */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5)  { grid-row: 5; }   /* importo */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6)  { grid-row: 6; }   /* pagato */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9)  { grid-row: 7; }   /* termini */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9) {
+    grid-column: 1 / -1;
+    font-size: 12px; color: var(--ink2);
+    display: flex; justify-content: space-between; gap: 12px;
+  }
+
+  /* Senza intestazione la cella da sola non si spiega: l'etichetta e' la
+     stessa della colonna, quindi resta tradotta. */
+  .hk-app #movTableWrap table.grid tbody td[data-label]:nth-child(2)::before,
+  .hk-app #movTableWrap table.grid tbody td[data-label]:nth-child(5)::before,
+  .hk-app #movTableWrap table.grid tbody td[data-label]:nth-child(6)::before {
+    content: attr(data-label);
+    color: var(--muted); font-weight: 600;
+    text-transform: uppercase; font-size: 10px; letter-spacing: .3px;
+    align-self: center;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(10)::before {
+    content: attr(data-label) ": ";
+    color: var(--muted); font-weight: 600;
+    text-transform: uppercase; font-size: 10px; letter-spacing: .3px;
+  }
+
+  .hk-app #movTableWrap table.grid tbody td:nth-child(11) {                           /* azioni */
+    grid-column: 1 / -1; grid-row: 8; margin-top: 8px;
+  }
+  .hk-app .row-actions { display: flex; gap: 8px; }
+  /* Nella scheda il fondo e' bianco: i pulsanti ghost dell'app sparivano. */
+  .hk-app .row-actions .btn {
+    flex: 1; min-height: 38px;
+    background: var(--thead); border-color: var(--border);
+  }
+  .hk-app #movTableWrap tbody tr.overdue-row .row-actions .btn { background: #fff; }
+
+  /* le righe colorate diventano bordi della scheda */
+  .hk-app #movTableWrap table.grid tbody tr.overdue-row { border-color: var(--danger); background: #FEF2F2; }
+  .hk-app #movTableWrap table.grid tbody tr.paid-row { opacity: .62; }
+
+  /* ── scadenzario e fornitori ── */
+  .hk-app .srow { flex-wrap: wrap; gap: 6px; }
+  #supTableWrap { overflow-x: auto; }
+
+  /* ── modale a tutta larghezza ── */
+  .hk-app .modal {
+    width: calc(100vw - 24px); max-width: none;
+    max-height: calc(100vh - 120px); overflow-y: auto;
+  }
+  .hk-app .modal .form-grid { grid-template-columns: 1fr; }
+
+  /* barra superiore compatta */
+  .hk-app .topbar-inner { padding: 0 12px; }
+  .hk-app .quicklinks { display: none; }
+}

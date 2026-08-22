@@ -408,16 +408,16 @@ export const FattureApp = (function () {
       var paidTitle = t("misc.paidSplit", { c: formatMoney(S.toCents(r.paidCash)), o: formatMoney(S.toCents(r.paidOther)) });
       return '<tr class="' + trClass + '" data-id="' + esc(r.id) + '" data-action="edit-row">' +
         '<td class="selcol">' + (d.unpaid > 0 ? '<input type="checkbox" class="sel-cb" data-action="sel-row" data-id="' + esc(r.id) + '"' + (selection[r.id] ? " checked" : "") + ">" : "") + "</td>" +
-        '<td class="nowrap num">' + esc(formatDate(r.arrivalDate)) + "</td>" +
-        "<td><strong>" + esc(r.supplier) + "</strong></td>" +
+        '<td class="nowrap num" data-label="' + esc(t("col.arrival")) + '">' + esc(formatDate(r.arrivalDate)) + "</td>" +
+        '<td data-label="' + esc(t("col.supplier")) + '"><strong>' + esc(r.supplier) + "</strong></td>" +
         "<td>" + esc(r.invoice || "") + (r.notes ? '<span class="notes-dot" title="' + esc(r.notes) + '">📝</span>' : "") +
         (r.checkNo ? '<div class="checkno" title="' + esc(t("col.checkNo")) + '">' + esc(r.checkNo) + "</div>" : "") + "</td>" +
-        '<td class="money">' + esc(formatMoney(d.amount)) + "</td>" +
-        '<td class="money" title="' + esc(paidTitle) + '">' + esc(formatMoney(d.paid)) + "</td>" +
-        '<td class="money bold' + (d.status === "overdue" ? " red" : "") + '">' + esc(formatMoney(d.unpaid)) + "</td>" +
+        '<td class="money" data-label="' + esc(t("col.amount")) + '">' + esc(formatMoney(d.amount)) + "</td>" +
+        '<td class="money" data-label="' + esc(t("col.paid")) + '" title="' + esc(paidTitle) + '">' + esc(formatMoney(d.paid)) + "</td>" +
+        '<td class="money bold' + (d.status === "overdue" ? " red" : "") + '" data-label="' + esc(t("col.unpaid")) + '">' + esc(formatMoney(d.unpaid)) + "</td>" +
         "<td>" + statusChip(d) + "</td>" +
         "<td>" + esc(r.terms || "") + "</td>" +
-        '<td class="nowrap num">' + esc(formatDate(r.dueDate)) + " " + daysPill(d) + "</td>" +
+        '<td class="nowrap num" data-label="' + esc(t("col.due")) + '">' + esc(formatDate(r.dueDate)) + " " + daysPill(d) + "</td>" +
         '<td><div class="row-actions">' +
         (d.unpaid > 0 ? '<button type="button" class="btn btn-sm" data-action="pay" data-id="' + esc(r.id) + '">€ ' + esc(t("action.pay")) + "</button>" : "") +
         '<button type="button" class="btn btn-sm" data-action="edit" data-id="' + esc(r.id) + '" title="' + esc(t("action.edit")) + '">✎</button>' +
