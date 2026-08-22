@@ -332,9 +332,39 @@ body.tab-fatture #dashboard-card { display: none; }
     box-shadow: 0 6px 20px rgba(15, 23, 42, .28);
   }
 
-  /* striscia totali un po' piu' bassa */
-  .hk-app .cashstrip-inner { height: 42px; gap: 18px; }
-  .hk-app .strip-seg { font-size: 11px; }
+  /* ── Striscia totali: due per due, invece di quattro che scorrono ──
+     A 375px i quattro segmenti sono 822px: tre quarti restavano fuori. E
+     l'altezza fissa che avevo messo (42px contro 50 necessari) tagliava i
+     valori a meta'. Qui ognuno ha il suo posto e si legge per intero. */
+  .hk-app .cashstrip-inner {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: auto; gap: 2px 10px; padding: 6px 12px;
+    overflow: visible;
+  }
+  .hk-app .strip-seg { min-width: 0; padding-left: 8px; }
+  .hk-app .strip-seg .lbl {
+    font-size: 9px; letter-spacing: .02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hk-app .strip-seg .val { font-size: 13px; white-space: nowrap; }
+
+  /* ── Tab interne: tutte e cinque nello schermo ──
+     Erano 510px in 375: "Dashboard" e "Dati" restavano fuori, e uno
+     scorrimento orizzontale non si vede che c'e'. */
+  .hk-app .tabs-inner {
+    overflow-x: visible; gap: 0; padding: 0 6px; height: 40px;
+  }
+  .hk-app .tabs-inner .tab {
+    flex: 1 1 auto; min-width: 0; justify-content: center;
+    padding: 0 4px; font-size: 11px; gap: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hk-app .tabs-inner .tab .badge { font-size: 9px; padding: 0 5px; line-height: 15px; min-width: 15px; }
+
+  /* Striscia e tab erano sticky a 52 e 100px, misure prese sulla topbar
+     dell'app: dentro l'ospite quella e' a zero e finivano sotto la sua
+     intestazione. Su telefono scorrono col contenuto. */
+  .hk-app .cashstrip, .hk-app .tabs { position: static; }
 
   /* stato e "altri filtri" sulla stessa riga: i chip scorrono, il pulsante resta */
   .hk-app .toolbar > .chips { flex: 1 1 auto; max-width: calc(100% - 116px); }
