@@ -1,6 +1,8 @@
 // ─── Main Entry Point ───
 
 import './style.css';
+import './js/fatture-app/hk-app.css';
+import './js/fatture-app/hk-host.css';
 import { initPinLock, changePin } from './js/pin-lock.js';
 import { setLang, applyLanguage, getLang, t } from './js/i18n.js';
 
@@ -61,6 +63,7 @@ import {
 } from './js/fatture.js';
 
 import { setReportPreset, setReportCompare, toggleCompareMenu, closeCompareMenu } from './js/report.js';
+import { FattureApp } from './js/fatture-app/hk-app.js';
 import { initOfflineMode } from './js/offline-mode.js';
 import {
   openVoiceAssistant, closeVoiceAssistant, closeVoiceOutside,
@@ -138,7 +141,7 @@ document.body.addEventListener('click', (e) => {
     case 'toggleSettings': toggleSettings(); break;
     case 'manualSaldo': manualSaldo(); break;
     case 'confirmReset': confirmReset(); break;
-    case 'setLang': setLang(btn.dataset.lang); updateHeaderDate(); updateDateDisplay(); renderCasse(); applyReadOnlyUI(); renderShareUI(); ui(); break;
+    case 'setLang': setLang(btn.dataset.lang); updateHeaderDate(); updateDateDisplay(); renderCasse(); applyReadOnlyUI(); renderShareUI(); FattureApp.setLang(btn.dataset.lang); ui(); break;
     case 'changePin': changePin(); break;
     case 'toggleDashboard': toggleDashboard(); break;
     case 'openSearch': openSearch(); break;

@@ -1,0 +1,39 @@
+/* Adattamenti per far convivere l'app fatture dentro cassa-smart-pro.
+   Stanno qui e non in hk-app.css: quel file e' la porta pulita dell'app
+   originale, e va poter essere rigenerato senza perdere queste correzioni. */
+
+/* L'app nasce per il desktop: dichiara min-width 1000px e non ha nemmeno una
+   media query per schermi piccoli. Invece di forzare la pagina intera a 1000px
+   (che manderebbe in scroll orizzontale tutta l'app ospite, barra inferiore
+   compresa) la larghezza resta confinata qui dentro. */
+.hk-app { min-width: 0; height: auto; background: transparent; }
+.hk-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.hk-scroll > .app { min-width: 1000px; }
+
+/* La topbar dell'app era sticky in cima alla pagina: dentro una tab si
+   sovrapporrebbe all'intestazione dell'ospite. */
+.hk-app .topbar { position: static; }
+.hk-app .topbar-inner { padding: 0 16px; height: 44px; }
+
+/* La sezione ha gia' il padding dell'ospite. */
+.hk-app .view { padding: 16px; }
+
+/* Modali e toast dell'app devono stare sopra la barra delle tab (z-index 200)
+   ma sotto gli overlay dell'ospite. */
+.hk-app .modal-scrim, .hk-app .modal { z-index: 480; }
+.hk-app .toast-root { z-index: 490; }
+
+/* Spazio per non finire sotto la barra delle tab flottante. */
+#s5 { padding-bottom: 96px; }
+
+/* La lingua si sceglie dalle impostazioni dell'ospite: il selettore interno
+   sparisce. Serve !important perche' il display:flex dell'app batte [hidden]. */
+.hk-app .lang-pill { display: none !important; }
+
+/* Le altre tab vivono in una colonna da 500px; qui servono le tabelle intere. */
+body.tab-fatture .content { max-width: none; padding: 0; }
+
+/* Il saldo di cassa e' comune a tutte le tab, ma qui non c'entra: l'app
+   fatture ha la sua striscia di totali, e a piena larghezza il riquadro
+   diventava una fascia sproporzionata. */
+body.tab-fatture #dashboard-card { display: none; }

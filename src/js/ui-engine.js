@@ -11,6 +11,7 @@ import { renderRubriche } from './rubrica.js';
 import { renderFatture, updateFattureTabBadge } from './fatture.js';
 import { t, getLang, translateLogDesc } from './i18n.js';
 import { renderReport } from './report.js';
+import { FattureApp } from './fatture-app/hk-app.js';
 
 export function updateDateDisplay() {
   document.getElementById('date-display-text').textContent = formatDateDisplay(selectedDate);
@@ -321,6 +322,9 @@ export function deleteLog(index, name) {
 export function tab(n) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('s' + n).classList.add('active');
+  // L'app fatture e' fatta di tabelle larghe: le altre tab restano nella
+  // colonna da 500px, lei prende tutto lo spazio che c'e'.
+  document.body.classList.toggle('tab-fatture', n === 5);
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.tab) === n));
   ui();
 }
@@ -471,6 +475,9 @@ export function ui() {
   // Il Report ricalcola su tutto lo storico: si rigenera solo quando la sua
   // tab e' davvero a schermo, non a ogni salvataggio.
   if (document.getElementById('s4')?.classList.contains('active')) renderReport();
+
+  // L'app fatture ha un suo ciclo di render: si disegna quando la sua tab e' a schermo.
+  if (document.getElementById('s5')?.classList.contains('active')) FattureApp.render();
 }
 
 export function updateHeaderDate() {

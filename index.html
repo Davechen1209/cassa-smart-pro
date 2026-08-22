@@ -563,6 +563,38 @@
     <div class="section" id="s4">
         <div id="report-content"></div>
     </div>
+
+    <!-- TAB 5: FATTURE (app "Gestione pagamenti / 货款管理" innestata) -->
+    <!-- La struttura interna e' quella originale dell'app, cosi' i suoi
+         selettori continuano a valere; .hk-app e' il guscio che ne circoscrive
+         il CSS. Fuori restano il wordmark (il titolo lo da' l'ospite) e il
+         selettore lingua, che qui e' governato dalle impostazioni. -->
+    <div class="section" id="s5">
+        <div class="hk-app">
+            <div class="hk-scroll">
+                <div class="app" id="hk-root">
+                    <header class="topbar" id="topbar">
+                        <div class="topbar-inner">
+                            <div class="topbar-right">
+                                <span class="quicklinks" id="quickLinks"></span>
+                                <button class="btn btn-primary" id="btnNew" type="button">+ Nuovo arrivo</button>
+                                <div class="lang-pill" id="langPill" role="group" aria-label="Language" hidden>
+                                    <button type="button" data-lang="it" id="langIt">IT</button>
+                                    <button type="button" data-lang="zh" id="langZh">中文</button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="cashstrip" id="cashStrip"></div>
+                    <nav class="tabs" id="tabs"></nav>
+                    <div id="seedBanner"></div>
+                    <main class="view" id="view"></main>
+                    <div id="modalRoot"></div>
+                    <div id="toastRoot" class="toast-root"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Bottom Tab Bar -->
@@ -587,6 +619,10 @@
     <button class="tab-btn" data-action="tab" data-tab="4" id="tab4">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
         <span data-i18n="tab.report">Report</span>
+    </button>
+    <button class="tab-btn" data-action="tab" data-tab="5" id="tab5">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span data-i18n="tab.fatture">Fatture</span>
     </button>
 </div>
 
