@@ -43,7 +43,7 @@ import {
 import {
   openExpenseSheet, closeExpenseSheet, closeExpenseOutside,
   setQuickAmount, customAmount, switchExpCat,
-  selectExpVoice, filterExpVoices, addNewVoiceFromSheet, addExpense,
+  selectExpVoice, filterExpVoices, apriElencoVoci, chiudiElencoVoci, addNewVoiceFromSheet, addExpense,
   renderPendingList, removePending
 } from './js/expense.js';
 
@@ -249,6 +249,15 @@ document.getElementById('voice-overlay').addEventListener('click', closeVoiceOut
 // Voice select dropdown
 // Ricerca fra le voci: filtra man mano che si scrive.
 document.getElementById('exp-voice-search').addEventListener('input', filterExpVoices);
+document.getElementById('exp-voice-search').addEventListener('focus', apriElencoVoci);
+
+// Fuori dal selettore l'elenco si richiude: resta aperto solo finche' serve.
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#exp-voices-section')) chiudiElencoVoci();
+});
+document.getElementById('exp-voice-search').addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { chiudiElencoVoci(); e.target.blur(); }
+});
 
 // Keyboard events
 document.getElementById('modal-input').addEventListener('keydown', function (e) {

@@ -84,25 +84,55 @@ export function updateExpSegments() {
   }
 }
 
-// Con duecento fornitori un <select> obbliga a scorrere: qui si scrive due
-// lettere e la lista si stringe. Restano visibili anche senza cercare nulla,
-// cosi' non si perde la possibilita' di sfogliare che il menu a tendina dava.
+// Scelta della voce: il campo mostra quella scelta, l'elenco compare solo
+// quando lo si tocca. Con una rubrica lunga scorrere un <select> era scomodo,
+// ma tenere l'elenco sempre aperto occupava mezza scheda per niente.
 const VOCI_MOSTRATE = 6;
+let vociAperte = false;
+
+function campoVoci() {
+  return document.getElementById('exp-voice-search');
+}
 
 function svuotaRicercaVoci() {
-  const campo = document.getElementById('exp-voice-search');
+  const campo = campoVoci();
   if (campo) campo.value = '';
+  vociAperte = false;
+}
+
+export function apriElencoVoci() {
+  if (expCat === 'libera' || expCat.startsWith('custom:')) return;
+  vociAperte = true;
+  const campo = campoVoci();
+  // Il campo contiene la voce gia' scelta: selezionandola per intero, la prima
+  // lettera digitata la sostituisce invece di accodarsi.
+  if (campo && campo.value) campo.select();
+  renderExpVoices();
+}
+
+export function chiudiElencoVoci() {
+  if (!vociAperte) return;
+  vociAperte = false;
+  renderExpVoices();
 }
 
 export function renderExpVoices() {
   if (expCat === 'libera') return;
 
-  const lista = d[expCat] || [];
   const contenitore = document.getElementById('exp-voice-results');
   if (!contenitore) return;
 
-  const campo = document.getElementById('exp-voice-search');
-  const cerca = (campo ? campo.value : '').trim().toLowerCase();
+  if (!vociAperte) {
+    contenitore.innerHTML = '';
+    return;
+  }
+
+  const lista = d[expCat] || [];
+  const campo = campoVoci();
+  const scritto = (campo ? campo.value : '').trim();
+  // Se nel campo c'e' esattamente la voce gia' scelta non e' una ricerca:
+  // riaprendo l'elenco si vuole rivedere tutto, non solo quella riga.
+  const cerca = (scritto && scritto !== expSelectedVoice) ? scritto.toLowerCase() : '';
 
   // Chi corrisponde meglio prima: chi inizia con quello che hai scritto.
   const trovate = lista
@@ -141,13 +171,16 @@ export function renderExpVoices() {
 }
 
 export function selectExpVoice(name) {
-  // Ritoccando la stessa voce si deseleziona: serve a correggere un tocco
-  // sbagliato senza dover svuotare il campo di ricerca.
-  setExpSelectedVoice(expSelectedVoice === name ? null : (name || null));
+  setExpSelectedVoice(name || null);
+  // Scelta fatta: il campo mostra il nome e l'elenco si richiude.
+  const campo = campoVoci();
+  if (campo) campo.value = name || '';
+  vociAperte = false;
   renderExpVoices();
 }
 
 export function filterExpVoices() {
+  vociAperte = true;
   renderExpVoices();
 }
 
