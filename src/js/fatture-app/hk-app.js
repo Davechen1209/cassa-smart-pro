@@ -72,6 +72,24 @@ export const FattureApp = (function () {
 
   var TODAY = S.todayISO();
   var currentView = "movimenti";
+
+  /* ---------- sola lettura ---------- */
+  // Quando si guardano i dati condivisi da un altro utente, questa tab deve
+  // essere consultabile ma non modificabile. Il blocco vive qui e non nella
+  // delega dell'app ospite, che non conosce i nomi delle azioni di questa.
+  // E' un elenco di cio' che si PUO' fare: navigare, filtrare, ordinare,
+  // guardare, esportare. Tutto il resto e' scrittura ed e' bloccato, cosi'
+  // un'azione nuova aggiunta domani nasce protetta invece che scoperta.
+  var readOnly = false;
+  var AZIONI_CONSENTITE = {
+    "tab": 1, "goto-all": 1, "goto-open": 1, "goto-scadenzario": 1, "goto-dati": 1,
+    "sup-open": 1, "filter-status": 1, "clear-filters": 1, "sort": 1,
+    "export-csv": 1, "backup-json": 1, "print": 1,
+    "ql-bank": 1, "ql-gmail": 1,
+    "form-cancel": 1, "form-scrim": 1, "pay-cancel": 1, "pay-scrim": 1,
+    "gpay-cancel": 1, "gpay-scrim": 1, "wiz-close": 1, "wiz-scrim": 1, "wiz-back": 1,
+    "dismiss-seed": 1
+  };
   (function initView() {
     var m = /[?&]view=(movimenti|scadenzario|fornitori|dashboard|dati)/.exec(location.search);
     if (m) currentView = m[1];
@@ -1510,6 +1528,20 @@ export const FattureApp = (function () {
       el = el.parentNode;
     }
     if (!actionEl) return;
+
+    // Questa delega vive su document e riceve anche i click dell'app che ci
+    // ospita, che usa nomi di azione propri: il suo pulsante di tab e' pure
+    // "tab" ma senza data-view, e finiva per azzerare la vista corrente.
+    if (!actionEl.closest('.hk-app')) return;
+
+    var azione = actionEl.getAttribute("data-action");
+    if (readOnly && !AZIONI_CONSENTITE[azione]) {
+      showToast(t("readonly.blocked"), null, true);
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+
     var action = actionEl.getAttribute("data-action");
     var id = actionEl.getAttribute("data-id");
 
@@ -1696,7 +1728,12 @@ export const FattureApp = (function () {
     }
   });
 
-  document.getElementById("btnNew").addEventListener("click", function () { openForm(null); });
+  // Ascoltatore diretto: non passa dalla delega, quindi il controllo di sola
+  // lettura va ripetuto qui.
+  document.getElementById("btnNew").addEventListener("click", function () {
+    if (readOnly) { showToast(t("readonly.blocked"), null, true); return; }
+    openForm(null);
+  });
   document.getElementById("langIt").addEventListener("click", function () { setLang("it"); });
   document.getElementById("langZh").addEventListener("click", function () { setLang("zh"); });
 
@@ -1720,6 +1757,7 @@ export const FattureApp = (function () {
   // esiste da subito ma si disegna solo quando serve.
   return {
     render: render,
+    setReadOnly: function (v) { readOnly = !!v; },
     setLang: function (l) { if (l === "it" || l === "zh") { lang = l; render(); } }
   };
 })();

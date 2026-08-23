@@ -385,3 +385,10 @@ body.tab-fatture #dashboard-card { display: none; }
   .hk-app .card > *, .hk-app .view > * { max-width: 100%; }
   .hk-app .view table { max-width: 100%; }
 }
+
+/* In sola lettura spariscono anche i comandi della tab fatture: il blocco vero
+   e' nella delega dell'app, questo evita di offrire pulsanti che rifiutano. */
+body.readonly-mode .hk-app #btnNew,
+body.readonly-mode .hk-app .row-actions,
+body.readonly-mode .hk-app .selcol,
+body.readonly-mode .hk-app #selBar { display: none !important; }

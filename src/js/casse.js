@@ -7,6 +7,7 @@ import {
 import { showToast } from './modals.js';
 import { renderPendingList } from './expense.js';
 import { t } from './i18n.js';
+import { fattureDaSpese } from './fatture-bridge.js';
 
 export function renderCasse() {
   const container = document.getElementById('casse-container');
@@ -83,6 +84,11 @@ export function registra() {
 
 
   });
+
+  // Una spesa a fornitore e' una fattura pagata in contanti: compare da sola
+  // nella tab Fatture, gia' saldata.
+  const fattureCreate = fattureDaSpese(pendingExpenses, oggi);
+  if (fattureCreate > 0) messages.push(t('bridge.fattureCreate', { n: fattureCreate }));
 
   if (pendingExpenses.length > 0) {
     const totalExp = pendingExpenses.reduce((s, e) => s + e.amount, 0);

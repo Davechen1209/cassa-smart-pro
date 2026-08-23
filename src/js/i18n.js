@@ -236,6 +236,7 @@ const translations = {
     'uscite.registered': '\u2713 Registrato!',
     'uscite.noData': 'Inserisci incassi o aggiungi spese',
     'uscite.expenses': 'uscite',
+    'bridge.fattureCreate': '{n} in Fatture',
 
     // Expense sheet
     'exp.title': 'Aggiungi Spesa',
@@ -776,6 +777,7 @@ const translations = {
     'uscite.registered': '\u2713 已登记！',
     'uscite.noData': '请先输入收入或添加支出',
     'uscite.expenses': '笔支出',
+    'bridge.fattureCreate': '{n} 张发票已记入',
 
     // Expense sheet
     'exp.title': '添加支出',

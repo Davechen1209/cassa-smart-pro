@@ -14,6 +14,7 @@ import {
 } from './state.js';
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { t } from './i18n.js';
+import { FattureApp } from './fatture-app/hk-app.js';
 
 // Configurazione Firebase integrata: usata di default su ogni nuova
 // installazione, così non serve reincollarla su ogni telefono.
@@ -531,6 +532,8 @@ function startSharedListener(view) {
 // Banner + classe sul body: la classe serve al CSS per nascondere i comandi
 // di modifica, il blocco vero delle azioni è nel guard di main.js.
 export function applyReadOnlyUI() {
+  // La tab fatture ha una delega tutta sua: va avvisata a parte.
+  FattureApp.setReadOnly(isReadOnly());
   updateAppTitle();
   const view = getSharedView();
   document.body.classList.toggle('readonly-mode', !!view);

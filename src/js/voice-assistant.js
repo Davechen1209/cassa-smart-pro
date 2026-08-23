@@ -6,6 +6,7 @@
 import { d, fullSave } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
 import { t, getLang } from './i18n.js';
+import { fatturaDaSpesaContanti } from './fatture-bridge.js';
 import { parseDateIT } from './date-utils.js';
 
 // Google Gemini (piano gratuito).
@@ -522,6 +523,15 @@ function execAction(name, args) {
         if (g.numero_fattura) entry.fatt = String(g.numero_fattura).trim();
         d.saldo = round2(d.saldo - importo);
         d.log.push(entry);
+        // Stessa regola della tab Registra: una spesa a fornitore diventa una
+        // fattura gia' saldata nell'archivio fatture.
+        if (cat === 'fornitori' && nome) {
+          fatturaDaSpesaContanti({
+            fornitore: nome, importo, dataIT: dateIT,
+            numeroFattura: g.numero_fattura, nota: g.nota
+          });
+        }
+
         // Mantieni le rubriche aggiornate
         if (nome && (cat === 'fornitori' || cat === 'stipendi' || cat === 'abit')) {
           if (!d[cat]) d[cat] = [];
