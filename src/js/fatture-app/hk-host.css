@@ -473,3 +473,19 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
     background: var(--surface); border-bottom: 1px solid var(--border);
   }
 }
+
+/* Elenco dei fornitori nel modulo fattura: compare solo al tocco del campo. */
+.hk-app .sup-results { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+.hk-app .sup-row {
+    text-align: left; width: 100%;
+    padding: 10px 12px; min-height: 40px;
+    background: var(--thead); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer;
+    font-family: inherit; font-size: 14px; color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hk-app .sup-row:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.hk-app .sup-more { font-size: 11px; color: var(--muted); padding: 2px 4px; }
+@media (max-width: 760px) {
+    .hk-app .sup-row { min-height: 44px; font-size: 16px; }
+}

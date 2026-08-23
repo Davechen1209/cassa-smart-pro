@@ -51,6 +51,8 @@ import {
   toggleRubrica, toggleRubricaPage, deleteItem, editItem, openModalRubrica, modalConfirm
 } from './js/rubrica.js';
 
+import { Store as HkStore } from './js/fatture-app/hk-store.js';
+import { fornitoriUnificati, allineaRubricaFornitori } from './js/fatture-bridge.js';
 import { setReportPreset, setReportCompare, toggleCompareMenu, closeCompareMenu } from './js/report.js';
 import { FattureApp } from './js/fatture-app/hk-app.js';
 import { initOfflineMode } from './js/offline-mode.js';
@@ -70,6 +72,10 @@ import {
 } from './js/excel-utils.js';
 
 // Wire up callbacks: fullSave → syncToCloud + ui
+// Ogni scrittura sull'archivio fatture: i fornitori nuovi entrano anche
+// nella rubrica della cassa, e il cloud si allinea.
+HkStore.setOnSave(() => { allineaRubricaFornitori(); syncToCloud(); });
+
 setOnSaveCallback(() => { syncToCloud(); ui(); });
 setFirebaseUiCallback(ui);
 
@@ -363,6 +369,9 @@ appTitleEl.addEventListener('keydown', (e) => {
   applyLanguage();
   applyReadOnlyUI();
   updateDatasetSwitcher();
+  // I fornitori che esistono solo fra le fatture entrano in rubrica anche
+  // per gli archivi gia' esistenti, non solo alla prossima modifica.
+  allineaRubricaFornitori();
   updateAppTitle();
   updateHeaderDate();
   updateDateDisplay();

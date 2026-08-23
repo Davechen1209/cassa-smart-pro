@@ -7,6 +7,7 @@ import { d, fullSave } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
 import { t, getLang } from './i18n.js';
 import { fatturaDaSpesaContanti } from './fatture-bridge.js';
+import { Store as HkStore } from './fatture-app/hk-store.js';
 import { parseDateIT } from './date-utils.js';
 
 // Google Gemini (piano gratuito).
@@ -287,6 +288,17 @@ function buildSnapshot() {
   });
 
 
+  // Fatture aperte dal nuovo archivio: il residuo, non l'importo pieno,
+  // cosi' un pagamento parziale si riflette in quello che dice.
+  const oggiISO = todayIT().split('/').reverse().join('-');
+  const fattureAperte = HkStore.records()
+    .filter(r => HkStore.computeStatus(r, oggiISO) !== 'paid')
+    .map(r => ({
+      fornitore: r.supplier, numero: r.invoice || '',
+      residuo: round2(HkStore.fromCents(HkStore.recCents(r).unpaid)),
+      scadenza: r.dueDate || '', stato: HkStore.computeStatus(r, oggiISO)
+    }));
+
   const recentLog = (d.log || []).slice(-80).map(l => ({ data: l.d, descrizione: l.v, importo: l.a }));
 
   return {
@@ -299,6 +311,8 @@ function buildSnapshot() {
     categorie_personalizzate: (d.customCats || []).map(c => c.name),
     mese_corrente: { mese: curKey, incassi: round2(agg[curKey].incassi), spese: round2(agg[curKey].spese) },
     mese_precedente: { mese: prevKey, incassi: round2(agg[prevKey].incassi), spese: round2(agg[prevKey].spese) },
+    fatture_da_pagare: fattureAperte,
+    totale_fatture_da_pagare: round2(fattureAperte.reduce((s, f) => s + f.residuo, 0)),
     ultimi_movimenti: recentLog
   };
 }
@@ -363,7 +377,7 @@ function systemPrompt() {
     + 'Hai a disposizione gli strumenti per eseguire operazioni (registrare incassi, spese, ecc.). '
     + 'Quando l\'utente chiede di registrare/aggiungere/pagare qualcosa, chiama lo strumento giusto. '
     + 'Se manca un dato essenziale (es. l\'importo), NON inventarlo: chiedi all\'utente. '
-    + 'Per le domande sui conti (saldo, spese del mese...) rispondi usando i DATI forniti, senza chiamare strumenti. '
+    + 'Per le domande sui conti (saldo, spese del mese, fatture da pagare...) rispondi usando i DATI forniti, senza chiamare strumenti. '
     + 'Tutti gli importi sono in euro. Oggi e ' + todayIT() + '.';
 }
 

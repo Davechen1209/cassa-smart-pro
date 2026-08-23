@@ -15,6 +15,7 @@ import {
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { t } from './i18n.js';
 import { FattureApp } from './fatture-app/hk-app.js';
+import { Store as HkStore } from './fatture-app/hk-store.js';
 
 // Configurazione Firebase integrata: usata di default su ogni nuova
 // installazione, così non serve reincollarla su ogni telefono.
@@ -109,6 +110,8 @@ export async function syncToCloud() {
         abit: d.abit,
         log: d.log,
         anticipi: d.anticipi || [],
+        // L'archivio fatture ha un suo storage: viaggia come campo a parte.
+        fattureApp: HkStore.records(),
         customCats: d.customCats || [],
         aziendaData: d.aziendaData || {},
         shopName: d.shopName || '',
@@ -145,6 +148,7 @@ export async function loadFromCloud() {
         d.abit = cloud.abit || d.abit;
         d.log = cloud.log || d.log;
         d.anticipi = cloud.anticipi || d.anticipi;
+        if (Array.isArray(cloud.fattureApp)) HkStore.applyRemote(cloud.fattureApp);
         d.customCats = cloud.customCats || d.customCats;
         d.aziendaData = cloud.aziendaData || d.aziendaData;
         if (cloud.shopName) d.shopName = cloud.shopName;
@@ -176,6 +180,7 @@ export async function forceSyncFromCloud() {
       d.abit = cloud.abit || [];
       d.log = cloud.log || [];
       d.anticipi = cloud.anticipi || [];
+      HkStore.applyRemote(cloud.fattureApp || []);
       d.customCats = cloud.customCats || [];
       d.aziendaData = cloud.aziendaData || {};
       localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
@@ -369,6 +374,7 @@ async function afterSignIn(user) {
   const view = getSharedView();
   if (view) {
     // Stavamo guardando i dati di un altro utente: riaggancia il listener.
+    HkStore.setSharedMode(true);
     startSharedListener(view);
   } else {
     await loadFromCloud();
@@ -469,6 +475,9 @@ export function viewSharedData(uid) {
   if (!owner) return;
 
   setSharedView({ uid: owner.uid, email: owner.email, name: owner.name, shopName: owner.shopName });
+  // Prima di agganciare il listener: da qui in poi l'archivio fatture scrive
+  // sulla copia condivisa, mai su quella propria.
+  HkStore.setSharedMode(true);
   applyReadOnlyUI();
   setSyncStatus('syncing');
   startSharedListener(getSharedView());
@@ -481,6 +490,7 @@ export function exitSharedView() {
   if (!isReadOnly()) return;
   stopSharedListener();
   setSharedView(null);
+  HkStore.setSharedMode(false);
   applyReadOnlyUI();
   renderShareUI();
   callUi();
@@ -510,6 +520,8 @@ function startSharedListener(view) {
       return;
     }
     replaceData(snap.data());
+    HkStore.applyRemote(snap.data().fattureApp || []);
+    FattureApp.render();
     localStorage.setItem(SHARED_CACHE_KEY, JSON.stringify(d));
     updateAppTitle();
     setSyncStatus('synced');

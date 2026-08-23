@@ -5,6 +5,7 @@
 // arrivare anche dal contabile vocale e le due strade devono comportarsi
 // allo stesso modo.
 
+import { d, save } from './state.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
 import { I18N } from './fatture-app/hk-i18n.js';
 import { getLang } from './i18n.js';
@@ -80,4 +81,48 @@ export function fattureDaSpese(spese, dataIT) {
     if (rec) creati++;
   });
   return creati;
+}
+
+/**
+ * Rubriche fornitori unificate.
+ * Erano due elenchi separati: quello della cassa (d.fornitori) e quello che
+ * l'app fatture ricava dai propri record. Aggiungendo un fornitore da una
+ * parte, dall'altra non compariva.
+ */
+
+/** Tutti i fornitori conosciuti, da entrambe le parti, senza doppioni. */
+export function fornitoriUnificati() {
+  const visti = new Map();
+  const aggiungi = (nome) => {
+    const n = String(nome || '').trim();
+    if (!n) return;
+    const k = n.toLowerCase();
+    if (!visti.has(k)) visti.set(k, n);
+  };
+  (d.fornitori || []).forEach(aggiungi);
+  HkStore.records().forEach(r => aggiungi(r.supplier));
+  return [...visti.values()].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Porta nella rubrica della cassa i fornitori che esistono solo fra le
+ * fatture. Restituisce quanti ne ha aggiunti.
+ */
+export function allineaRubricaFornitori() {
+  const presenti = new Set((d.fornitori || []).map(n => n.trim().toLowerCase()));
+  let aggiunti = 0;
+  HkStore.records().forEach(r => {
+    const nome = String(r.supplier || '').trim();
+    if (!nome) return;
+    if (presenti.has(nome.toLowerCase())) return;
+    presenti.add(nome.toLowerCase());
+    if (!d.fornitori) d.fornitori = [];
+    d.fornitori.push(nome);
+    aggiunti++;
+  });
+  if (aggiunti > 0) {
+    d.fornitori.sort((a, b) => a.localeCompare(b));
+    save();
+  }
+  return aggiunti;
 }

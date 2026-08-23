@@ -4,6 +4,7 @@ import { d } from './state.js';
 import { escapeHtml } from './modals.js';
 import { t, translateLogDesc } from './i18n.js';
 import { tab } from './ui-engine.js';
+import { Store as HkStore } from './fatture-app/hk-store.js';
 
 let debounceTimer = null;
 let lastResults = [];
@@ -53,6 +54,21 @@ function performSearch(query) {
   });
 
 
+  // Fatture: si cercano per fornitore o numero, e portano alla loro tab.
+  HkStore.records().forEach(f => {
+    const forn = (f.supplier || '').toLowerCase();
+    const num = (f.invoice || '').toLowerCase();
+    if (!forn.includes(q) && !num.includes(q)) return;
+    const residuo = HkStore.fromCents(HkStore.recCents(f).unpaid);
+    results.push({
+      type: 'fattura',
+      label: f.supplier || '-',
+      sub: (f.invoice ? 'N° ' + f.invoice + ' · ' : '') +
+        (residuo > 0 ? '€ ' + residuo.toLocaleString('it-IT', { minimumFractionDigits: 2 }) : t('fatt.paid')),
+      tab: 5
+    });
+  });
+
   // Search rubriche
   ['fornitori', 'stipendi', 'abit'].forEach(cat => {
     (d[cat] || []).forEach(name => {
@@ -72,11 +88,13 @@ function performSearch(query) {
 
 const typeIcons = {
   movimento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  fattura: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
   rubrica: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
 };
 
 const typeLabels = {
   movimento: () => t('search.typeMovimento'),
+  fattura: () => t('search.typeFattura'),
   rubrica: () => t('search.typeRubrica'),
 };
 

@@ -80,6 +80,11 @@ export const FattureApp = (function () {
   // E' un elenco di cio' che si PUO' fare: navigare, filtrare, ordinare,
   // guardare, esportare. Tutto il resto e' scrittura ed e' bloccato, cosi'
   // un'azione nuova aggiunta domani nasce protetta invece che scoperta.
+  // Fornitori noti alla cassa ma non ancora presenti fra le fatture: li
+  // fornisce l'app ospite, cosi' i suggerimenti sono gli stessi da entrambe
+  // le parti.
+  var fornitoriEsterni = [];
+
   var readOnly = false;
   var AZIONI_CONSENTITE = {
     "tab": 1, "goto-all": 1, "goto-open": 1, "goto-scadenzario": 1, "goto-dati": 1,
@@ -88,7 +93,7 @@ export const FattureApp = (function () {
     "ql-bank": 1, "ql-gmail": 1,
     "form-cancel": 1, "form-scrim": 1, "pay-cancel": 1, "pay-scrim": 1,
     "gpay-cancel": 1, "gpay-scrim": 1, "wiz-close": 1, "wiz-scrim": 1, "wiz-back": 1,
-    "dismiss-seed": 1
+    "dismiss-seed": 1, "sup-pick": 1
   };
   (function initView() {
     var m = /[?&]view=(movimenti|scadenzario|fornitori|dashboard|dati)/.exec(location.search);
@@ -1142,9 +1147,83 @@ export const FattureApp = (function () {
     return parts.join(" ");
   }
 
+
+  /* ---------- scelta del fornitore ---------- */
+  // I suggerimenti nativi del campo (list=) su iPhone compaiono solo dopo che
+  // hai digitato: con duecento fornitori non c'e' modo di sfogliare. Qui
+  // l'elenco si apre al tocco, come nella scheda spesa dell'app ospite.
+  var SUP_MOSTRATI = 6;
+  var supAperto = false;
+
+  function elencoFornitori() {
+    var visti = {}, nomi = [];
+    supplierAggregates().forEach(function (s) {
+      var k = String(s.name || "").trim().toLowerCase();
+      if (!k || visti[k]) return; visti[k] = 1; nomi.push(s.name);
+    });
+    fornitoriEsterni.forEach(function (n) {
+      var k = String(n || "").trim().toLowerCase();
+      if (!k || visti[k]) return; visti[k] = 1; nomi.push(n);
+    });
+    return nomi.sort(function (a, b) { return a.localeCompare(b); });
+  }
+
+  function renderSupResults() {
+    var box = document.getElementById("fSupplierResults");
+    if (!box) return;
+    if (!supAperto) { box.innerHTML = ""; return; }
+
+    var campo = document.getElementById("fSupplier");
+    var cerca = (campo ? campo.value : "").trim().toLowerCase();
+    var tutti = elencoFornitori();
+    // Chi inizia con quello che hai scritto viene prima.
+    var trovati = tutti.filter(function (n) {
+      return !cerca || n.toLowerCase().indexOf(cerca) >= 0;
+    }).sort(function (a, b) {
+      if (!cerca) return 0;
+      var ia = a.toLowerCase().indexOf(cerca) === 0 ? 0 : 1;
+      var ib = b.toLowerCase().indexOf(cerca) === 0 ? 0 : 1;
+      return ia - ib;
+    });
+
+    if (trovati.length === 0) { box.innerHTML = ""; return; }
+
+    var mostrati = trovati.slice(0, SUP_MOSTRATI);
+    var html = mostrati.map(function (n) {
+      return '<button type="button" class="sup-row" data-action="sup-pick" data-name="' + esc(n) + '">' + esc(n) + "</button>";
+    }).join("");
+    var restanti = trovati.length - mostrati.length;
+    if (restanti > 0) html += '<div class="sup-more">+' + restanti + "</div>";
+    box.innerHTML = html;
+  }
+
+  function apriSup() { supAperto = true; renderSupResults(); }
+  function chiudiSup() { if (!supAperto) { return; } supAperto = false; renderSupResults(); }
+
+  function collegaSupPicker() {
+    var campo = document.getElementById("fSupplier");
+    if (!campo) return;
+    supAperto = false;
+    // Al tocco, non al fuoco: aprendo il modulo il fuoco ci arriva da solo e
+    // l'elenco coprirebbe il resto senza che nessuno l'abbia chiesto.
+    campo.addEventListener("click", apriSup);
+    campo.addEventListener("input", function () { supAperto = true; renderSupResults(); });
+    campo.addEventListener("keydown", function (e) { if (e.key === "Escape") chiudiSup(); });
+  }
   function supplierDatalist() {
-    return '<datalist id="dlSuppliers">' + supplierAggregates().map(function (s) {
-      return '<option value="' + esc(s.name) + '"></option>';
+    var visti = {};
+    var nomi = [];
+    supplierAggregates().forEach(function (s) {
+      var k = String(s.name || "").trim().toLowerCase();
+      if (!k || visti[k]) return; visti[k] = 1; nomi.push(s.name);
+    });
+    fornitoriEsterni.forEach(function (n) {
+      var k = String(n || "").trim().toLowerCase();
+      if (!k || visti[k]) return; visti[k] = 1; nomi.push(n);
+    });
+    nomi.sort(function (a, b) { return a.localeCompare(b); });
+    return '<datalist id="dlSuppliers">' + nomi.map(function (n) {
+      return '<option value="' + esc(n) + '"></option>';
     }).join("") + "</datalist>";
   }
 
@@ -1163,7 +1242,8 @@ export const FattureApp = (function () {
       "<h2>" + esc(title) + "</h2>" +
       '<div class="form-grid">' +
       '<div class="form-field"><label for="fSupplier">' + esc(t("form.supplier")) + ' *</label>' +
-      '<input type="text" id="fSupplier" list="dlSuppliers" value="' + esc(r.supplier) + '" autocomplete="off">' +
+      '<input type="text" id="fSupplier" value="' + esc(r.supplier) + '" autocomplete="off">' +
+      '<div class="sup-results" id="fSupplierResults"></div>' +
       '<span class="err" id="eSupplier"></span></div>' +
       '<div class="form-field"><label for="fArrival">' + esc(t("form.arrival")) + "</label>" +
       '<input type="date" id="fArrival" value="' + esc(r.arrivalDate || "") + '"></div>' +
@@ -1236,6 +1316,7 @@ export const FattureApp = (function () {
     document.getElementById("fDue").addEventListener("change", function () { form.dueManual = true; });
     document.getElementById("fTermDays").addEventListener("input", function () { applyTermsDue(true); });
 
+    collegaSupPicker();
     document.getElementById("fSupplier").focus();
 
     form.initial = formSnapshot();
@@ -1548,6 +1629,18 @@ export const FattureApp = (function () {
     // don't let inner buttons bubble into row edit
     if (action !== "edit-row") e.stopPropagation();
 
+    // Fornitore scelto dall'elenco: finisce nel campo e l'elenco si chiude.
+    if (action === "sup-pick") {
+      var campoSup = document.getElementById("fSupplier");
+      if (campoSup) { campoSup.value = actionEl.getAttribute("data-name") || ""; }
+      chiudiSup();
+      return;
+    }
+    // Un tocco altrove chiude l'elenco dei fornitori. Si guarda dove ha toccato
+    // davvero, non l'elemento con l'azione: il click sul campo risale fino allo
+    // sfondo del modulo, che un'azione ce l'ha, e l'elenco si richiudeva subito.
+    if (!e.target.closest(".form-field")) chiudiSup();
+
     switch (action) {
       case "tab": gotoView(actionEl.getAttribute("data-view")); break;
       case "goto-scadenzario": gotoView("scadenzario"); break;
@@ -1758,6 +1851,7 @@ export const FattureApp = (function () {
   return {
     render: render,
     setReadOnly: function (v) { readOnly = !!v; },
+    setFornitoriEsterni: function (list) { fornitoriEsterni = list || []; },
     setLang: function (l) { if (l === "it" || l === "zh") { lang = l; render(); } }
   };
 })();

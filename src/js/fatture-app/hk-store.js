@@ -6,6 +6,62 @@ export const Store = (function () {
   var CORRUPT_KEY = "huokuan.app.v1.corrupt";
   var DEFAULT_BANK_URL = "https://www.inbank.it/go/99999"; // user's home banking; editable in Dati
 
+  /* ---------- cloud e vista condivisa ---------- */
+  // L'archivio di chi guarda i dati di un altro sta in una chiave separata,
+  // come fa la cassa con cassa_v6 / cassa_v6_shared: i propri dati non vengono
+  // mai toccati mentre si e' in vista condivisa.
+  var SHARED_KEY = "huokuan.app.v1.shared";
+  var sharedMode = false;
+  var onSaveHook = null;
+  // Mentre si applica cio' che arriva dal cloud non si risale al cloud:
+  // altrimenti ogni ricezione farebbe partire una scrittura.
+  var applyingRemote = false;
+
+  function activeKey() {
+    return sharedMode ? SHARED_KEY : KEY;
+  }
+
+  function setSharedMode(on) {
+    var next = !!on;
+    if (next === sharedMode) return;
+    sharedMode = next;
+    if (!sharedMode) {
+      try { localStorage.removeItem(SHARED_KEY); } catch (e) { /* ignore */ }
+    }
+    load();
+  }
+
+  function setOnSave(fn) {
+    onSaveHook = fn;
+  }
+
+  // Sostituisce i record con quelli arrivati dal cloud, conservando le
+  // preferenze locali (lingua, link della banca) che sono di questo device.
+  function applyRemote(records) {
+    applyingRemote = true;
+    try {
+      var meta = state.meta;
+      var used = {};
+      var i = 0;
+      state.records = (records || []).map(function (r) {
+        i++;
+        var rec = normalizeRecord(r, i);
+        if (used[rec.id]) {
+          var n = i;
+          while (used["r" + String(n).padStart(4, "0")]) n++;
+          rec.id = "r" + String(n).padStart(4, "0");
+        }
+        used[rec.id] = true;
+        return rec;
+      });
+      state.meta = meta;
+      state.meta.nextId = maxIdNum(state.records) + 1;
+      save();
+    } finally {
+      applyingRemote = false;
+    }
+  }
+
   /* ---------- money helpers (integer cents) ---------- */
 
   function toCents(euros) {
@@ -150,7 +206,7 @@ export const Store = (function () {
 
   function load() {
     var raw = null;
-    try { raw = localStorage.getItem(KEY); } catch (e) { raw = null; }
+    try { raw = localStorage.getItem(activeKey()); } catch (e) { raw = null; }
     if (raw != null) {
       var parsed = null;
       try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
@@ -220,8 +276,12 @@ export const Store = (function () {
 
   function save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
+      localStorage.setItem(activeKey(), JSON.stringify(state));
       quotaError = false;
+      // Salvataggio riuscito: il cloud puo' allinearsi. Non durante
+      // l'applicazione di dati remoti, ne' in vista condivisa: quei record
+      // non sono nostri.
+      if (onSaveHook && !applyingRemote && !sharedMode) onSaveHook();
     } catch (e) {
       quotaError = true;
     }
@@ -348,6 +408,9 @@ export const Store = (function () {
 
   return {
     KEY: KEY,
+    setSharedMode: setSharedMode,
+    setOnSave: setOnSave,
+    applyRemote: applyRemote,
     state: function () { return state; },
     records: function () { return state.records; },
     meta: function () { return state.meta; },

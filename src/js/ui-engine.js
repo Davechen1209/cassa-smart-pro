@@ -13,6 +13,7 @@ import { t, getLang, translateLogDesc } from './i18n.js';
 import { parseImportoOrNull } from './money.js';
 import { renderReport } from './report.js';
 import { FattureApp } from './fatture-app/hk-app.js';
+import { fornitoriUnificati } from './fatture-bridge.js';
 
 export function updateDateDisplay() {
   document.getElementById('date-display-text').textContent = formatDateDisplay(selectedDate);
@@ -475,7 +476,11 @@ export function ui() {
   if (document.getElementById('s4')?.classList.contains('active')) renderReport();
 
   // L'app fatture ha un suo ciclo di render: si disegna quando la sua tab e' a schermo.
-  if (document.getElementById('s5')?.classList.contains('active')) FattureApp.render();
+  if (document.getElementById('s5')?.classList.contains('active')) {
+    // I suggerimenti del fornitore includono anche chi sta solo in rubrica.
+    FattureApp.setFornitoriEsterni(fornitoriUnificati());
+    FattureApp.render();
+  }
 }
 
 export function updateHeaderDate() {
