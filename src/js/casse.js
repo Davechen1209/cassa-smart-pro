@@ -7,6 +7,7 @@ import {
 import { showToast } from './modals.js';
 import { renderPendingList } from './expense.js';
 import { t } from './i18n.js';
+import { parseImporto } from './money.js';
 import { fattureDaSpese } from './fatture-bridge.js';
 
 export function renderCasse() {
@@ -26,12 +27,12 @@ export function renderCasse() {
       </div>
       <div class="input-row">
         <div class="input-group">
-          <label>${t('incassi.totaleZ')}</label>
-          <input type="number" class="input-field" id="z-${c.id}" placeholder="0,00" inputmode="decimal">
+          <label for="z-${c.id}">${t('incassi.totaleZ')}</label>
+          <input type="text" class="input-field" id="z-${c.id}" placeholder="0,00" inputmode="decimal">
         </div>
         <div class="input-group">
-          <label>${t('incassi.pos')}</label>
-          <input type="number" class="input-field" id="pos-${c.id}" placeholder="0,00" inputmode="decimal">
+          <label for="pos-${c.id}">${t('incassi.pos')}</label>
+          <input type="text" class="input-field" id="pos-${c.id}" placeholder="0,00" inputmode="decimal">
         </div>
       </div>
     </div>
@@ -51,8 +52,8 @@ export function removeCassa(id) {
 
 export function getCasseData() {
   return casseList.map((c, i) => {
-    const z = parseFloat(document.getElementById('z-' + c.id)?.value) || 0;
-    const pos = parseFloat(document.getElementById('pos-' + c.id)?.value) || 0;
+    const z = parseImporto(document.getElementById('z-' + c.id)?.value);
+    const pos = parseImporto(document.getElementById('pos-' + c.id)?.value);
     return { name: t('incassi.cassa') + ' ' + (i + 1), z, pos, cash: z - pos };
   }).filter(c => c.z > 0);
 }

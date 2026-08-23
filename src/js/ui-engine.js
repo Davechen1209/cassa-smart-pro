@@ -10,6 +10,7 @@ import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
 import { t, getLang, translateLogDesc } from './i18n.js';
+import { parseImportoOrNull } from './money.js';
 import { renderReport } from './report.js';
 import { FattureApp } from './fatture-app/hk-app.js';
 
@@ -419,8 +420,8 @@ export function removeGeminiKey() {
 }
 
 export function manualSaldo() {
-  const n = parseFloat(document.getElementById('set-saldo').value);
-  if (!isNaN(n)) {
+  const n = parseImportoOrNull(document.getElementById('set-saldo').value);
+  if (n !== null) {
     d.saldo = n;
     fullSave();
     ui();

@@ -261,6 +261,14 @@ document.getElementById('exp-free-name').addEventListener('keydown', function (e
   if (e.key === 'Enter' && !blockedInReadOnly('addExpense')) addExpense();
 });
 
+// Invio dai campi della spesa: il fuoco parte sull'importo, ed era l'unico
+// da cui premere Invio non faceva nulla.
+['exp-amount', 'exp-note'].forEach((id) => {
+  document.getElementById(id).addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !blockedInReadOnly('addExpense')) addExpense();
+  });
+});
+
 // Date picker
 document.getElementById('date-input-hidden').addEventListener('change', function () {
   if (this.value) {

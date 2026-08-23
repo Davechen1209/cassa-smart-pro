@@ -392,3 +392,16 @@ body.readonly-mode .hk-app #btnNew,
 body.readonly-mode .hk-app .row-actions,
 body.readonly-mode .hk-app .selcol,
 body.readonly-mode .hk-app #selBar { display: none !important; }
+
+/* ── Bersagli tattili nella tab fatture ──
+   Stesse soglie dell'app ospite: sotto i ~44px un comando si sbaglia. I chip
+   di filtro restano piu' densi: sono molti, e nessuno di essi e' distruttivo. */
+@media (max-width: 760px) {
+  .hk-app .tabs-inner .tab { min-height: 44px; }
+  .hk-app .strip-seg { min-height: 44px; }
+  .hk-app .chip-filter { min-height: 36px; display: inline-flex; align-items: center; }
+  .hk-app .adv-summary { min-height: 36px; }
+  .hk-app .btn { min-height: 40px; }
+  .hk-app #movTableWrap .row-actions .btn { min-height: 40px; }
+  .hk-app .toolbar > input.search { min-height: 42px; }
+}

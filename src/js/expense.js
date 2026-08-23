@@ -7,6 +7,7 @@ import {
 } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
 import { t } from './i18n.js';
+import { parseImporto } from './money.js';
 export function openExpenseSheet() {
   setExpCat('fornitori');
   setExpSelectedVoice(null);
@@ -109,7 +110,7 @@ export function addNewVoiceFromSheet() {
 }
 
 export function addExpense() {
-  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const amount = parseImporto(document.getElementById('exp-amount').value);
   if (!amount || amount <= 0) {
     showToast(t('exp.invalidAmount'), 'warn');
     return;

@@ -116,15 +116,15 @@
                         <span data-i18n="pin.change">Cambia PIN</span>
                     </div>
                     <div class="input-group">
-                        <label data-i18n="pin.oldPin">PIN attuale</label>
+                        <label for="pin-old" data-i18n="pin.oldPin">PIN attuale</label>
                         <input type="password" class="input-field" id="pin-old" inputmode="numeric" maxlength="8" pattern="[0-9]*">
                     </div>
                     <div class="input-group">
-                        <label data-i18n="pin.newPin">Nuovo PIN</label>
+                        <label for="pin-new" data-i18n="pin.newPin">Nuovo PIN</label>
                         <input type="password" class="input-field" id="pin-new" inputmode="numeric" maxlength="8" pattern="[0-9]*">
                     </div>
                     <div class="input-group">
-                        <label data-i18n="pin.confirmPin">Conferma PIN</label>
+                        <label for="pin-confirm" data-i18n="pin.confirmPin">Conferma PIN</label>
                         <input type="password" class="input-field" id="pin-confirm" inputmode="numeric" maxlength="8" pattern="[0-9]*">
                     </div>
                     <div class="settings-row" style="margin-top:8px;">
@@ -134,8 +134,8 @@
                 <div class="settings-card" data-owner-only>
                     <div class="settings-card-title" data-i18n="settings.saldo">Saldo manuale</div>
                     <div class="input-group">
-                        <label data-i18n="settings.saldoLabel">Imposta il saldo corrente</label>
-                        <input type="number" class="input-field" id="set-saldo" data-i18n-placeholder="settings.saldoPlaceholder" placeholder="Imposta saldo..." inputmode="decimal">
+                        <label for="set-saldo" data-i18n="settings.saldoLabel">Imposta il saldo corrente</label>
+                        <input type="text" class="input-field" id="set-saldo" data-i18n-placeholder="settings.saldoPlaceholder" placeholder="Imposta saldo..." inputmode="decimal">
                     </div>
                     <div class="settings-row" style="margin-top:8px;">
                         <button class="btn-sm blue" data-action="manualSaldo" style="flex:1; text-align:center;" data-i18n="settings.update">Aggiorna Saldo</button>
@@ -158,11 +158,11 @@
                     </div>
                     <div class="cloud-info" data-i18n="azienda.info">I tuoi dati aziendali. Servono per distinguere i tuoi dati da quelli del fornitore durante la scansione automatica.</div>
                     <div class="input-group" style="margin-top:10px;">
-                        <label data-i18n="azienda.nome">Nome azienda</label>
+                        <label for="azienda-nome" data-i18n="azienda.nome">Nome azienda</label>
                         <input type="text" class="input-field" id="azienda-nome" data-i18n-placeholder="azienda.nomePlaceholder" placeholder="Es. Ristorante Da Mario...">
                     </div>
                     <div class="input-group">
-                        <label data-i18n="azienda.piva">P.IVA / Codice Fiscale</label>
+                        <label for="azienda-piva" data-i18n="azienda.piva">P.IVA / Codice Fiscale</label>
                         <input type="text" class="input-field" id="azienda-piva" data-i18n-placeholder="azienda.pivaPlaceholder" placeholder="Es. IT01234567890...">
                     </div>
                     <button class="btn-sm blue" data-action="saveAziendaData" style="margin-top:10px; width:100%;" data-i18n="azienda.save">Salva</button>
@@ -581,7 +581,7 @@
 
         <div class="amount-display">
             <div class="amount-currency" data-i18n="exp.currency">EUR</div>
-            <input type="number" class="amount-big-input" id="exp-amount" placeholder="0,00" inputmode="decimal">
+            <input type="text" class="amount-big-input" id="exp-amount" placeholder="0,00" inputmode="decimal">
         </div>
 
         <div class="quick-amounts">
@@ -613,18 +613,18 @@
 
         <div class="free-name-wrap" id="free-name-wrap">
             <div class="input-group" style="margin-bottom:0;">
-                <label data-i18n="exp.description">Descrizione</label>
+                <label for="exp-free-name" data-i18n="exp.description">Descrizione</label>
                 <input type="text" class="input-field" id="exp-free-name" data-i18n-placeholder="exp.descPlaceholder" placeholder="Nome della spesa...">
             </div>
         </div>
 
         <div class="input-group" id="exp-fattura-wrap" style="margin-bottom:12px; display:none;">
-            <label data-i18n="exp.fattura">N° Fattura</label>
+            <label for="exp-fattura-num" data-i18n="exp.fattura">N° Fattura</label>
             <input type="text" class="input-field" id="exp-fattura-num" data-i18n-placeholder="exp.fatturaPlaceholder" placeholder="Numero fattura...">
         </div>
 
         <div class="input-group" style="margin-bottom:12px;">
-            <label data-i18n="exp.note">Note (opzionale)</label>
+            <label for="exp-note" data-i18n="exp.note">Note (opzionale)</label>
             <input type="text" class="input-field" id="exp-note" data-i18n-placeholder="exp.notePlaceholder" placeholder="Aggiungi una nota...">
         </div>
 
@@ -641,7 +641,7 @@
         <div class="modal-handle"></div>
         <div class="modal-title" id="modal-title" data-i18n="modal.add">Aggiungi</div>
         <div class="input-group">
-            <label data-i18n="modal.name">Nome</label>
+            <label for="modal-input" data-i18n="modal.name">Nome</label>
             <input type="text" class="input-field" id="modal-input" data-i18n-placeholder="modal.namePlaceholder" placeholder="Inserisci nome...">
         </div>
         <div class="modal-actions">
@@ -706,7 +706,7 @@
         <div class="sheet-handle"></div>
         <div class="sheet-title" data-i18n="pdf.title">Report Mensile</div>
         <div class="input-group">
-            <label data-i18n="pdf.selectMonth">Seleziona mese</label>
+            <label for="pdf-report-month" data-i18n="pdf.selectMonth">Seleziona mese</label>
             <input type="month" class="input-field" id="pdf-report-month">
         </div>
         <div style="display:flex; gap:10px; margin-top:16px;">

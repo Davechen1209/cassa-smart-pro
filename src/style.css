@@ -2123,3 +2123,53 @@ body.readonly-mode [data-owner-only] { display: none !important; }
    tutto, non solo i pulsanti. I campi TOTALE/POS delle casse non hanno una
    data-action propria e restavano scrivibili nei giorni ancora senza movimenti. */
 body.readonly-mode #registration-form { display: none !important; }
+
+/* ═══════════════════════════════════════════════════
+   BERSAGLI TATTILI
+   Su schermo tattile un comando sotto i ~44px si sbaglia facilmente. Qui
+   stanno i controlli che l'audit ha trovato sotto quella misura. Sul
+   desktop restano compatti: col mouse la precisione non e' un problema.
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+    /* Cestino dei movimenti: e' distruttivo ed era il piu' piccolo di tutti. */
+    .history-delete {
+        min-width: 44px; min-height: 44px;
+        display: inline-flex; align-items: center; justify-content: center;
+    }
+    /* Report PDF ed esporta, nella barra dello storico. */
+    .history-export-btn {
+        min-width: 44px; min-height: 44px;
+        display: inline-flex; align-items: center; justify-content: center;
+    }
+    /* Cerca, rubriche, impostazioni. */
+    .header-btn { min-width: 44px; min-height: 44px; }
+    /* Frecce avanti/indietro sulla data. */
+    .date-nav { width: 44px; height: 44px; }
+    .date-display { min-height: 44px; }
+    /* Chip del Report: densi per natura, ma non sotto i 38. */
+    .report-chip { min-height: 38px; }
+    .report-compare-badge { min-height: 38px; }
+}
+
+/* Superfici secondarie: pannelli, ricerca, impostazioni. */
+@media (max-width: 760px) {
+    .settings-back { min-height: 44px; }
+    .lang-btn { min-height: 44px; }
+    /* Link "ottieni una chiave": era alto 17px, praticamente non centrabile. */
+    .cloud-info[href] {
+        min-height: 44px; display: inline-flex; align-items: center;
+    }
+    /* Annulla della ricerca: stessa storia. */
+    .search-cancel-btn {
+        min-height: 44px; display: inline-flex; align-items: center;
+        padding-left: 10px; padding-right: 4px;
+    }
+    /* L'interruttore resta della sua misura, che e' quella giusta a vedersi:
+       si allarga solo l'area che risponde al dito. */
+    .toggle-switch { position: relative; }
+    .toggle-switch::after {
+        content: ''; position: absolute;
+        top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 100%; height: 44px; min-width: 52px;
+    }
+}
