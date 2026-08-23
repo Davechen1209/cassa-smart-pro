@@ -163,10 +163,7 @@ body.tab-fatture #dashboard-card { display: none; }
   #supTableWrap { overflow-x: auto; }
 
   /* ── modale a tutta larghezza ── */
-  .hk-app .modal {
-    width: calc(100vw - 24px); max-width: none;
-    max-height: calc(100vh - 120px); overflow-y: auto;
-  }
+  /* (la misura del foglio e' definita piu' avanti) */
   .hk-app .modal .form-grid { grid-template-columns: 1fr; }
 
   /* barra superiore compatta */
@@ -404,4 +401,75 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
   .hk-app .btn { min-height: 40px; }
   .hk-app #movTableWrap .row-actions .btn { min-height: 40px; }
   .hk-app .toolbar > input.search { min-height: 42px; }
+}
+
+/* ─── Modulo "Nuovo arrivo" su telefono ───
+   Nasce per il mouse: campi da 32px con testo da 14. Su iPhone un campo con
+   corpo sotto i 16px fa ingrandire la pagina non appena lo tocchi, e poi resta
+   ingrandita. Qui i campi si allargano e il testo sale a 16. */
+@media (max-width: 760px) {
+  /* Foglio che sale dal basso, come le altre schede dell'app ospite.
+     Prima la finestra era centrata dentro uno sfondo che scorreva a sua volta:
+     due scorrimenti annidati, e il piede finiva sotto il bordo dello schermo
+     senza che "appiccicarlo" servisse a nulla. Ora scorre solo il foglio. */
+  /* Foglio che sale dal basso, come le altre schede dell'app ospite. Prima la
+     finestra era centrata dentro uno sfondo che scorreva a sua volta: due
+     scorrimenti annidati, e il piede finiva sotto il bordo dello schermo.
+     L'ancoraggio passa dall'allineamento del contenitore e non da
+     position:fixed, che dipenderebbe dall'assenza di trasformazioni negli
+     antenati: la sezione che ospita la tab ne ha una durante la sua animazione
+     di entrata. */
+  .hk-app .modal-scrim {
+    flex-direction: column; justify-content: flex-end; align-items: stretch;
+    padding: 0; overflow: hidden;
+  }
+  .hk-app .modal {
+    width: 100%; max-width: none; margin: 0;
+    max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 16px 0;
+  }
+
+  .hk-app .modal input[type="text"],
+  .hk-app .modal input[type="number"],
+  .hk-app .modal input[type="date"],
+  .hk-app .modal select,
+  .hk-app .modal textarea {
+    font-size: 16px; min-height: 44px; padding: 0 12px;
+  }
+  .hk-app .modal textarea { padding: 10px 12px; min-height: 76px; }
+  /* L'importo e' il numero che conta: si legge piu' grande degli altri. */
+  .hk-app .modal #fAmount { font-size: 19px; font-weight: 700; }
+  .hk-app .modal label { font-size: 13px; }
+
+  /* Termini e metodo di pagamento: si scelgono col dito. */
+  .hk-app .modal .term-chips .chip-filter { min-height: 40px; padding: 0 14px; }
+  .hk-app .modal #fTermDays { width: 88px !important; }
+
+  /* "Pagata per intero" era una casella da 16px. */
+  .hk-app .modal .check-field { align-items: center; gap: 12px; }
+  .hk-app .modal .check-field input[type="checkbox"] {
+    width: 24px; height: 24px; min-height: 24px; flex-shrink: 0;
+  }
+
+  /* Il piede finiva sotto il fondo della finestra: per salvare bisognava
+     scorrere tutto il modulo. Ora resta agganciato in basso. */
+  .hk-app .modal .modal-footer {
+    position: sticky; bottom: 0; z-index: 2;
+    margin: 16px -16px 0; padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; gap: 10px;
+  }
+  .hk-app .modal .modal-footer .btn { flex: 1; min-height: 46px; font-size: 15px; }
+  /* Il pulsante che elimina non prende lo stesso spazio di quello che salva. */
+  .hk-app .modal .modal-footer .btn-danger { flex: 0 0 auto; padding: 0 16px; }
+
+  /* Il titolo resta in vista mentre si scorre il modulo. */
+  .hk-app .modal h2 {
+    position: sticky; top: 0; z-index: 2;
+    margin: -16px -16px 12px; padding: 14px 16px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
 }
