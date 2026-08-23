@@ -1,0 +1,475 @@
+/* Adattamenti per far convivere l'app fatture dentro cassa-smart-pro.
+   Stanno qui e non in hk-app.css: quel file e' la porta pulita dell'app
+   originale, e va poter essere rigenerato senza perdere queste correzioni. */
+
+/* L'app nasce per il desktop: dichiara min-width 1000px e non ha nemmeno una
+   media query per schermi piccoli. Invece di forzare la pagina intera a 1000px
+   (che manderebbe in scroll orizzontale tutta l'app ospite, barra inferiore
+   compresa) la larghezza resta confinata qui dentro. */
+.hk-app { min-width: 0; height: auto; background: transparent; }
+.hk-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.hk-scroll > .app { min-width: 1000px; }
+
+/* La topbar dell'app era sticky in cima alla pagina: dentro una tab si
+   sovrapporrebbe all'intestazione dell'ospite. */
+.hk-app .topbar { position: static; }
+.hk-app .topbar-inner { padding: 0 16px; height: 44px; }
+
+/* La sezione ha gia' il padding dell'ospite. */
+.hk-app .view { padding: 16px; }
+
+/* Modali e toast dell'app devono stare sopra la barra delle tab (z-index 200)
+   ma sotto gli overlay dell'ospite. */
+.hk-app .modal-scrim, .hk-app .modal { z-index: 480; }
+.hk-app .toast-root { z-index: 490; }
+
+/* Spazio per non finire sotto la barra delle tab flottante. */
+#s5 { padding-bottom: 96px; }
+
+/* La lingua si sceglie dalle impostazioni dell'ospite: il selettore interno
+   sparisce. Serve !important perche' il display:flex dell'app batte [hidden]. */
+.hk-app .lang-pill { display: none !important; }
+
+/* Le altre tab vivono in una colonna da 500px; qui servono le tabelle intere. */
+body.tab-fatture .content { max-width: none; padding: 0; }
+
+/* Il saldo di cassa e' comune a tutte le tab, ma qui non c'entra: l'app
+   fatture ha la sua striscia di totali, e a piena larghezza il riquadro
+   diventava una fascia sproporzionata. */
+body.tab-fatture #dashboard-card { display: none; }
+
+/* Interruttore dei filtri di dettaglio: su schermo largo il contenitore
+   sparisce e i campi restano figli diretti della barra, come in origine. */
+.hk-app .adv-toggle, .hk-app .adv-summary { display: none; }
+.hk-app .adv-body { display: contents; }
+
+/* ═══════════════════════════════════════════════════
+   APP FATTURE SU TELEFONO
+   L'app nasce per il desktop: sotto i 760px le tabelle diventano schede
+   impilate, cosi' la tab si usa come le altre invece di scorrere di lato.
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+
+  /* niente piu' larghezza forzata: si sta dentro lo schermo */
+  .hk-scroll { overflow-x: visible; }
+  .hk-scroll > .app { min-width: 0; }
+  .hk-app .view { padding: 12px; }
+  .hk-app .table-wrap { overflow-x: auto; }
+  .hk-app #movTableWrap .table-wrap { overflow: visible; }
+
+  /* la striscia dei totali scorre invece di comprimersi */
+  .hk-app .cashstrip-inner { overflow-x: auto; scrollbar-width: none; }
+  .hk-app .cashstrip-inner::-webkit-scrollbar { display: none; }
+
+  /* barra dei filtri: va a capo invece di tagliarsi */
+  .hk-app .toolbar { flex-wrap: wrap; gap: 8px; }
+  .hk-app .toolbar > * { flex: 0 1 auto; }
+  .hk-app .chip-filter { flex-wrap: wrap; }
+  .hk-app .tabs-inner { overflow-x: auto; scrollbar-width: none; }
+  .hk-app .tabs-inner::-webkit-scrollbar { display: none; }
+
+  /* ── tabella movimenti → schede ── */
+  .hk-app #movTableWrap table.grid,
+  .hk-app #movTableWrap table.grid tbody { display: block; width: 100%; }
+  .hk-app #movTableWrap table.grid thead { display: none; }
+
+  .hk-app #movTableWrap table.grid tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  }
+  .hk-app #movTableWrap table.grid tbody td {
+    display: block; border: none; padding: 0;
+    /* la tabella impone 40px per cella: nella scheda ogni riga deve invece
+       stringersi sul proprio contenuto */
+    height: auto; min-height: 0;
+    white-space: normal; word-break: break-word;
+  }
+
+  /* Ordine delle celle: selezione, arrivo, fornitore, fattura, importo,
+     pagato, residuo, stato, termini, scadenza, azioni. */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(1) { display: none; }          /* casella di selezione */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(3) {                            /* fornitore */
+    grid-column: 1; grid-row: 1; font-size: 15px; line-height: 1.25;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(7) {                            /* residuo */
+    grid-column: 2; grid-row: 1; text-align: right;
+    font-size: 17px; font-weight: 800; white-space: nowrap;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(4) {                            /* n. fattura */
+    grid-column: 1; grid-row: 2; color: var(--ink2); font-size: 13px;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(8) {                            /* stato */
+    grid-column: 2; grid-row: 2; text-align: right;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(10) {                           /* scadenza */
+    grid-column: 1 / -1; grid-row: 3;
+    font-size: 12px; color: var(--ink2); margin-top: 4px;
+  }
+  /* Una riga esplicita per ogni cella: mescolare posizionamento esplicito e
+     automatico lasciava buchi nella scheda. */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2)  { grid-row: 4; }   /* arrivo */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5)  { grid-row: 5; }   /* importo */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6)  { grid-row: 6; }   /* pagato */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9)  { grid-row: 7; }   /* termini */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9) {
+    grid-column: 1 / -1;
+    font-size: 12px; color: var(--ink2);
+    display: flex; justify-content: space-between; gap: 12px;
+  }
+
+  /* Senza intestazione la cella da sola non si spiega: l'etichetta e' la
+     stessa della colonna, quindi resta tradotta. */
+  .hk-app #movTableWrap table.grid tbody td[data-label]:nth-child(2)::before,
+  .hk-app #movTableWrap table.grid tbody td[data-label]:nth-child(5)::before,
+  .hk-app #movTableWrap table.grid tbody td[data-label]:nth-child(6)::before {
+    content: attr(data-label);
+    color: var(--muted); font-weight: 600;
+    text-transform: uppercase; font-size: 10px; letter-spacing: .3px;
+    align-self: center;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(10)::before {
+    content: attr(data-label) ": ";
+    color: var(--muted); font-weight: 600;
+    text-transform: uppercase; font-size: 10px; letter-spacing: .3px;
+  }
+
+  .hk-app #movTableWrap table.grid tbody td:nth-child(11) {                           /* azioni */
+    grid-column: 1 / -1; grid-row: 8; margin-top: 8px;
+  }
+  .hk-app .row-actions { display: flex; gap: 8px; }
+  /* Nella scheda il fondo e' bianco: i pulsanti ghost dell'app sparivano. */
+  .hk-app .row-actions .btn {
+    flex: 1; min-height: 38px;
+    background: var(--thead); border-color: var(--border);
+  }
+  .hk-app #movTableWrap tbody tr.overdue-row .row-actions .btn { background: #fff; }
+
+  /* le righe colorate diventano bordi della scheda */
+  .hk-app #movTableWrap table.grid tbody tr.overdue-row { border-color: var(--danger); background: #FEF2F2; }
+  .hk-app #movTableWrap table.grid tbody tr.paid-row { opacity: .62; }
+
+  /* ── scadenzario e fornitori ── */
+  .hk-app .srow { flex-wrap: wrap; gap: 6px; }
+  #supTableWrap { overflow-x: auto; }
+
+  /* ── modale a tutta larghezza ── */
+  /* (la misura del foglio e' definita piu' avanti) */
+  .hk-app .modal .form-grid { grid-template-columns: 1fr; }
+
+  /* barra superiore compatta */
+  .hk-app .topbar-inner { padding: 0 12px; }
+  .hk-app .quicklinks { display: none; }
+
+  /* ── Scheda compatta ──
+     La prima versione impilava ogni colonna su una riga propria: 372px per una
+     fattura, cioe' una per schermata. Qui le informazioni si affiancano su due
+     colonne e i dettagli secondari scendono a corpo piccolo. */
+  .hk-app #movTableWrap table.grid tbody tr {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 3px 10px;
+    padding: 11px 13px;
+    margin-bottom: 8px;
+  }
+
+  /* riga 1: chi e quanto resta da pagare */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(3) {
+    grid-row: 1; grid-column: 1;
+    font-size: 15px; line-height: 1.2;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(7) {
+    grid-row: 1; grid-column: 2;
+    font-size: 17px; font-weight: 800; text-align: right; white-space: nowrap;
+  }
+
+  /* riga 2: numero fattura e stato */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(4) {
+    grid-row: 2; grid-column: 1;
+    font-size: 12px; color: var(--ink2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(8) {
+    grid-row: 2; grid-column: 2; text-align: right;
+  }
+
+  /* riga 3: scadenza e comandi */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(10) {
+    grid-row: 3; grid-column: 1;
+    font-size: 12px; color: var(--ink2); align-self: center; margin: 0;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(11) {
+    grid-row: 3; grid-column: 2; margin-top: 2px;
+  }
+
+  /* righe 4-5: il contorno, due per riga invece di una */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2) { grid-row: 4; grid-column: 1; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5) { grid-row: 4; grid-column: 2; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6) { grid-row: 5; grid-column: 1; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9) { grid-row: 5; grid-column: 2; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9) {
+    display: flex; gap: 5px; align-items: baseline;
+    font-size: 11px; color: var(--ink2); white-space: nowrap;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9) { justify-content: flex-end; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2)::before,
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5)::before,
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6)::before {
+    content: attr(data-label);
+    color: var(--muted); font-weight: 600;
+    text-transform: uppercase; font-size: 9px; letter-spacing: .3px;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(10)::before {
+    content: attr(data-label) " ";
+    color: var(--muted); font-weight: 600;
+    text-transform: uppercase; font-size: 9px; letter-spacing: .3px;
+  }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9)::before { content: none; }
+
+  /* comandi stretti: stanno accanto alla scadenza invece di prendersi una riga */
+  /* L'app mostra i comandi di riga solo al passaggio del mouse (opacity 0 -> 1
+     su :hover). Su un touch screen quell'evento non esiste: restavano
+     invisibili ma cliccabili. Qui sono sempre visibili. */
+  .hk-app #movTableWrap .row-actions {
+    opacity: 1; gap: 5px; justify-content: flex-end;
+  }
+  .hk-app #movTableWrap .row-actions .btn {
+    flex: 0 0 auto; min-height: 34px; padding: 0 10px;
+    background: var(--thead); border-color: var(--border);
+  }
+
+  /* ── Filtri compatti ──
+     Erano 216px, un quarto dello schermo. Ricerca e stato restano in vista,
+     il resto scorre di lato su una riga sola. */
+  .hk-app .toolbar { gap: 7px; }
+  .hk-app .toolbar > input.search { flex: 1 1 100%; }
+  .hk-app .toolbar > .chips {
+    flex: 1 1 100%;
+    flex-wrap: nowrap; overflow-x: auto;
+    scrollbar-width: none; padding-bottom: 2px;
+  }
+  .hk-app .toolbar > .chips::-webkit-scrollbar { display: none; }
+  .hk-app .toolbar > .chips > * { flex: 0 0 auto; }
+  .hk-app .toolbar > select,
+  .hk-app .toolbar > label.inline,
+  .hk-app .toolbar > .btn { flex: 0 0 auto; font-size: 12px; }
+  .hk-app .toolbar > label.inline input[type="date"] { width: 122px; }
+  .hk-app .toolbar > select { max-width: 46%; }
+
+  /* ── Fornitori: schede al posto della tabella ── */
+  #supTableWrap table.grid,
+  #supTableWrap table.grid tbody { display: block; width: 100%; }
+  #supTableWrap table.grid thead { display: none; }
+  #supTableWrap table.grid tbody tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 10px; padding: 11px 13px; margin-bottom: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  #supTableWrap table.grid tbody td { display: block; border: none; padding: 0; height: auto; min-height: 0; }
+  #supTableWrap table.grid tbody td:nth-child(1) { grid-row: 1; grid-column: 1; font-size: 15px; }
+  #supTableWrap table.grid tbody td:nth-child(5) { grid-row: 1; grid-column: 2; font-size: 16px; font-weight: 800; text-align: right; }
+  #supTableWrap table.grid tbody td:nth-child(2),
+  #supTableWrap table.grid tbody td:nth-child(3),
+  #supTableWrap table.grid tbody td:nth-child(4),
+  #supTableWrap table.grid tbody td:nth-child(6),
+  #supTableWrap table.grid tbody td:nth-child(7) {
+    grid-column: 1 / -1; font-size: 11px; color: var(--ink2);
+  }
+
+  /* Su telefono i filtri di dettaglio si aprono a richiesta. */
+  .hk-app .adv-body { display: none; }
+  .hk-app .adv-summary {
+    display: inline-flex; align-items: center; gap: 5px;
+    flex: 0 0 auto; cursor: pointer;
+    background: var(--thead); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 13px;
+    font-size: 12px; font-weight: 600; color: var(--ink2);
+  }
+  .hk-app .adv-summary::after { content: '▾'; font-size: 10px; }
+  .hk-app .adv-toggle:checked ~ .adv-summary { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  .hk-app .adv-toggle:checked ~ .adv-summary::after { content: '▴'; }
+  .hk-app .adv-toggle:checked ~ .adv-body {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    flex: 1 1 100%; margin-top: 2px;
+  }
+
+  /* ── Recupero di spazio verticale ──
+     Su 812px di schermo, 348 se ne andavano in intestazioni prima della prima
+     fattura. Qui la topbar sparisce, i filtri stanno su una riga e la scheda
+     tiene solo cio' che serve a decidere: il resto e' a un tocco di distanza,
+     perche' toccando la scheda si apre il record. */
+
+  /* "+ Nuovo arrivo" diventa flottante: la barra che lo conteneva sparisce e
+     il comando resta raggiungibile anche a meta' elenco. Sta a sinistra, il
+     microfono dell'app ospite e' a destra. */
+  /* La barra non occupa piu' spazio, ma non si puo' nascondere: il pulsante
+     flottante e' suo figlio e display:none lo porterebbe via con se'. */
+  .hk-app .topbar {
+    height: 0; min-height: 0; padding: 0;
+    border: none; background: none; overflow: visible;
+  }
+  .hk-app .topbar-inner { height: 0; min-height: 0; padding: 0; overflow: visible; }
+  .hk-app #btnNew {
+    position: fixed; left: 16px; bottom: 92px; z-index: 300;
+    border-radius: 999px; padding: 0 20px; height: auto; min-height: 46px;
+    font-size: 14px; font-weight: 700;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, .28);
+  }
+
+  /* ── Striscia totali: due per due, invece di quattro che scorrono ──
+     A 375px i quattro segmenti sono 822px: tre quarti restavano fuori. E
+     l'altezza fissa che avevo messo (42px contro 50 necessari) tagliava i
+     valori a meta'. Qui ognuno ha il suo posto e si legge per intero. */
+  .hk-app .cashstrip-inner {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: auto; gap: 2px 10px; padding: 6px 12px;
+    overflow: visible;
+  }
+  .hk-app .strip-seg { min-width: 0; padding-left: 8px; }
+  .hk-app .strip-seg .lbl {
+    font-size: 9px; letter-spacing: .02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hk-app .strip-seg .val { font-size: 13px; white-space: nowrap; }
+
+  /* ── Tab interne: tutte e cinque nello schermo ──
+     Erano 510px in 375: "Dashboard" e "Dati" restavano fuori, e uno
+     scorrimento orizzontale non si vede che c'e'. */
+  .hk-app .tabs-inner {
+    overflow-x: visible; gap: 0; padding: 0 6px; height: 40px;
+  }
+  .hk-app .tabs-inner .tab {
+    flex: 1 1 auto; min-width: 0; justify-content: center;
+    padding: 0 4px; font-size: 11px; gap: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hk-app .tabs-inner .tab .badge { font-size: 9px; padding: 0 5px; line-height: 15px; min-width: 15px; }
+
+  /* Striscia e tab erano sticky a 52 e 100px, misure prese sulla topbar
+     dell'app: dentro l'ospite quella e' a zero e finivano sotto la sua
+     intestazione. Su telefono scorrono col contenuto. */
+  .hk-app .cashstrip, .hk-app .tabs { position: static; }
+
+  /* stato e "altri filtri" sulla stessa riga: i chip scorrono, il pulsante resta */
+  .hk-app .toolbar > .chips { flex: 1 1 auto; max-width: calc(100% - 116px); }
+  .hk-app .adv-summary { margin-left: auto; }
+
+  /* la scheda tiene fornitore, residuo, stato, scadenza e comandi: data di
+     arrivo e termini di pagamento si leggono aprendo il record */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(2),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(9) { display: none; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5) { grid-row: 4; grid-column: 1; justify-content: flex-start; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6) { grid-row: 4; grid-column: 2; justify-content: flex-end; }
+
+  /* Dashboard e Dati: le griglie a colonne fisse sbordavano lo schermo. */
+  .hk-app .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .hk-app .dash-cols { grid-template-columns: 1fr; gap: 12px; }
+  .hk-app .dash-list-row .dd { width: auto; }
+  .hk-app .card { min-width: 0; }
+  .hk-app .card > *, .hk-app .view > * { max-width: 100%; }
+  .hk-app .view table { max-width: 100%; }
+}
+
+/* In sola lettura spariscono anche i comandi della tab fatture: il blocco vero
+   e' nella delega dell'app, questo evita di offrire pulsanti che rifiutano. */
+body.readonly-mode .hk-app #btnNew,
+body.readonly-mode .hk-app .row-actions,
+body.readonly-mode .hk-app .selcol,
+body.readonly-mode .hk-app #selBar { display: none !important; }
+
+/* ── Bersagli tattili nella tab fatture ──
+   Stesse soglie dell'app ospite: sotto i ~44px un comando si sbaglia. I chip
+   di filtro restano piu' densi: sono molti, e nessuno di essi e' distruttivo. */
+@media (max-width: 760px) {
+  .hk-app .tabs-inner .tab { min-height: 44px; }
+  .hk-app .strip-seg { min-height: 44px; }
+  .hk-app .chip-filter { min-height: 36px; display: inline-flex; align-items: center; }
+  .hk-app .adv-summary { min-height: 36px; }
+  .hk-app .btn { min-height: 40px; }
+  .hk-app #movTableWrap .row-actions .btn { min-height: 40px; }
+  .hk-app .toolbar > input.search { min-height: 42px; }
+}
+
+/* ─── Modulo "Nuovo arrivo" su telefono ───
+   Nasce per il mouse: campi da 32px con testo da 14. Su iPhone un campo con
+   corpo sotto i 16px fa ingrandire la pagina non appena lo tocchi, e poi resta
+   ingrandita. Qui i campi si allargano e il testo sale a 16. */
+@media (max-width: 760px) {
+  /* Foglio che sale dal basso, come le altre schede dell'app ospite.
+     Prima la finestra era centrata dentro uno sfondo che scorreva a sua volta:
+     due scorrimenti annidati, e il piede finiva sotto il bordo dello schermo
+     senza che "appiccicarlo" servisse a nulla. Ora scorre solo il foglio. */
+  /* Foglio che sale dal basso, come le altre schede dell'app ospite. Prima la
+     finestra era centrata dentro uno sfondo che scorreva a sua volta: due
+     scorrimenti annidati, e il piede finiva sotto il bordo dello schermo.
+     L'ancoraggio passa dall'allineamento del contenitore e non da
+     position:fixed, che dipenderebbe dall'assenza di trasformazioni negli
+     antenati: la sezione che ospita la tab ne ha una durante la sua animazione
+     di entrata. */
+  .hk-app .modal-scrim {
+    flex-direction: column; justify-content: flex-end; align-items: stretch;
+    padding: 0; overflow: hidden;
+  }
+  .hk-app .modal {
+    width: 100%; max-width: none; margin: 0;
+    max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 16px 0;
+  }
+
+  .hk-app .modal input[type="text"],
+  .hk-app .modal input[type="number"],
+  .hk-app .modal input[type="date"],
+  .hk-app .modal select,
+  .hk-app .modal textarea {
+    font-size: 16px; min-height: 44px; padding: 0 12px;
+  }
+  .hk-app .modal textarea { padding: 10px 12px; min-height: 76px; }
+  /* L'importo e' il numero che conta: si legge piu' grande degli altri. */
+  .hk-app .modal #fAmount { font-size: 19px; font-weight: 700; }
+  .hk-app .modal label { font-size: 13px; }
+
+  /* Termini e metodo di pagamento: si scelgono col dito. */
+  .hk-app .modal .term-chips .chip-filter { min-height: 40px; padding: 0 14px; }
+  .hk-app .modal #fTermDays { width: 88px !important; }
+
+  /* "Pagata per intero" era una casella da 16px. */
+  .hk-app .modal .check-field { align-items: center; gap: 12px; }
+  .hk-app .modal .check-field input[type="checkbox"] {
+    width: 24px; height: 24px; min-height: 24px; flex-shrink: 0;
+  }
+
+  /* Il piede finiva sotto il fondo della finestra: per salvare bisognava
+     scorrere tutto il modulo. Ora resta agganciato in basso. */
+  .hk-app .modal .modal-footer {
+    position: sticky; bottom: 0; z-index: 2;
+    margin: 16px -16px 0; padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; gap: 10px;
+  }
+  .hk-app .modal .modal-footer .btn { flex: 1; min-height: 46px; font-size: 15px; }
+  /* Il pulsante che elimina non prende lo stesso spazio di quello che salva. */
+  .hk-app .modal .modal-footer .btn-danger { flex: 0 0 auto; padding: 0 16px; }
+
+  /* Il titolo resta in vista mentre si scorre il modulo. */
+  .hk-app .modal h2 {
+    position: sticky; top: 0; z-index: 2;
+    margin: -16px -16px 12px; padding: 14px 16px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+}

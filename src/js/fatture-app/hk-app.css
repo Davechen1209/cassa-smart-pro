@@ -1,0 +1,457 @@
+/* Gestione pagamenti / 货款管理 — app styles */
+
+.hk-app *{ box-sizing: border-box; margin: 0; padding: 0; }
+
+.hk-app{
+  --bg: #F6F8FA;
+  --surface: #FFFFFF;
+  --thead: #F1F5F9;
+  --divider: #EEF2F6;
+  --border: #E2E8F0;
+  --ink: #0F172A;
+  --ink2: #475569;
+  --muted: #94A3B8;
+  --accent: #0F766E;
+  --accent-hover: #115E59;
+  --accent-bg: #F0FDFA;
+  --danger: #DC2626;
+  --danger-hover: #B91C1C;
+  --success: #15803D;
+  --warning: #B45309;
+  --red-text: #B91C1C;
+  --sel: #E6F4F1;
+  --shadow: 0 8px 24px rgba(15, 23, 42, .12);
+}
+
+.hk-app{ height: 100%; }
+
+.hk-app{
+  font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI",
+    "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+  min-width: 1000px;
+}
+.hk-app :lang(zh-CN) body, .hk-app:lang(zh-CN){ line-height: 1.6; }
+
+.hk-app button{ font: inherit; color: inherit; cursor: pointer; }
+.hk-app input, .hk-app select, .hk-app textarea{ font: inherit; color: var(--ink); }
+
+.hk-app .num{ font-variant-numeric: tabular-nums; }
+
+/* ---------- sticky chrome ---------- */
+
+.hk-app .topbar{
+  position: sticky; top: 0; z-index: 40;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.hk-app .topbar-inner{
+  max-width: 1440px; margin: 0 auto;
+  height: 52px; padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.hk-app .wordmark{ font-size: 16px; font-weight: 600; white-space: nowrap; }
+.hk-app .wordmark-sep{ color: var(--muted); font-weight: 400; margin: 0 2px; }
+.hk-app .topbar-right{ display: flex; align-items: center; gap: 12px; }
+
+.hk-app .lang-pill{
+  display: flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden;
+  background: var(--bg);
+}
+.hk-app .lang-pill button{
+  border: 0; background: transparent; padding: 4px 14px; font-size: 13px; font-weight: 600;
+  color: var(--ink2);
+}
+.hk-app .lang-pill button.active{ background: var(--accent); color: #fff; }
+
+.hk-app .cashstrip{
+  position: sticky; top: 52px; z-index: 39;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.hk-app .cashstrip-inner{
+  max-width: 1440px; margin: 0 auto; padding: 0 24px;
+  height: 48px; display: flex; align-items: stretch; gap: 32px;
+}
+.hk-app .strip-seg{
+  display: flex; flex-direction: column; justify-content: center;
+  padding-left: 10px; border-left: 3px solid transparent; cursor: pointer;
+  min-width: 180px;
+}
+.hk-app .strip-seg .lbl{ font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink2); }
+.hk-app .strip-seg .val{ font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hk-app .strip-seg.red{ border-left-color: var(--danger); }
+.hk-app .strip-seg.red .val{ color: var(--red-text); }
+.hk-app .strip-seg.green{ border-left-color: #22C55E; }
+.hk-app .strip-seg.green .val{ color: var(--success); }
+.hk-app .strip-seg.amber{ border-left-color: #F59E0B; }
+.hk-app .strip-seg.neutral{ border-left-color: #CBD5E1; }
+.hk-app .strip-seg:hover{ background: var(--accent-bg); }
+.hk-app .strip-seg .cnt{ font-weight: 400; color: var(--ink2); font-size: 13px; }
+
+.hk-app .tabs{
+  position: sticky; top: 100px; z-index: 38;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.hk-app .tabs-inner{
+  max-width: 1440px; margin: 0 auto; padding: 0 24px;
+  display: flex; gap: 4px; height: 42px;
+}
+.hk-app .tab{
+  border: 0; background: transparent; padding: 0 16px;
+  font-size: 14px; color: var(--ink2);
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+  display: flex; align-items: center; gap: 6px;
+}
+.hk-app .tab:hover{ color: var(--accent); background: var(--accent-bg); }
+.hk-app .tab.active{ color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.hk-app .tab .badge{
+  background: var(--danger); color: #fff; border-radius: 999px;
+  font-size: 11px; font-weight: 600; padding: 0 7px; line-height: 17px; min-width: 17px; text-align: center;
+}
+
+/* ---------- banners ---------- */
+
+.hk-app .banner{
+  max-width: 1440px; margin: 12px auto 0; padding: 10px 16px;
+  border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  font-size: 13px;
+}
+.hk-app .banner-wrap{ padding: 0 24px; max-width: 1488px; margin: 0 auto; }
+.hk-app .banner.info{ background: #E0F2FE; border: 1px solid #7DD3FC; color: #075985; }
+.hk-app .banner.warn{ background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; }
+.hk-app .banner.error{ background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; }
+.hk-app .banner button{
+  border: 1px solid currentColor; background: transparent; border-radius: 6px;
+  padding: 3px 12px; font-size: 12px; font-weight: 600; color: inherit; flex-shrink: 0;
+}
+
+/* ---------- layout ---------- */
+
+.hk-app .view{ max-width: 1440px; margin: 0 auto; padding: 24px; }
+.hk-app .view-title{ font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+
+.hk-app .card{
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px;
+}
+
+/* ---------- buttons & controls ---------- */
+
+.hk-app .btn{
+  height: 32px; padding: 0 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.hk-app .btn:hover{ border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.hk-app .btn-primary{ background: var(--accent); border-color: var(--accent); color: #fff; }
+.hk-app .btn-primary:hover{ background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+.hk-app .btn-danger{ background: var(--danger); border-color: var(--danger); color: #fff; }
+.hk-app .btn-danger:hover{ background: var(--danger-hover); border-color: var(--danger-hover); color: #fff; }
+.hk-app .btn-ghost{ border-color: transparent; background: transparent; color: var(--accent); }
+.hk-app .btn-sm{ height: 26px; padding: 0 10px; font-size: 12px; }
+.hk-app .btn:focus-visible, .hk-app input:focus-visible, .hk-app select:focus-visible, .hk-app textarea:focus-visible{
+  outline: none; box-shadow: 0 0 0 3px rgba(15, 118, 110, .35);
+}
+
+.hk-app input[type="text"], .hk-app input[type="date"], .hk-app input[type="search"], .hk-app input[type="number"], .hk-app select, .hk-app textarea{
+  height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); font-size: 14px;
+}
+.hk-app textarea{ height: auto; padding: 6px 10px; resize: vertical; }
+.hk-app input::placeholder, .hk-app textarea::placeholder{ color: var(--muted); }
+.hk-app input.invalid{ border-color: var(--danger); }
+
+/* ---------- toolbar ---------- */
+
+.hk-app .toolbar{
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.hk-app .toolbar .search{ width: 280px; }
+.hk-app .toolbar label.inline{ display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink2); white-space: nowrap; }
+
+.hk-app .chips{ display: flex; gap: 6px; flex-wrap: wrap; }
+.hk-app .chip-filter{
+  border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
+  padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--ink2);
+}
+.hk-app .chip-filter:hover{ border-color: var(--accent); color: var(--accent); }
+.hk-app .chip-filter.active{ background: var(--accent); border-color: var(--accent); color: #fff; }
+.hk-app .term-chips{ align-items: center; margin-top: 4px; }
+.hk-app .term-chips input[type="number"]{ padding: 4px 8px; }
+
+/* ---------- table ---------- */
+
+.hk-app .table-wrap{
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  overflow-x: auto;
+}
+.hk-app table.grid{ width: 100%; border-collapse: collapse; font-size: 13px; }
+.hk-app table.grid th{
+  background: var(--thead); text-align: left; font-size: 12px; font-weight: 600; color: var(--ink2);
+  padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  position: sticky; top: 0; z-index: 5;
+}
+.hk-app table.grid th.sortable{ cursor: pointer; user-select: none; }
+.hk-app table.grid th.sortable:hover{ color: var(--accent); }
+.hk-app table.grid td{
+  padding: 8px 12px; border-bottom: 1px solid var(--divider); height: 40px; vertical-align: middle;
+}
+.hk-app table.grid tbody tr{ border-left: 3px solid transparent; }
+.hk-app table.grid tbody tr:hover{ background: var(--accent-bg); }
+.hk-app table.grid tbody tr.overdue-row{ border-left: 3px solid var(--danger); }
+.hk-app table.grid tbody tr.flash{ animation: rowflash 1.5s ease-out; }
+@keyframes rowflash { 0% { background: #CCECE6; } 100% { background: transparent; } }
+.hk-app td.money, .hk-app th.money{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hk-app td.money.red{ color: var(--red-text); font-weight: 600; }
+.hk-app td.money.bold{ font-weight: 600; }
+.hk-app tr.paid-row td.money{ opacity: .6; }
+.hk-app td.nowrap, .hk-app th.nowrap{ white-space: nowrap; }
+.hk-app .row-actions{ display: flex; gap: 4px; justify-content: flex-end; opacity: 0; }
+.hk-app tr:hover .row-actions{ opacity: 1; }
+.hk-app .notes-dot{ cursor: help; margin-left: 4px; }
+.hk-app .checkno{ font-size: 11px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+
+/* combined payment */
+.hk-app th.selcol, .hk-app td.selcol{ width: 30px; text-align: center; }
+.hk-app .sel-cb{ width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
+.hk-app .selbar{
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  background: #0F172A; color: #fff; border-radius: 12px; padding: 10px 16px;
+  display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  z-index: 60; white-space: nowrap; font-size: 14px;
+}
+.hk-app .selbar .selbar-clear{ background: transparent; color: #CBD5E1; border-color: #475569; }
+.hk-app .gpay-list{ max-height: 240px; overflow-y: auto; margin: 4px 0; border-top: 1px solid #E2E8F0; }
+.hk-app .gpay-row{ display: flex; justify-content: space-between; gap: 12px; padding: 7px 2px; border-bottom: 1px solid #E2E8F0; font-size: 13px; }
+.hk-app .gpay-row .ginv{ color: var(--ink2); font-size: 12px; margin-left: 6px; }
+.hk-app .gpay-row .num{ font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hk-app .gpay-total{ display: flex; justify-content: space-between; font-weight: 700; padding: 10px 2px 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.hk-app .gpay-fields{ display: flex; gap: 12px; }
+.hk-app .gpay-fields .form-field{ flex: 1; }
+.hk-app .gpay-defer{ width: 100%; border-style: dashed; }
+.hk-app .gpay-settle{ width: 100%; }
+.hk-app .gpay-hint{ font-size: 12px; color: var(--ink2); margin-top: 10px; }
+.hk-app .swap-pay{
+  border: 1px solid #CBD5E1; background: #fff; border-radius: 6px; cursor: pointer;
+  font-size: 12px; line-height: 1; padding: 2px 7px; margin-left: 6px; color: var(--ink2);
+}
+.hk-app .swap-pay:hover{ background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+/* topbar quick links */
+.hk-app .quicklinks{ display: inline-flex; gap: 6px; margin-right: 8px; }
+.hk-app .quicklink{
+  border: 1px solid #CBD5E1; background: #fff; border-radius: 8px; cursor: pointer;
+  font-size: 13px; padding: 6px 10px; color: var(--ink); white-space: nowrap;
+}
+.hk-app .quicklink:hover{ background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+
+/* status chips */
+.hk-app .chip{
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.hk-app .chip .dot{ width: 8px; height: 8px; border-radius: 50%; }
+.hk-app .chip.paid{ color: #15803D; background: #DCFCE7; border-color: #86EFAC; }
+.hk-app .chip.paid .dot{ background: #22C55E; }
+.hk-app .chip.partial{ color: #B45309; background: #FEF3C7; border-color: #FCD34D; }
+.hk-app .chip.partial .dot{ background: #F59E0B; }
+.hk-app .chip.open{ color: #1D4ED8; background: #DBEAFE; border-color: #93C5FD; }
+.hk-app .chip.open .dot{ background: #3B82F6; }
+.hk-app .chip.overdue{ color: #B91C1C; background: #FEE2E2; border-color: #FCA5A5; }
+.hk-app .chip.overdue .dot{ background: #EF4444; }
+.hk-app .chip.olddebt{ color: #6D28D9; background: #EDE9FE; border-color: #C4B5FD; }
+.hk-app .days-pill{
+  display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600;
+  background: #F1F5F9; color: var(--ink2); white-space: nowrap;
+}
+.hk-app .days-pill.late{ background: #FEE2E2; color: var(--red-text); }
+
+/* ---------- sticky footer totals ---------- */
+
+.hk-app .totalsbar{
+  position: sticky; bottom: 0; z-index: 6;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  margin-top: 12px; padding: 10px 16px;
+  font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+  display: flex; justify-content: flex-end; gap: 6px;
+  box-shadow: 0 -4px 12px rgba(15, 23, 42, .06);
+}
+.hk-app .totalsbar .red{ color: var(--red-text); }
+
+/* ---------- scadenzario ---------- */
+
+.hk-app .sgroup{ margin-bottom: 20px; }
+.hk-app .sgroup-header{
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 8px 4px; border-bottom: 2px solid var(--border);
+  position: sticky; top: 142px; background: var(--bg); z-index: 4;
+}
+.hk-app .sgroup-header.red{ border-bottom-color: var(--danger); }
+.hk-app .sgroup-header .gname{ font-size: 14px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.hk-app .sgroup-header.red .gname{ color: var(--red-text); }
+.hk-app .sgroup-header .gcount{ color: var(--ink2); font-size: 13px; }
+.hk-app .sgroup-header .gsub{ margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hk-app .sgroup-header .gcum{ color: var(--accent); font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+.hk-app .srow{
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid transparent;
+  border-radius: 8px; padding: 8px 14px; margin-top: 8px; cursor: pointer;
+}
+.hk-app .srow:hover{ background: var(--accent-bg); }
+.hk-app .srow.overdue-row{ border-left-color: var(--danger); }
+.hk-app .srow .sdate{ width: 110px; font-variant-numeric: tabular-nums; font-size: 13px; white-space: nowrap; }
+.hk-app .srow .ssup{ font-weight: 600; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hk-app .srow .sinv, .hk-app .srow .sterms{ color: var(--ink2); font-size: 12px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hk-app .srow .samt{ font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hk-app .srow .samt.red{ color: var(--red-text); }
+
+/* ---------- dashboard ---------- */
+
+.hk-app .kpi-row{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.hk-app .kpi{
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px; border-top: 3px solid var(--border); cursor: pointer;
+}
+.hk-app .kpi:hover{ border-color: var(--accent); }
+.hk-app .kpi.red{ border-top-color: var(--danger); }
+.hk-app .kpi.amber{ border-top-color: #F59E0B; }
+.hk-app .kpi.teal{ border-top-color: var(--accent); }
+.hk-app .kpi.green{ border-top-color: #22C55E; }
+.hk-app .kpi .klabel{ font-size: 12px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: .04em; }
+.hk-app .kpi .kval{ font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
+.hk-app .kpi.red .kval{ color: var(--red-text); }
+.hk-app .kpi.green .kval{ color: var(--success); }
+.hk-app .kpi .ksub{ font-size: 12px; color: var(--muted); }
+
+.hk-app .dash-cols{ display: grid; grid-template-columns: 3fr 2fr; gap: 16px; align-items: start; }
+.hk-app .dash-list-row{
+  display: flex; align-items: center; gap: 10px; padding: 8px 4px;
+  border-bottom: 1px solid var(--divider); font-size: 13px;
+}
+.hk-app .dash-list-row:last-child{ border-bottom: 0; }
+.hk-app .dash-list-row .ds{ flex: 1 1 auto; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hk-app .dash-list-row .dd{ width: 96px; font-variant-numeric: tabular-nums; color: var(--ink2); white-space: nowrap; }
+.hk-app .dash-list-row .da{ font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hk-app .dash-list-row .da.red{ color: var(--red-text); }
+.hk-app .dash-total{ padding-top: 10px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; border-top: 2px solid var(--border); margin-top: 4px; }
+.hk-app .section-title{ font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+
+.hk-app .hbar-row{ display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 13px; }
+.hk-app .hbar-row .hname{ width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; cursor: pointer; }
+.hk-app .hbar-row .hname:hover{ color: var(--accent); }
+.hk-app .hbar-track{ flex: 1; background: #EDF1F5; border-radius: 4px; height: 18px; overflow: hidden; display: flex; }
+.hk-app .hbar-fill{ background: var(--accent); height: 100%; }
+.hk-app .hbar-fill.red{ background: #EF4444; }
+.hk-app .hbar-row .hval{ width: 110px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- fornitori ---------- */
+
+.hk-app tr.sup-row{ cursor: pointer; }
+
+/* ---------- dati ---------- */
+
+.hk-app .dati-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.hk-app .dati-card h3{ font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.hk-app .dati-card p{ font-size: 13px; color: var(--ink2); margin-bottom: 12px; }
+.hk-app .dati-card .actions{ display: flex; gap: 10px; flex-wrap: wrap; }
+.hk-app .dati-card.danger{ border-color: #FCA5A5; }
+.hk-app .dati-card.danger h3{ color: var(--red-text); }
+
+/* ---------- modal ---------- */
+
+.hk-app .modal-scrim{
+  position: fixed; inset: 0; background: rgba(15, 23, 42, .35); z-index: 100;
+  display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 16px;
+}
+.hk-app .modal{
+  background: var(--surface); border-radius: 10px; box-shadow: var(--shadow);
+  width: 560px; max-width: 96vw; padding: 24px;
+}
+.hk-app .modal.wide{ width: 900px; }
+.hk-app .modal.small{ width: 420px; }
+.hk-app .modal h2{ font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.hk-app .form-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.hk-app .form-field{ display: flex; flex-direction: column; gap: 4px; }
+.hk-app .form-field.full{ grid-column: 1 / -1; }
+.hk-app .form-field label{ font-size: 13px; font-weight: 600; color: var(--ink2); }
+.hk-app .form-field .err{ font-size: 12px; color: var(--danger); }
+.hk-app .form-field .hint{ font-size: 12px; color: var(--muted); }
+.hk-app .form-field .hint.warn{ color: var(--warning); }
+.hk-app .check-field{ display: flex; align-items: flex-start; gap: 8px; grid-column: 1 / -1; }
+.hk-app .check-field input{ width: 16px; height: 16px; margin-top: 3px; }
+.hk-app .check-field .help{ font-size: 12px; color: var(--muted); }
+.hk-app .residuo-line{ grid-column: 1 / -1; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 8px 12px; background: var(--bg); border-radius: 6px; }
+.hk-app .residuo-line.red{ color: var(--red-text); }
+.hk-app .residuo-line.green{ color: var(--success); }
+.hk-app .modal-footer{ display: flex; gap: 10px; margin-top: 20px; align-items: center; }
+.hk-app .modal-footer .meta{ margin-right: auto; font-size: 12px; color: var(--muted); }
+.hk-app .modal-footer.end{ justify-content: flex-end; }
+
+/* pay popover-modal */
+.hk-app .pay-head{ display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 13px; }
+.hk-app .pay-head .who{ font-weight: 600; }
+.hk-app .pay-head .resid{ color: var(--red-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hk-app .pay-amount{ width: 100%; text-align: right; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; height: 40px; }
+.hk-app .pay-methods{ display: flex; gap: 10px; margin-top: 12px; }
+.hk-app .pay-methods .btn{ flex: 1; justify-content: center; }
+.hk-app .pay-warn{ margin-top: 8px; font-size: 12px; color: var(--warning); }
+
+/* import wizard */
+.hk-app .wizard-steps{ display: flex; gap: 16px; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
+.hk-app .wizard-steps .on{ color: var(--accent); }
+.hk-app .sheet-pick{ display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.hk-app .sheet-pick button{ text-align: left; }
+.hk-app .preview-wrap{ max-height: 380px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; }
+.hk-app .preview-wrap table.grid th{ position: static; }
+.hk-app .import-summary{ font-size: 15px; font-weight: 600; margin: 12px 0; }
+
+/* ---------- empty states ---------- */
+
+.hk-app .empty{
+  text-align: center; padding: 56px 20px; color: var(--ink2);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+}
+.hk-app .empty .big{ font-size: 40px; margin-bottom: 12px; color: var(--muted); }
+.hk-app .empty .actions{ margin-top: 16px; display: flex; gap: 10px; justify-content: center; }
+.hk-app .empty.green{ color: var(--success); font-weight: 600; }
+.hk-app .empty-inline{ padding: 32px; text-align: center; color: var(--ink2); }
+
+/* ---------- toast ---------- */
+
+.hk-app .toast-root{
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center;
+}
+.hk-app .toast{
+  background: #1E293B; color: #F1F5F9; border-radius: 8px; padding: 10px 16px;
+  font-size: 13px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px;
+  animation: toastin .15s ease-out;
+}
+.hk-app .toast.error{ background: #7F1D1D; }
+.hk-app .toast button{
+  border: 0; background: transparent; color: #5EEAD4; font-weight: 600; font-size: 13px;
+}
+@keyframes toastin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ---------- datalist etc ---------- */
+
+.hk-app .mono{ font-variant-numeric: tabular-nums; }
+
+/* ---------- print ---------- */
+
+.hk-app .print-only{ display: none; }
+@media print {
+  .hk-app{ background: #fff; min-width: 0; }
+  .hk-app .topbar, .hk-app .cashstrip, .hk-app .tabs, .hk-app .toolbar, .hk-app #seedBanner, .hk-app .toast-root, .hk-app .modal-scrim, .hk-app .srow .btn, .hk-app .row-actions, .hk-app .totalsbar, .hk-app .no-print{ display: none !important; }
+  .hk-app .view{ padding: 0; max-width: none; }
+  .hk-app .print-only{ display: block; font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+  .hk-app .sgroup-header{ position: static; background: #fff; }
+  .hk-app .srow{ border: 0; border-bottom: 1px solid #ccc; border-radius: 0; margin: 0; padding: 6px 4px; page-break-inside: avoid; }
+  .hk-app .srow::after{ content: "✓ ______"; color: #999; margin-left: 12px; white-space: nowrap; }
+  .hk-app .print-sign{ display: block !important; margin-top: 40px; font-size: 14px; }
+}
+.hk-app .print-sign{ display: none; }

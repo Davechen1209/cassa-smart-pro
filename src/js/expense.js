@@ -7,6 +7,7 @@ import {
 } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
 import { t } from './i18n.js';
+import { parseImporto } from './money.js';
 export function openExpenseSheet() {
   setExpCat('fornitori');
   setExpSelectedVoice(null);
@@ -14,6 +15,7 @@ export function openExpenseSheet() {
   document.getElementById('exp-free-name').value = '';
   document.getElementById('exp-note').value = '';
   document.getElementById('exp-fattura-num').value = '';
+  svuotaRicercaVoci();
   updateExpSegments();
   renderExpVoices();
   document.getElementById('expense-overlay').classList.add('show');
@@ -42,6 +44,9 @@ export function customAmount() {
 export function switchExpCat(cat) {
   setExpCat(cat);
   setExpSelectedVoice(null);
+  // La ricerca vale per la categoria in cui e' stata scritta: restando,
+  // cambiando categoria si vedeva un elenco vuoto senza capire perche'.
+  svuotaRicercaVoci();
   updateExpSegments();
   renderExpVoices();
 }
@@ -79,22 +84,104 @@ export function updateExpSegments() {
   }
 }
 
+// Scelta della voce: il campo mostra quella scelta, l'elenco compare solo
+// quando lo si tocca. Con una rubrica lunga scorrere un <select> era scomodo,
+// ma tenere l'elenco sempre aperto occupava mezza scheda per niente.
+const VOCI_MOSTRATE = 6;
+let vociAperte = false;
+
+function campoVoci() {
+  return document.getElementById('exp-voice-search');
+}
+
+function svuotaRicercaVoci() {
+  const campo = campoVoci();
+  if (campo) campo.value = '';
+  vociAperte = false;
+}
+
+export function apriElencoVoci() {
+  if (expCat === 'libera' || expCat.startsWith('custom:')) return;
+  vociAperte = true;
+  const campo = campoVoci();
+  // Il campo contiene la voce gia' scelta: selezionandola per intero, la prima
+  // lettera digitata la sostituisce invece di accodarsi.
+  if (campo && campo.value) campo.select();
+  renderExpVoices();
+}
+
+export function chiudiElencoVoci() {
+  if (!vociAperte) return;
+  vociAperte = false;
+  renderExpVoices();
+}
+
 export function renderExpVoices() {
   if (expCat === 'libera') return;
 
-  const list = d[expCat] || [];
-  const container = document.getElementById('exp-voices-select');
-  if (!container) return;
+  const contenitore = document.getElementById('exp-voice-results');
+  if (!contenitore) return;
 
-  container.innerHTML = '<option value="">' + escapeHtml(t('exp.selectVoice')) + '</option>' +
-    list.map(n => {
-      const sel = expSelectedVoice === n ? ' selected' : '';
-      return '<option value="' + escapeHtml(n) + '"' + sel + '>' + escapeHtml(n) + '</option>';
-    }).join('');
+  if (!vociAperte) {
+    contenitore.innerHTML = '';
+    return;
+  }
+
+  const lista = d[expCat] || [];
+  const campo = campoVoci();
+  const scritto = (campo ? campo.value : '').trim();
+  // Se nel campo c'e' esattamente la voce gia' scelta non e' una ricerca:
+  // riaprendo l'elenco si vuole rivedere tutto, non solo quella riga.
+  const cerca = (scritto && scritto !== expSelectedVoice) ? scritto.toLowerCase() : '';
+
+  // Chi corrisponde meglio prima: chi inizia con quello che hai scritto.
+  const trovate = lista
+    .filter(n => !cerca || n.toLowerCase().includes(cerca))
+    .sort((a, b) => {
+      if (!cerca) return 0;
+      const ia = a.toLowerCase().startsWith(cerca) ? 0 : 1;
+      const ib = b.toLowerCase().startsWith(cerca) ? 0 : 1;
+      return ia - ib;
+    });
+
+  if (lista.length === 0) {
+    contenitore.innerHTML = '<div class="voice-empty">' + escapeHtml(t('exp.noVoices')) + '</div>';
+    return;
+  }
+  if (trovate.length === 0) {
+    contenitore.innerHTML = '<div class="voice-empty">' + escapeHtml(t('exp.noMatch')) + '</div>';
+    return;
+  }
+
+  const mostrate = trovate.slice(0, VOCI_MOSTRATE);
+  let html = mostrate.map(n => {
+    const scelta = expSelectedVoice === n;
+    return '<button type="button" class="voice-row' + (scelta ? ' selected' : '') + '"' +
+      ' data-action="selectExpVoice" data-name="' + escapeHtml(n) + '">' +
+      '<span class="voice-row-name">' + escapeHtml(n) + '</span>' +
+      (scelta ? '<span class="voice-row-check">✓</span>' : '') +
+      '</button>';
+  }).join('');
+
+  const restanti = trovate.length - mostrate.length;
+  if (restanti > 0) {
+    html += '<div class="voice-more">' + escapeHtml(t('exp.moreVoices', { n: restanti })) + '</div>';
+  }
+  contenitore.innerHTML = html;
 }
 
 export function selectExpVoice(name) {
   setExpSelectedVoice(name || null);
+  // Scelta fatta: il campo mostra il nome e l'elenco si richiude.
+  const campo = campoVoci();
+  if (campo) campo.value = name || '';
+  vociAperte = false;
+  renderExpVoices();
+}
+
+export function filterExpVoices() {
+  vociAperte = true;
+  renderExpVoices();
 }
 
 export function addNewVoiceFromSheet() {
@@ -109,7 +196,7 @@ export function addNewVoiceFromSheet() {
 }
 
 export function addExpense() {
-  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const amount = parseImporto(document.getElementById('exp-amount').value);
   if (!amount || amount <= 0) {
     showToast(t('exp.invalidAmount'), 'warn');
     return;

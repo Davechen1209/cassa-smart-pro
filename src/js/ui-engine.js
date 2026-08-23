@@ -8,9 +8,11 @@ import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './date-utils.js';
 import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
-import { renderFatture, updateFattureTabBadge } from './fatture.js';
+import { Store as HkStore } from './fatture-app/hk-store.js';
 import { t, getLang, translateLogDesc } from './i18n.js';
+import { parseImportoOrNull } from './money.js';
 import { renderReport } from './report.js';
+import { FattureApp } from './fatture-app/hk-app.js';
 
 export function updateDateDisplay() {
   document.getElementById('date-display-text').textContent = formatDateDisplay(selectedDate);
@@ -321,6 +323,9 @@ export function deleteLog(index, name) {
 export function tab(n) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('s' + n).classList.add('active');
+  // L'app fatture e' fatta di tabelle larghe: le altre tab restano nella
+  // colonna da 500px, lei prende tutto lo spazio che c'e'.
+  document.body.classList.toggle('tab-fatture', n === 5);
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.tab) === n));
   ui();
 }
@@ -415,8 +420,8 @@ export function removeGeminiKey() {
 }
 
 export function manualSaldo() {
-  const n = parseFloat(document.getElementById('set-saldo').value);
-  if (!isNaN(n)) {
+  const n = parseImportoOrNull(document.getElementById('set-saldo').value);
+  if (n !== null) {
     d.saldo = n;
     fullSave();
     ui();
@@ -434,7 +439,6 @@ export function confirmReset() {
       d.stipendi = [];
       d.abit = [];
       d.log = [];
-      d.fatture = [];
       d.anticipi = [];
       fullSave();
       ui();
@@ -464,13 +468,14 @@ export function ui() {
   renderRubriche();
   renderHistory();
   renderDaySummary();
-  renderFatture();
-  updateFattureTabBadge();
   renderDashboard();
 
   // Il Report ricalcola su tutto lo storico: si rigenera solo quando la sua
   // tab e' davvero a schermo, non a ogni salvataggio.
   if (document.getElementById('s4')?.classList.contains('active')) renderReport();
+
+  // L'app fatture ha un suo ciclo di render: si disegna quando la sua tab e' a schermo.
+  if (document.getElementById('s5')?.classList.contains('active')) FattureApp.render();
 }
 
 export function updateHeaderDate() {
@@ -495,16 +500,22 @@ export function renderDashboard() {
   // 1. Totale in cassa
   const saldo = d.saldo;
 
-  // 2. Fatture da pagare con scadenza questo mese
-  const fattureMese = (d.fatture || []).filter(f => {
-    if (f.pagata) return false;
-    if (!f.scadenza) return false;
-    const dt = new Date(f.scadenza);
-    return dt.getMonth() === curMonth && dt.getFullYear() === curYear;
-  });
-  const fattureTotal = fattureMese.reduce((s, f) => s + (f.importo || 0), 0);
+  // 2. e 4. Fatture: i dati non stanno piu' in d.fatture ma nell'archivio
+  // dell'app fatture, che tiene anche i pagamenti parziali. Il residuo e' cio'
+  // che conta qui, non l'importo pieno della fattura.
+  const oggiISO = new Date().getFullYear() + '-' +
+    String(new Date().getMonth() + 1).padStart(2, '0') + '-' +
+    String(new Date().getDate()).padStart(2, '0');
+  const daPagare = HkStore.records().filter(r => HkStore.computeStatus(r, oggiISO) !== 'paid');
+  const residuo = r => HkStore.fromCents(HkStore.recCents(r).unpaid);
 
-  // 3. Spese del mese (al di fuori delle fatture)
+  const fattureMese = daPagare.filter(r => (r.dueDate || '').slice(0, 7) === curMonthKey);
+  const fattureTotal = fattureMese.reduce((s, r) => s + residuo(r), 0);
+
+  const fattureScadute = daPagare.filter(r => HkStore.computeStatus(r, oggiISO) === 'overdue');
+  const scaduteTotal = fattureScadute.reduce((s, r) => s + residuo(r), 0);
+
+  // 3. Spese del mese
   let speseExtra = 0;
   d.log.forEach(l => {
     if (!l.d || l.a >= 0) return;
@@ -514,16 +525,6 @@ export function renderDashboard() {
       if (lm === curMonthKey) speseExtra += Math.abs(l.a);
     }
   });
-
-  // 4. Fatture scadute non saldate
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const fattureScadute = (d.fatture || []).filter(f => {
-    if (f.pagata) return false;
-    if (!f.scadenza) return false;
-    const dt = new Date(f.scadenza); dt.setHours(0, 0, 0, 0);
-    return dt < today;
-  });
-  const scaduteTotal = fattureScadute.reduce((s, f) => s + (f.importo || 0), 0);
 
   const fmt = n => '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

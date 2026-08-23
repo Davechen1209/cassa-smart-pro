@@ -1,6 +1,5 @@
 // ─── State Management ───
 
-import { openDb, migrateFromFatture } from './pdf-storage.js';
 
 const STORAGE_KEY = 'cassa_v6';
 // Cache locale dei dati di un altro utente, mostrati in sola lettura.
@@ -30,9 +29,8 @@ export function isReadOnly() {
 }
 
 let d = JSON.parse(localStorage.getItem(activeStorageKey())) || {
-  saldo: 0, fornitori: [], stipendi: [], abit: ['Pranzo', 'Treno'], log: [], fatture: []
+  saldo: 0, fornitori: [], stipendi: [], abit: ['Pranzo', 'Treno'], log: []
 };
-if (!d.fatture) d.fatture = [];
 if (!d.anticipi) d.anticipi = [];
 if (!d.customCats) d.customCats = [];
 if (!d.aziendaData) d.aziendaData = {};
@@ -48,9 +46,6 @@ let editingItem = null;
 let modalCat = null;
 let selectedDate = new Date();
 let editingDay = false;
-let fattureFilter = 'tutte';
-let fattureSort = 'data';
-let editingFatturaId = null;
 let parsedImportData = [];
 let importMode = 'movimenti'; // 'movimenti' or 'fatture'
 
@@ -70,7 +65,6 @@ function save() {
   } catch (e) {
     // localStorage full — emergency: strip any remaining PDF blobs
     console.warn('[save] localStorage full, stripping blobs...', e);
-    (d.fatture || []).forEach(f => { delete f.pdf; delete f.foto; });
     localStorage.setItem(key, JSON.stringify(d));
   }
 }
@@ -81,7 +75,7 @@ export function replaceData(obj) {
   Object.keys(d).forEach(k => delete d[k]);
   Object.assign(d, {
     saldo: 0, fornitori: [], stipendi: [], abit: [], log: [],
-    fatture: [], anticipi: [], customCats: [], aziendaData: {}
+    anticipi: [], customCats: [], aziendaData: {}
   }, obj || {});
 }
 
@@ -113,7 +107,6 @@ function resetData() {
   d.stipendi = [];
   d.abit = [];
   d.log = [];
-  d.fatture = [];
   d.anticipi = [];
   d.customCats = [];
   d.aziendaData = {};
@@ -130,7 +123,6 @@ export {
   confirmCallback,
   editingItem, modalCat,
   selectedDate, editingDay,
-  fattureFilter, fattureSort, editingFatturaId,
   parsedImportData, importMode,
   firebaseDb, firebaseUser, cloudSyncEnabled, syncDebounceTimer,
   SHARED_CACHE_KEY
@@ -147,42 +139,9 @@ export function setEditingItem(val) { editingItem = val; }
 export function setModalCat(val) { modalCat = val; }
 export function setSelectedDate(val) { selectedDate = val; }
 export function setEditingDay(val) { editingDay = val; }
-export function setFattureFilter(val) { fattureFilter = val; }
-export function setFattureSort(val) { fattureSort = val; }
-export function setEditingFatturaId(val) { editingFatturaId = val; }
 export function setParsedImportData(val) { parsedImportData = val; }
 export function setImportMode(val) { importMode = val; }
 export function setFirebaseDb(val) { firebaseDb = val; }
 export function setFirebaseUser(val) { firebaseUser = val; }
 export function setCloudSyncEnabled(val) { cloudSyncEnabled = val; }
 export function setSyncDebounceTimer(val) { syncDebounceTimer = val; }
-
-// ─── PDF Storage Migration (localStorage → IndexedDB) ───
-export async function initPdfStorage() {
-  try {
-    await openDb();
-    const needsMigration = d.fatture.some(f => f.pdf || f.foto);
-    if (needsMigration) {
-      const count = await migrateFromFatture(d.fatture);
-      if (count > 0) {
-        d.fatture.forEach(f => {
-          if (f.pdf || f.foto) {
-            f.hasPdf = true;
-            delete f.pdf;
-            delete f.foto;
-          }
-        });
-        try {
-          save();
-        } catch (e) {
-          // localStorage might be full — force strip all blobs
-          d.fatture.forEach(f => { delete f.pdf; delete f.foto; });
-          try { save(); } catch (_) { /* truly full */ }
-        }
-        console.log(`[PDF migration] moved ${count} PDFs to IndexedDB`);
-      }
-    }
-  } catch (err) {
-    console.error('[PDF storage] IndexedDB unavailable:', err);
-  }
-}

@@ -52,10 +52,6 @@ function performSearch(query) {
     }
   });
 
-  // Fatture escluse: la tab e' nascosta dalla barra, un risultato porterebbe
-  // a una sezione senza pulsante per tornarci. Ripristinando la tab in
-  // index.html, riattivare anche questo blocco.
-  // (d.fatture || []).forEach(f => { ... tab: 3 ... });
 
   // Search rubriche
   ['fornitori', 'stipendi', 'abit'].forEach(cat => {
@@ -76,13 +72,11 @@ function performSearch(query) {
 
 const typeIcons = {
   movimento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-  fattura: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
   rubrica: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
 };
 
 const typeLabels = {
   movimento: () => t('search.typeMovimento'),
-  fattura: () => t('search.typeFattura'),
   rubrica: () => t('search.typeRubrica'),
 };
 

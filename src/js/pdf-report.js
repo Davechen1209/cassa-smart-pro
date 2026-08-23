@@ -57,11 +57,6 @@ function buildPrintArea(year, month) {
   });
   const sortedCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
 
-  // Fatture for this month
-  const monthFatture = (d.fatture || []).filter(f => {
-    if (!f.dataArrivo) return false;
-    return f.dataArrivo.startsWith(curMonthKey);
-  });
 
   const fmt = n => '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -91,21 +86,6 @@ function buildPrintArea(year, month) {
         </table>
       </div>` : ''}
 
-      ${monthFatture.length > 0 ? `
-      <div class="print-section">
-        <div class="print-section-title">${t('pdf.invoices')} (${monthFatture.length})</div>
-        <table class="print-table">
-          <thead><tr><th>${t('fatt.fornitore')}</th><th>${t('fatt.numero')}</th><th class="print-amount">${t('fatt.importo')}</th><th>${t('pdf.status')}</th></tr></thead>
-          <tbody>
-            ${monthFatture.map(f => `<tr>
-              <td>${f.azienda || '-'}</td>
-              <td>${f.numero || '-'}</td>
-              <td class="print-amount">${fmt(f.importo || 0)}</td>
-              <td>${f.pagata ? t('fatt.paid') : t('fatt.unpaidLabel')}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>` : ''}
 
       ${monthLogs.length > 0 ? `
       <div class="print-section">

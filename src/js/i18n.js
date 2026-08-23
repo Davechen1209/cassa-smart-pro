@@ -236,6 +236,7 @@ const translations = {
     'uscite.registered': '\u2713 Registrato!',
     'uscite.noData': 'Inserisci incassi o aggiungi spese',
     'uscite.expenses': 'uscite',
+    'bridge.fattureCreate': '{n} in Fatture',
 
     // Expense sheet
     'exp.title': 'Aggiungi Spesa',
@@ -247,6 +248,10 @@ const translations = {
     'exp.abitudinarie': 'Abitudinarie',
     'exp.libera': 'Libera',
     'exp.selectVoice': 'Seleziona voce',
+    'exp.searchVoice': 'Cerca...',
+    'exp.noVoices': 'Nessuna voce in questa categoria. Usa "+ Nuova".',
+    'exp.noMatch': 'Nessun risultato',
+    'exp.moreVoices': 'Altri {n}: continua a scrivere per restringere',
     'exp.description': 'Descrizione',
     'exp.descPlaceholder': 'Nome della spesa...',
     'exp.fattura': 'N\u00B0 Fattura',
@@ -776,6 +781,7 @@ const translations = {
     'uscite.registered': '\u2713 已登记！',
     'uscite.noData': '请先输入收入或添加支出',
     'uscite.expenses': '笔支出',
+    'bridge.fattureCreate': '{n} 张发票已记入',
 
     // Expense sheet
     'exp.title': '添加支出',
@@ -787,6 +793,10 @@ const translations = {
     'exp.abitudinarie': '日常支出',
     'exp.libera': '自定义',
     'exp.selectVoice': '选择项目',
+    'exp.searchVoice': '搜索...',
+    'exp.noVoices': '此分类还没有条目。用"+ 新建"添加。',
+    'exp.noMatch': '没有匹配项',
+    'exp.moreVoices': '还有 {n} 项：继续输入以缩小范围',
     'exp.description': '说明',
     'exp.descPlaceholder': '支出名称...',
     'exp.fattura': '账单号',

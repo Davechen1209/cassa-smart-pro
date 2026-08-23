@@ -6,10 +6,10 @@
 import { d, fullSave } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
 import { t, getLang } from './i18n.js';
+import { fatturaDaSpesaContanti } from './fatture-bridge.js';
 import { parseDateIT } from './date-utils.js';
-import { autoCreateFatturaIfNeeded, getFatturaStatus } from './fatture.js';
 
-// Google Gemini (piano gratuito) — chiave separata da quella OpenAI delle foto fatture.
+// Google Gemini (piano gratuito).
 const KEY_STORAGE = 'cassa_gemini_key';
 // Modelli provati in ordine: se il primo non è disponibile sulla chiave, prova il successivo.
 const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash'];
@@ -286,12 +286,6 @@ function buildSnapshot() {
     if (l.a >= 0) agg[k].incassi += l.a; else agg[k].spese += Math.abs(l.a);
   });
 
-  const fatture = (d.fatture || []).map(f => ({
-    azienda: f.azienda, numero: f.numero || '', importo: f.importo,
-    dataArrivo: f.dataArrivo || '', scadenza: f.scadenza || '',
-    tipoPagamento: f.tipoPagamento || '', stato: getFatturaStatus(f)
-  }));
-  const nonPagate = fatture.filter(f => f.stato !== 'pagata');
 
   const recentLog = (d.log || []).slice(-80).map(l => ({ data: l.d, descrizione: l.v, importo: l.a }));
 
@@ -305,8 +299,6 @@ function buildSnapshot() {
     categorie_personalizzate: (d.customCats || []).map(c => c.name),
     mese_corrente: { mese: curKey, incassi: round2(agg[curKey].incassi), spese: round2(agg[curKey].spese) },
     mese_precedente: { mese: prevKey, incassi: round2(agg[prevKey].incassi), spese: round2(agg[prevKey].spese) },
-    fatture_non_pagate: nonPagate,
-    totale_da_pagare: round2(nonPagate.reduce((s, f) => s + (f.importo || 0), 0)),
     ultimi_movimenti: recentLog
   };
 }
@@ -352,40 +344,6 @@ function tools() {
     {
       type: 'function',
       function: {
-        name: 'crea_fattura',
-        description: 'Registra una fattura ricevuta da un fornitore (da pagare o gia pagata). NON cambia il saldo: serve solo a tenere traccia nella sezione Fatture. Per un pagamento in contanti immediato usa invece aggiungi_spesa.',
-        parameters: {
-          type: 'object',
-          properties: {
-            fornitore: { type: 'string', description: 'Nome del fornitore' },
-            importo: { type: 'number', description: 'Importo della fattura in euro' },
-            numero: { type: 'string', description: 'Numero fattura' },
-            data: { type: 'string', description: 'Data fattura YYYY-MM-DD. Vuoto = oggi.' },
-            scadenza: { type: 'string', description: 'Data di scadenza YYYY-MM-DD' },
-            tipo_pagamento: { type: 'string', enum: ['contanti', 'bonifico', 'assegno'] },
-            pagata: { type: 'boolean', description: 'true se gia pagata' }
-          },
-          required: ['fornitore', 'importo']
-        }
-      }
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'segna_fattura_pagata',
-        description: 'Segna come pagata una fattura gia esistente, identificandola per numero e/o fornitore.',
-        parameters: {
-          type: 'object',
-          properties: {
-            fornitore: { type: 'string' },
-            numero: { type: 'string' }
-          }
-        }
-      }
-    },
-    {
-      type: 'function',
-      function: {
         name: 'imposta_saldo',
         description: 'Imposta o corregge manualmente il saldo di cassa al valore indicato.',
         parameters: {
@@ -402,10 +360,10 @@ function systemPrompt() {
   const replyLang = lang() === 'zh' ? 'cinese (中文)' : 'italiano';
   return 'Sei il contabile personale dell\'utente dentro l\'app "Cassa Smart Pro", un gestionale di cassa. '
     + 'Parli in ' + replyLang + ', in modo breve, cordiale e diretto: la tua risposta verra letta ad alta voce, quindi niente elenchi lunghi, niente markdown, frasi parlate. '
-    + 'Hai a disposizione gli strumenti per eseguire operazioni (registrare incassi, spese, fatture, ecc.). '
+    + 'Hai a disposizione gli strumenti per eseguire operazioni (registrare incassi, spese, ecc.). '
     + 'Quando l\'utente chiede di registrare/aggiungere/pagare qualcosa, chiama lo strumento giusto. '
     + 'Se manca un dato essenziale (es. l\'importo), NON inventarlo: chiedi all\'utente. '
-    + 'Per le domande sui conti (saldo, spese del mese, fatture da pagare...) rispondi usando i DATI forniti, senza chiamare strumenti. '
+    + 'Per le domande sui conti (saldo, spese del mese...) rispondi usando i DATI forniti, senza chiamare strumenti. '
     + 'Tutti gli importi sono in euro. Oggi e ' + todayIT() + '.';
 }
 
@@ -484,12 +442,6 @@ function describeAction(a) {
       return t('voice.act.spesa')
         .replace('{importo}', euro(g.importo || 0))
         .replace('{nome}', g.nome || g.categoria || '');
-    case 'crea_fattura':
-      return t('voice.act.fattura')
-        .replace('{importo}', euro(g.importo || 0))
-        .replace('{fornitore}', g.fornitore || '');
-    case 'segna_fattura_pagata':
-      return t('voice.act.pagata').replace('{rif}', g.numero || g.fornitore || '');
     case 'imposta_saldo':
       return t('voice.act.saldo').replace('{saldo}', euro(g.saldo || 0));
     default:
@@ -571,6 +523,15 @@ function execAction(name, args) {
         if (g.numero_fattura) entry.fatt = String(g.numero_fattura).trim();
         d.saldo = round2(d.saldo - importo);
         d.log.push(entry);
+        // Stessa regola della tab Registra: una spesa a fornitore diventa una
+        // fattura gia' saldata nell'archivio fatture.
+        if (cat === 'fornitori' && nome) {
+          fatturaDaSpesaContanti({
+            fornitore: nome, importo, dataIT: dateIT,
+            numeroFattura: g.numero_fattura, nota: g.nota
+          });
+        }
+
         // Mantieni le rubriche aggiornate
         if (nome && (cat === 'fornitori' || cat === 'stipendi' || cat === 'abit')) {
           if (!d[cat]) d[cat] = [];
@@ -579,52 +540,7 @@ function execAction(name, args) {
             d[cat].sort((a, b) => a.localeCompare(b));
           }
         }
-        if (cat === 'fornitori' && nome) {
-          autoCreateFatturaIfNeeded(nome, importo, dateIT, g.numero_fattura ? String(g.numero_fattura).trim() : '');
-        }
         return t('voice.res.spesa').replace('{importo}', euro(importo)).replace('{nome}', label);
-      }
-      case 'crea_fattura': {
-        const importo = round2(g.importo || 0);
-        const fornitore = (g.fornitore || '').trim();
-        if (!fornitore || importo <= 0) return t('voice.res.invalid');
-        if (!d.fatture) d.fatture = [];
-        d.fatture.push({
-          id: Date.now() + Math.floor(Math.random() * 1000),
-          dataArrivo: g.data ? String(g.data) : new Date().toISOString().slice(0, 10),
-          azienda: fornitore,
-          numero: g.numero ? String(g.numero) : '',
-          importo: importo,
-          tipoPagamento: g.tipo_pagamento || 'contanti',
-          numeroAssegno: '',
-          ciclo: '',
-          scadenza: g.scadenza ? String(g.scadenza) : '',
-          note: '',
-          hasPdf: false,
-          pagata: g.pagata === true
-        });
-        if (fornitore) {
-          if (!d.fornitori) d.fornitori = [];
-          if (!d.fornitori.some(x => x.toLowerCase() === fornitore.toLowerCase())) {
-            d.fornitori.push(fornitore);
-            d.fornitori.sort((a, b) => a.localeCompare(b));
-          }
-        }
-        return t('voice.res.fattura').replace('{importo}', euro(importo)).replace('{fornitore}', fornitore);
-      }
-      case 'segna_fattura_pagata': {
-        const num = (g.numero || '').trim().toLowerCase();
-        const forn = (g.fornitore || '').trim().toLowerCase();
-        let target = null;
-        if (num) target = (d.fatture || []).find(f => f.numero && f.numero.trim().toLowerCase() === num && !f.pagata);
-        if (!target && forn) {
-          const cand = (d.fatture || []).filter(f => (f.azienda || '').trim().toLowerCase() === forn && !f.pagata);
-          cand.sort((a, b) => (b.dataArrivo || '').localeCompare(a.dataArrivo || ''));
-          target = cand[0];
-        }
-        if (!target) return t('voice.res.notFound');
-        target.pagata = true;
-        return t('voice.res.pagata').replace('{fornitore}', target.azienda || '');
       }
       case 'imposta_saldo': {
         d.saldo = round2(g.saldo || 0);

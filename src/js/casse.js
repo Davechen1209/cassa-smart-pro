@@ -5,9 +5,10 @@ import {
   setCasseList, setCasseNextId
 } from './state.js';
 import { showToast } from './modals.js';
-import { autoCreateFatturaIfNeeded } from './fatture.js';
 import { renderPendingList } from './expense.js';
 import { t } from './i18n.js';
+import { parseImporto } from './money.js';
+import { fattureDaSpese } from './fatture-bridge.js';
 
 export function renderCasse() {
   const container = document.getElementById('casse-container');
@@ -26,12 +27,12 @@ export function renderCasse() {
       </div>
       <div class="input-row">
         <div class="input-group">
-          <label>${t('incassi.totaleZ')}</label>
-          <input type="number" class="input-field" id="z-${c.id}" placeholder="0,00" inputmode="decimal">
+          <label for="z-${c.id}">${t('incassi.totaleZ')}</label>
+          <input type="text" class="input-field" id="z-${c.id}" placeholder="0,00" inputmode="decimal">
         </div>
         <div class="input-group">
-          <label>${t('incassi.pos')}</label>
-          <input type="number" class="input-field" id="pos-${c.id}" placeholder="0,00" inputmode="decimal">
+          <label for="pos-${c.id}">${t('incassi.pos')}</label>
+          <input type="text" class="input-field" id="pos-${c.id}" placeholder="0,00" inputmode="decimal">
         </div>
       </div>
     </div>
@@ -51,8 +52,8 @@ export function removeCassa(id) {
 
 export function getCasseData() {
   return casseList.map((c, i) => {
-    const z = parseFloat(document.getElementById('z-' + c.id)?.value) || 0;
-    const pos = parseFloat(document.getElementById('pos-' + c.id)?.value) || 0;
+    const z = parseImporto(document.getElementById('z-' + c.id)?.value);
+    const pos = parseImporto(document.getElementById('pos-' + c.id)?.value);
     return { name: t('incassi.cassa') + ' ' + (i + 1), z, pos, cash: z - pos };
   }).filter(c => c.z > 0);
 }
@@ -82,11 +83,13 @@ export function registra() {
     if (e.fatturaNum) logEntry.fatt = e.fatturaNum;
     d.log.push(logEntry);
 
-    if (e.cat === 'fornitori' && e.name) {
-      autoCreateFatturaIfNeeded(e.name, e.amount, oggi, e.fatturaNum);
-    }
 
   });
+
+  // Una spesa a fornitore e' una fattura pagata in contanti: compare da sola
+  // nella tab Fatture, gia' saldata.
+  const fattureCreate = fattureDaSpese(pendingExpenses, oggi);
+  if (fattureCreate > 0) messages.push(t('bridge.fattureCreate', { n: fattureCreate }));
 
   if (pendingExpenses.length > 0) {
     const totalExp = pendingExpenses.reduce((s, e) => s + e.amount, 0);
