@@ -2173,3 +2173,29 @@ body.readonly-mode #registration-form { display: none !important; }
         width: 100%; height: 44px; min-width: 52px;
     }
 }
+
+/* ─── Ricerca fra le voci della spesa ───
+   Con una rubrica lunga il menu a tendina obbligava a scorrere: qui si scrive
+   e la lista si stringe, restando comunque sfogliabile a campo vuoto. */
+.voice-search-row { display: flex; gap: 8px; align-items: center; }
+.voice-search-row .input-field { flex: 1; margin: 0; }
+.voice-results { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.voice-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    width: 100%; padding: 11px 14px; min-height: 44px;
+    background: var(--gray6); border: 1.5px solid transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    font-family: inherit; font-size: 15px; font-weight: 500; color: var(--text);
+    text-align: left;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.voice-row:active { transform: scale(0.99); }
+.voice-row.selected {
+    background: rgba(0,122,255,0.1); border-color: var(--blue);
+    color: var(--blue); font-weight: 700;
+}
+.voice-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.voice-row-check { flex-shrink: 0; font-weight: 800; }
+.voice-empty, .voice-more {
+    padding: 10px 4px; font-size: 13px; color: var(--gray); text-align: center;
+}

@@ -43,7 +43,7 @@ import {
 import {
   openExpenseSheet, closeExpenseSheet, closeExpenseOutside,
   setQuickAmount, customAmount, switchExpCat,
-  selectExpVoice, addNewVoiceFromSheet, addExpense,
+  selectExpVoice, filterExpVoices, addNewVoiceFromSheet, addExpense,
   renderPendingList, removePending
 } from './js/expense.js';
 
@@ -247,10 +247,8 @@ document.getElementById('share-preview-overlay').addEventListener('click', close
 document.getElementById('voice-overlay').addEventListener('click', closeVoiceOutside);
 
 // Voice select dropdown
-document.getElementById('exp-voices-select').addEventListener('change', function () {
-  if (isReadOnly()) return;
-  selectExpVoice(this.value);
-});
+// Ricerca fra le voci: filtra man mano che si scrive.
+document.getElementById('exp-voice-search').addEventListener('input', filterExpVoices);
 
 // Keyboard events
 document.getElementById('modal-input').addEventListener('keydown', function (e) {

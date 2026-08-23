@@ -15,6 +15,7 @@ export function openExpenseSheet() {
   document.getElementById('exp-free-name').value = '';
   document.getElementById('exp-note').value = '';
   document.getElementById('exp-fattura-num').value = '';
+  svuotaRicercaVoci();
   updateExpSegments();
   renderExpVoices();
   document.getElementById('expense-overlay').classList.add('show');
@@ -43,6 +44,9 @@ export function customAmount() {
 export function switchExpCat(cat) {
   setExpCat(cat);
   setExpSelectedVoice(null);
+  // La ricerca vale per la categoria in cui e' stata scritta: restando,
+  // cambiando categoria si vedeva un elenco vuoto senza capire perche'.
+  svuotaRicercaVoci();
   updateExpSegments();
   renderExpVoices();
 }
@@ -80,22 +84,71 @@ export function updateExpSegments() {
   }
 }
 
+// Con duecento fornitori un <select> obbliga a scorrere: qui si scrive due
+// lettere e la lista si stringe. Restano visibili anche senza cercare nulla,
+// cosi' non si perde la possibilita' di sfogliare che il menu a tendina dava.
+const VOCI_MOSTRATE = 6;
+
+function svuotaRicercaVoci() {
+  const campo = document.getElementById('exp-voice-search');
+  if (campo) campo.value = '';
+}
+
 export function renderExpVoices() {
   if (expCat === 'libera') return;
 
-  const list = d[expCat] || [];
-  const container = document.getElementById('exp-voices-select');
-  if (!container) return;
+  const lista = d[expCat] || [];
+  const contenitore = document.getElementById('exp-voice-results');
+  if (!contenitore) return;
 
-  container.innerHTML = '<option value="">' + escapeHtml(t('exp.selectVoice')) + '</option>' +
-    list.map(n => {
-      const sel = expSelectedVoice === n ? ' selected' : '';
-      return '<option value="' + escapeHtml(n) + '"' + sel + '>' + escapeHtml(n) + '</option>';
-    }).join('');
+  const campo = document.getElementById('exp-voice-search');
+  const cerca = (campo ? campo.value : '').trim().toLowerCase();
+
+  // Chi corrisponde meglio prima: chi inizia con quello che hai scritto.
+  const trovate = lista
+    .filter(n => !cerca || n.toLowerCase().includes(cerca))
+    .sort((a, b) => {
+      if (!cerca) return 0;
+      const ia = a.toLowerCase().startsWith(cerca) ? 0 : 1;
+      const ib = b.toLowerCase().startsWith(cerca) ? 0 : 1;
+      return ia - ib;
+    });
+
+  if (lista.length === 0) {
+    contenitore.innerHTML = '<div class="voice-empty">' + escapeHtml(t('exp.noVoices')) + '</div>';
+    return;
+  }
+  if (trovate.length === 0) {
+    contenitore.innerHTML = '<div class="voice-empty">' + escapeHtml(t('exp.noMatch')) + '</div>';
+    return;
+  }
+
+  const mostrate = trovate.slice(0, VOCI_MOSTRATE);
+  let html = mostrate.map(n => {
+    const scelta = expSelectedVoice === n;
+    return '<button type="button" class="voice-row' + (scelta ? ' selected' : '') + '"' +
+      ' data-action="selectExpVoice" data-name="' + escapeHtml(n) + '">' +
+      '<span class="voice-row-name">' + escapeHtml(n) + '</span>' +
+      (scelta ? '<span class="voice-row-check">✓</span>' : '') +
+      '</button>';
+  }).join('');
+
+  const restanti = trovate.length - mostrate.length;
+  if (restanti > 0) {
+    html += '<div class="voice-more">' + escapeHtml(t('exp.moreVoices', { n: restanti })) + '</div>';
+  }
+  contenitore.innerHTML = html;
 }
 
 export function selectExpVoice(name) {
-  setExpSelectedVoice(name || null);
+  // Ritoccando la stessa voce si deseleziona: serve a correggere un tocco
+  // sbagliato senza dover svuotare il campo di ricerca.
+  setExpSelectedVoice(expSelectedVoice === name ? null : (name || null));
+  renderExpVoices();
+}
+
+export function filterExpVoices() {
+  renderExpVoices();
 }
 
 export function addNewVoiceFromSheet() {

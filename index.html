@@ -605,10 +605,11 @@
 
         <div class="voice-section" id="exp-voices-section">
             <div class="voice-label" data-i18n="exp.selectVoice">Seleziona voce</div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <select class="input-field" id="exp-voices-select" style="flex:1; margin:0;"></select>
+            <div class="voice-search-row">
+                <input type="text" class="input-field" id="exp-voice-search" data-i18n-placeholder="exp.searchVoice" placeholder="Cerca..." autocomplete="off" autocapitalize="off" spellcheck="false">
                 <button class="voice-chip new-voice" data-action="addNewVoiceFromSheet" style="white-space:nowrap; margin:0;">+ Nuova</button>
             </div>
+            <div class="voice-results" id="exp-voice-results"></div>
         </div>
 
         <div class="free-name-wrap" id="free-name-wrap">
