@@ -290,6 +290,38 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// L'intestazione dell'ospite e' appiccicata in cima e la sua altezza cambia
+// con la tacca del telefono: chi deve appiccicarsi sotto (l'intestazione di
+// gruppo dello scadenzario) la legge da qui invece di indovinarla.
+function misuraIntestazione() {
+  const h = document.querySelector('.header');
+  if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+}
+misuraIntestazione();
+window.addEventListener('resize', misuraIntestazione);
+window.addEventListener('orientationchange', () => setTimeout(misuraIntestazione, 250));
+
+// I due pulsanti flottanti (microfono e "+ Nuovo arrivo") stanno sopra la
+// lista: in una schermata di fatture coprivano proprio i pulsanti "Paga"
+// delle righe sotto di loro. Mentre si scorre verso il basso si tolgono di
+// mezzo, e tornano appena si risale o ci si ferma in cima.
+(function pulsantiFlottanti() {
+  let ultimoY = window.scrollY;
+  let inAttesa = false;
+  window.addEventListener('scroll', () => {
+    if (inAttesa) return;
+    inAttesa = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      if (Math.abs(y - ultimoY) > 8) {
+        document.body.classList.toggle('scorre-giu', y > ultimoY && y > 140);
+        ultimoY = y;
+      }
+      inAttesa = false;
+    });
+  }, { passive: true });
+})();
+
 // Keyboard events
 document.getElementById('modal-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && !blockedInReadOnly('modalConfirm')) modalConfirm();

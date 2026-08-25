@@ -233,10 +233,16 @@ body.tab-fatture #dashboard-card { display: none; }
     flex: 1; min-height: 38px;
     background: var(--thead); border-color: var(--border);
   }
-  .hk-app #movTableWrap tbody tr.overdue-row .row-actions .btn { background: #fff; }
+  .hk-app #movTableWrap tbody tr.overdue-row .row-actions .btn { background: var(--card); }
 
   /* le righe colorate diventano bordi della scheda */
-  .hk-app #movTableWrap table.grid tbody tr.overdue-row { border-color: var(--danger); background: #FEF2F2; }
+  .hk-app #movTableWrap table.grid tbody tr.overdue-row {
+    border-color: var(--danger);
+    /* Era #FEF2F2 fisso: col tema scuro restava una scheda rosa chiaro con
+       sopra testo chiaro, illeggibile. Ora la velatura nasce dal rosso del
+       tema e si posa sul colore della scheda, quale che sia. */
+    background: color-mix(in srgb, var(--red) 9%, var(--card));
+  }
   .hk-app #movTableWrap table.grid tbody tr.paid-row { opacity: .62; }
 
   /* ── scadenzario e fornitori ── */
@@ -483,7 +489,9 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
   .hk-app .strip-seg { min-height: 44px; }
   .hk-app .chip-filter { min-height: 36px; display: inline-flex; align-items: center; }
   .hk-app .adv-summary { min-height: 36px; }
-  .hk-app .btn { min-height: 40px; }
+  /* 40px erano quattro in meno della soglia: "Vedi movimenti", "Paga",
+     "Azzera filtri" si sbagliavano di striscio. */
+  .hk-app .btn { min-height: 44px; }
   .hk-app #movTableWrap .row-actions .btn { min-height: 44px; }
   /* Modifica ed Elimina sono a sola icona: erano larghe 32 e 34px, cioe'
      meno del polpastrello, e una delle due cancella una fattura. */
@@ -604,3 +612,102 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
     line-height: 1.4;
   }
 }
+
+/* ── Superfici che erano rimaste di vetro ──
+   Dentro questa tab --bg e' trasparente, perche' il fondo lo mette l'app
+   ospite. Ma due elementi lo usavano per coprire cio' che ci scorre sotto:
+   l'intestazione appiccicata dello scadenzario (le righe le passavano
+   attraverso, testo sopra testo) e la riga del residuo nel modulo di
+   pagamento. Serve una tinta piena. */
+.hk-app .sgroup-header { background: var(--page-bg); }
+.hk-app .residuo-line { background: var(--card-sunken); }
+
+/* L'intestazione si appiccicava a 142px dall'alto, che e' l'altezza della
+   barra dell'app originale su desktop. Qui sopra c'e' l'intestazione
+   dell'ospite, alta quanto dice --header-h (che tiene conto della tacca). */
+@media (max-width: 760px) {
+  .hk-app .sgroup-header {
+    top: var(--header-h, 62px);
+    padding: 10px 12px; margin: 0 -12px;
+    border-bottom-width: 1px;
+  }
+}
+
+/* ── Scadenzario su telefono: righe che diventano schede ──
+   La riga nasce per il mouse: data, pillola, fornitore, numero, termini,
+   importo e pulsante tutti in fila. Sotto i 400px andavano a capo dove
+   capitava, e la stessa informazione finiva ogni volta in un posto diverso.
+   Qui ogni cosa ha la sua casella, uguale in tutte le righe. */
+@media (max-width: 760px) {
+  .hk-app #scadTableWrap .srow,
+  .hk-app .sgroup .srow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 12px 14px;
+    flex-wrap: initial;
+  }
+  .hk-app .srow .sdate { grid-column: 1; grid-row: 1; width: auto; color: var(--ink2); }
+  .hk-app .srow .days-pill { grid-column: 2; grid-row: 1; justify-self: end; }
+  .hk-app .srow .ssup {
+    grid-column: 1 / -1; grid-row: 2;
+    font-size: 15px; line-height: 1.25;
+    white-space: normal; overflow: visible; text-overflow: clip;
+  }
+  .hk-app .srow .sinv { grid-column: 1; grid-row: 3; max-width: none; }
+  .hk-app .srow .sterms { grid-column: 2; grid-row: 3; justify-self: end; max-width: 45vw; }
+  .hk-app .srow .chip.olddebt { grid-column: 1 / -1; grid-row: 4; justify-self: start; }
+  .hk-app .srow .samt {
+    grid-column: 1; grid-row: 5;
+    font-size: 18px; font-weight: 700; align-self: center;
+  }
+  .hk-app .srow .btn { grid-column: 2; grid-row: 5; justify-self: end; min-height: 44px; }
+}
+
+/* ── Pastiglie dei giorni: erano scritte con colori fissi ──
+   #F1F5F9 e #FEE2E2 non sanno del tema scuro: la pastiglia restava rosa
+   chiaro con sopra un rosso chiaro, 1,25:1 quella neutra e 2,29:1 quella
+   dei ritardi, cioe' proprio l'informazione che si cerca a colpo d'occhio. */
+.hk-app .days-pill {
+  background: var(--card-sunken); color: var(--text2);
+  padding: 2px 9px; min-height: 20px;
+}
+.hk-app .days-pill.late {
+  background: color-mix(in srgb, var(--red) 18%, transparent);
+  color: var(--red-ink);
+}
+
+/* ── Dashboard su telefono ──
+   Le cifre grosse (28px) uscivano dal riquadro e l'elenco "da pagare adesso"
+   era ancora una riga da desktop: insieme facevano scorrere di lato tutta la
+   pagina, e mezzo importo restava fuori dallo schermo. */
+@media (max-width: 760px) {
+  .hk-app .kpi { min-width: 0; overflow: hidden; }
+  .hk-app .kpi .kval { font-size: clamp(19px, 6.2vw, 28px); overflow-wrap: anywhere; }
+  .hk-app .kpi .klabel { font-size: 11px; }
+
+  .hk-app .dash-list-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 8px; align-items: center; padding: 10px 0;
+  }
+  .hk-app .dash-list-row .dd { grid-column: 1; grid-row: 1; }
+  .hk-app .dash-list-row .days-pill { grid-column: 2; grid-row: 1; justify-self: end; }
+  .hk-app .dash-list-row .ds { grid-column: 1 / -1; grid-row: 2; font-weight: 600; min-width: 0; }
+  .hk-app .dash-list-row .sinv { grid-column: 1; grid-row: 3; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .hk-app .dash-list-row .da { grid-column: 2; grid-row: 3; justify-self: end; font-weight: 700; }
+  .hk-app .dash-list-row .btn { grid-column: 1 / -1; grid-row: 4; justify-self: start; min-height: 44px; }
+
+  /* Il nome del fornitore nella classifica era fisso a 150px: "PARTENOPE
+     DISTRIBUZIONE SRL" ne chiede 237 e finiva a puntini. */
+  .hk-app .hbar-row { flex-wrap: wrap; }
+  .hk-app .hbar-row .hname { width: auto; flex: 1 1 100%; white-space: normal; }
+  .hk-app .hbar-row .hbar-track { flex: 1 1 auto; min-width: 0; }
+}
+
+/* Altre superfici scritte a mano quando il tema era uno solo. */
+.hk-app .hbar-track { background: var(--card-sunken); }
+.hk-app .swap-pay, .hk-app .quicklink { background: var(--card); border-color: var(--hairline); }
+.hk-app .banner.error { background: color-mix(in srgb, var(--red) 12%, var(--card)); border-color: color-mix(in srgb, var(--red) 40%, transparent); color: var(--red-ink); }
+.hk-app .banner.warn { background: color-mix(in srgb, var(--orange) 14%, var(--card)); border-color: color-mix(in srgb, var(--orange) 40%, transparent); color: var(--text); }
+.hk-app .banner.info { background: var(--accent-weak); border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }

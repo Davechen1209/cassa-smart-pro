@@ -20,10 +20,14 @@
     --accent-weak: #EDF1FE;   /* fondo tenue dell'accento */
     --accent-ink: #1E3AA8;    /* accento su fondo chiaro, per il testo */
     --red-ink: #9B2118;      /* rosso leggibile su fondo tenue */
+    --on-red: #FFFFFF;       /* testo sopra un rosso pieno */
     --on-accent: #FFFFFF;     /* testo sopra una superficie d'accento */
 
     /* ─── Superfici ─── */
     --bg: #F4F5F8;
+    /* Copia del fondo pagina: dentro l'app fatture --bg e' trasparente, ma le
+       intestazioni appiccicate hanno bisogno di una tinta piena. */
+    --page-bg: #F4F5F8;
     --card: #FFFFFF;
     --card-sunken: #F6F7FA;   /* riquadri dentro una scheda */
     --text: #10131C;
@@ -89,10 +93,12 @@
         --accent-weak: #1B2340;
         --accent-ink: #A9BCFF;
         --red-ink: #FF9A90;
+        --on-red: #2B0A06;
         /* Al buio l'accento e' chiaro: sopra ci va inchiostro, non bianco. */
         --on-accent: #0B0D13;
 
         --bg: #0B0D13;
+        --page-bg: #0B0D13;
         --card: #151822;
         --card-sunken: #1C2030;
         --text: #F3F5FA;
@@ -460,7 +466,7 @@ body {
 .btn-sm.gray { background: var(--gray5); color: var(--text); }
 /* Era rosso pallido su rosa pallido: 1,47:1, praticamente illeggibile, e
    sopra ci sta scritto "Elimina". Ora e' pieno, come il peso dell'azione. */
-.btn-sm.red { background: var(--red); color: #FFFFFF; }
+.btn-sm.red { background: var(--red); color: var(--on-red); }
 
 /* ═══════════════════════════════════════════════════
    BOTTOM SHEETS — Shared Styles
@@ -1685,6 +1691,14 @@ body {
    restavano davanti alla pagina, sopra i campi. */
 body.settings-open .voice-fab,
 body.settings-open .hk-app #btnNew { display: none; }
+
+/* Mentre si scorre verso il basso i pulsanti flottanti si ritirano: sopra una
+   lista coprivano i comandi delle righe. Tornano risalendo. */
+.voice-fab, .hk-app #btnNew { transition: transform 0.25s var(--ease-out-quart), opacity 0.2s ease; }
+body.scorre-giu .voice-fab,
+body.scorre-giu .hk-app #btnNew {
+    transform: translateY(160%); opacity: 0; pointer-events: none;
+}
 .voice-fab svg { width: 26px; height: 26px; }
 
 .voice-overlay {
