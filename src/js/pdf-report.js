@@ -2,6 +2,8 @@
 
 import { d } from './state.js';
 import { t, getLang, translateLogDesc } from './i18n.js';
+import { Store as HkStore } from './fatture-app/hk-store.js';
+import { escapeHtml } from './modals.js';
 
 export function openPdfReportSheet() {
   const now = new Date();
@@ -60,6 +62,29 @@ function buildPrintArea(year, month) {
 
   const fmt = n => '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  // ─── Fatture del mese ───
+  // Restano un libro a parte dai movimenti di cassa: una fattura pagata in
+  // contanti e' gia' un'uscita nel registro, e sommarla anche qui la
+  // conterebbe due volte. Il mese si conta sulla data di arrivo; residuo e
+  // scaduto sono fotografie di oggi, e sono etichettati come tali.
+  const oggiISO = HkStore.todayISO();
+  const inMese = iso => typeof iso === 'string' && iso.slice(0, 7) === curMonthKey;
+  const euro = c => c / 100;
+  const fattureMese = HkStore.records()
+    .filter(r => inMese(r.arrivalDate))
+    .sort((a, b) => String(a.arrivalDate).localeCompare(String(b.arrivalDate)));
+  const totFatture = fattureMese.reduce((s2, r) => s2 + euro(HkStore.recCents(r).amount), 0);
+  const residuoMese = fattureMese.reduce((s2, r) => s2 + euro(HkStore.recCents(r).unpaid), 0);
+  const scadute = HkStore.records()
+    .filter(r => HkStore.computeStatus(r, oggiISO) === 'overdue')
+    .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
+  const residuoScaduto = scadute.reduce((s2, r) => s2 + euro(HkStore.recCents(r).unpaid), 0);
+  const dataIT = iso => {
+    if (typeof iso !== 'string' || iso.length < 10) return '';
+    const [y, m, g] = iso.split('-');
+    return g + '/' + m + '/' + y;
+  };
+
   const el = document.getElementById('print-area');
   el.innerHTML = `
     <div class="print-report">
@@ -72,9 +97,11 @@ function buildPrintArea(year, month) {
       <div class="print-section">
         <div class="print-section-title">${t('pdf.summary')}</div>
         <table class="print-table">
-          <tr><td>${t('dash.monthIncome')}</td><td class="print-amount positive">${fmt(totalIncome)}</td></tr>
-          <tr><td>${t('dash.monthExpenses')}</td><td class="print-amount negative">${fmt(totalExpenses)}</td></tr>
+          <tr><td>${t('report.totalTakings')}</td><td class="print-amount positive">${fmt(totalIncome)}</td></tr>
+          <tr><td>${t('day.shareUscite')}</td><td class="print-amount negative">${fmt(totalExpenses)}</td></tr>
           <tr class="print-total-row"><td>${t('stats.net')}</td><td class="print-amount ${net >= 0 ? 'positive' : 'negative'}">${fmt(net)}</td></tr>
+          ${fattureMese.length > 0 ? `<tr><td>${t('report.fattArrivate')} (${fattureMese.length})</td><td class="print-amount">${fmt(totFatture)}</td></tr>` : ''}
+          ${residuoScaduto > 0 ? `<tr><td>${t('report.fattScadute')} · ${t('report.fattAOggi')}</td><td class="print-amount negative">${fmt(residuoScaduto)}</td></tr>` : ''}
         </table>
       </div>
 
@@ -99,6 +126,61 @@ function buildPrintArea(year, month) {
               <td class="print-amount ${l.a >= 0 ? 'positive' : 'negative'}">${fmt(l.a)}</td>
             </tr>`).join('')}
           </tbody>
+        </table>
+      </div>` : ''}
+
+      ${fattureMese.length > 0 ? `
+      <div class="print-section">
+        <div class="print-section-title">${t('report.fattTitolo')} (${fattureMese.length})</div>
+        <table class="print-table">
+          <thead><tr>
+            <th>${t('excel.colArrivalDate')}</th><th>${t('excel.colSupplier')}</th><th>${t('excel.colNumber')}</th>
+            <th class="print-amount">${t('excel.colAmount')}</th>
+            <th class="print-amount">${t('pdf.fattPagato')}</th>
+            <th class="print-amount">${t('pdf.fattResiduo')}</th>
+            <th>${t('excel.colDueDate')}</th>
+          </tr></thead>
+          <tbody>
+            ${fattureMese.map(r => { const c = HkStore.recCents(r); return `<tr>
+              <td>${dataIT(r.arrivalDate)}</td>
+              <td>${escapeHtml(r.supplier)}</td>
+              <td>${escapeHtml(r.invoice)}</td>
+              <td class="print-amount">${fmt(euro(c.amount))}</td>
+              <td class="print-amount">${fmt(euro(c.paid))}</td>
+              <td class="print-amount ${c.unpaid > 0 ? 'negative' : ''}">${fmt(euro(c.unpaid))}</td>
+              <td>${dataIT(r.dueDate)}</td>
+            </tr>`; }).join('')}
+          </tbody>
+          <tfoot><tr class="print-total-row">
+            <td colspan="3">${t('report.total')}</td>
+            <td class="print-amount">${fmt(totFatture)}</td>
+            <td class="print-amount">${fmt(totFatture - residuoMese)}</td>
+            <td class="print-amount">${fmt(residuoMese)}</td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+      </div>` : ''}
+
+      ${scadute.length > 0 ? `
+      <div class="print-section">
+        <div class="print-section-title">${t('report.fattScadute')} — ${t('report.fattAOggi')} (${scadute.length})</div>
+        <table class="print-table">
+          <thead><tr>
+            <th>${t('excel.colDueDate')}</th><th>${t('excel.colSupplier')}</th><th>${t('excel.colNumber')}</th>
+            <th class="print-amount">${t('pdf.fattResiduo')}</th>
+          </tr></thead>
+          <tbody>
+            ${scadute.map(r => `<tr>
+              <td>${dataIT(r.dueDate)}</td>
+              <td>${escapeHtml(r.supplier)}</td>
+              <td>${escapeHtml(r.invoice)}</td>
+              <td class="print-amount negative">${fmt(euro(HkStore.recCents(r).unpaid))}</td>
+            </tr>`).join('')}
+          </tbody>
+          <tfoot><tr class="print-total-row">
+            <td colspan="3">${t('report.total')}</td>
+            <td class="print-amount negative">${fmt(residuoScaduto)}</td>
+          </tr></tfoot>
         </table>
       </div>` : ''}
 

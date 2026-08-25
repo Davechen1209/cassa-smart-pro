@@ -1,12 +1,16 @@
 // ─── Report ───
 // Entrate/uscite di un periodo, confronto col periodo precedente equivalente,
-// dettaglio per mese, per categoria e per giorno. Solo movimenti di cassa:
-// le fatture hanno una loro sezione e qui non entrano.
+// dettaglio per mese, per categoria e per giorno.
+// Le fatture hanno una sezione propria e restano fuori dai conti di cassa:
+// una fattura pagata in contanti e' gia' un'uscita nel registro, sommarla
+// anche come fattura la conterebbe due volte. Qui si risponde a un'altra
+// domanda: quanto e' arrivato, quanto resta da pagare, a chi.
 
 import { d } from './state.js';
 import { t, getLang, translateLogDesc, parseIncasso } from './i18n.js';
 import { monthKeyOf, isoOf, parseDateIT, toISODate } from './date-utils.js';
 import { escapeHtml } from './modals.js';
+import { Store as HkStore } from './fatture-app/hk-store.js';
 
 let preset = 'thisMonth';
 let customFrom = null;
@@ -205,6 +209,60 @@ function byCategory(logs) {
   return Object.entries(map).sort((a, b) => b[1] - a[1]);
 }
 
+// ─── Fatture ───
+// L'archivio fatture non registra la data di pagamento: si sa quanto e' stato
+// pagato di ogni fattura, non quando. Percio' "arrivate" e "in scadenza" si
+// contano sul periodo scelto, mentre residuo e scaduto sono fotografie di
+// oggi, ed e' cosi' che vengono etichettati.
+function fattureNelPeriodo(campo, daISO, aISO) {
+  return HkStore.records().filter(r => {
+    const v = r[campo];
+    return typeof v === 'string' && v >= daISO && v <= aISO;
+  });
+}
+
+function sommaEuro(lista, campo) {
+  return lista.reduce((s, r) => s + HkStore.recCents(r)[campo], 0) / 100;
+}
+
+// "1 fatture" non si puo' leggere.
+function nFatture(n) {
+  return n === 1 ? t('report.fattNumeroUno') : t('report.fattNumero', { n });
+}
+
+function getFattureData(r) {
+  const tutte = HkStore.records();
+  const oggi = HkStore.todayISO();
+  const daISO = toISODate(r.from), aISO = toISODate(r.to);
+  const arrivate = fattureNelPeriodo('arrivalDate', daISO, aISO);
+  const arrivatePrec = fattureNelPeriodo('arrivalDate', toISODate(r.prevFrom), toISODate(r.prevTo));
+  const inScadenza = fattureNelPeriodo('dueDate', daISO, aISO);
+  const aperte = tutte.filter(x => HkStore.recCents(x).unpaid > 0);
+  const scadute = tutte.filter(x => HkStore.computeStatus(x, oggi) === 'overdue');
+
+  const perFornitore = new Map();
+  arrivate.forEach(x => {
+    const nome = String(x.supplier || '').trim() || t('exp.genericExpense');
+    const c = HkStore.recCents(x);
+    const v = perFornitore.get(nome) || { totale: 0, residuo: 0, n: 0 };
+    v.totale += c.amount / 100; v.residuo += c.unpaid / 100; v.n++;
+    perFornitore.set(nome, v);
+  });
+  const topFornitori = [...perFornitore.entries()]
+    .sort((a, b) => b[1].totale - a[1].totale)
+    .slice(0, 5);
+
+  return {
+    conArchivio: tutte.length > 0,
+    arrivate: { n: arrivate.length, totale: sommaEuro(arrivate, 'amount'), residuo: sommaEuro(arrivate, 'unpaid') },
+    arrivatePrecTotale: sommaEuro(arrivatePrec, 'amount'),
+    inScadenza: { n: inScadenza.length, residuo: sommaEuro(inScadenza, 'unpaid') },
+    aperte: { n: aperte.length, residuo: sommaEuro(aperte, 'unpaid') },
+    scadute: { n: scadute.length, residuo: sommaEuro(scadute, 'unpaid') },
+    topFornitori
+  };
+}
+
 export function getReportData() {
   const r = currentRange();
   const logs = logsBetween(r.from, r.to);
@@ -220,7 +278,8 @@ export function getReportData() {
     days,
     best: sorted[0] || null,
     worst: sorted.length > 1 ? sorted[sorted.length - 1] : null,
-    weekdays: byWeekday(logs)
+    weekdays: byWeekday(logs),
+    fatture: getFattureData(r)
   };
 }
 
@@ -252,6 +311,13 @@ function deltaHtml(now, prev, higherIsBetter = true) {
   const diff = now - prev;
   if (Math.abs(diff) < 0.005) {
     return `<div class="report-delta flat">${t('report.noChange')}</div>`;
+  }
+  // `null` = variazione senza giudizio: per le fatture arrivate "meno" non
+  // vuol dire ne' bene ne' male, e tingerla di verde sarebbe una sentenza.
+  if (higherIsBetter === null) {
+    const arrowN = diff > 0 ? '↑' : '↓';
+    const pctN = prev > 0 ? ` (${diff > 0 ? '+' : ''}${(diff / prev * 100).toFixed(0)}%)` : '';
+    return `<div class="report-delta flat">${arrowN} ${fmtShort(Math.abs(diff))}${pctN}</div>`;
   }
   const good = higherIsBetter ? diff > 0 : diff < 0;
   const arrow = diff > 0 ? '↑' : '↓';
@@ -448,6 +514,59 @@ function renderCategories(data) {
     </div>`;
 }
 
+function renderFatture(data) {
+  const f = data.fatture;
+  if (!f.conArchivio) return '';
+
+  const barre = f.topFornitori.length ? (() => {
+    const max = f.topFornitori[0][1].totale || 1;
+    return f.topFornitori.map(([nome, v]) => {
+      const pct = v.totale / max * 100;
+      return `
+      <div class="report-cat-row">
+        <div class="report-cat-name">${escapeHtml(nome)}</div>
+        <div class="report-cat-bar-wrap"><div class="report-cat-bar" style="width:${pct.toFixed(0)}%; background:var(--accent);"></div></div>
+        <div class="report-cat-amount">${fmtShort(v.totale)}${v.residuo > 0 ? ` <span class="report-cat-pct">${t('report.fattResiduoBreve')} ${fmtShort(v.residuo)}</span>` : ''}</div>
+      </div>`;
+    }).join('');
+  })() : '';
+
+  return `
+    <div class="card">
+      <div class="report-section-title">${t('report.fattTitolo')}</div>
+      <div class="report-summary report-summary-fatture">
+        <div class="report-sum-card blue">
+          <div class="report-sum-label">${t('report.fattArrivate')}</div>
+          <div class="report-sum-value">${fmtShort(f.arrivate.totale)}</div>
+          <div class="report-sum-note">${nFatture(f.arrivate.n)}</div>
+          ${deltaHtml(f.arrivate.totale, f.arrivatePrecTotale, null)}
+        </div>
+        <div class="report-sum-card orange">
+          <div class="report-sum-label">${t('report.fattDaPagare')}</div>
+          <div class="report-sum-value">${fmtShort(f.aperte.residuo)}</div>
+          <div class="report-sum-note">${nFatture(f.aperte.n)} · ${t('report.fattAOggi')}</div>
+        </div>
+        <div class="report-sum-card ${f.scadute.residuo > 0 ? 'red' : 'green'}">
+          <div class="report-sum-label">${t('report.fattScadute')}</div>
+          <div class="report-sum-value">${fmtShort(f.scadute.residuo)}</div>
+          <div class="report-sum-note">${nFatture(f.scadute.n)} · ${t('report.fattAOggi')}</div>
+        </div>
+      </div>
+      <div class="report-fatt-righe">
+        <div class="report-fatt-riga">
+          <span>${t('report.fattInScadenza')}</span>
+          <strong>${fmtEuro(f.inScadenza.residuo)} <span class="report-cat-pct">${nFatture(f.inScadenza.n)}</span></strong>
+        </div>
+        <div class="report-fatt-riga">
+          <span>${t('report.fattResiduoArrivate')}</span>
+          <strong>${fmtEuro(f.arrivate.residuo)}</strong>
+        </div>
+      </div>
+      ${barre ? `<div class="report-section-subtitle">${t('report.fattTopFornitori')}</div><div class="report-fatt-fornitori">${barre}</div>` : ''}
+      <div class="report-fatt-nota">${t('report.fattNota')}</div>
+    </div>`;
+}
+
 function renderAverages(data) {
   const worked = data.days.length;
   if (worked === 0) return '';
@@ -503,6 +622,9 @@ export function renderReport() {
     html += renderCategories(data);
     html += renderAverages(data);
   }
+  // Le fatture sono un libro a parte: si mostrano anche quando in cassa non
+  // si e' mosso niente nel periodo, perche' le scadenze corrono lo stesso.
+  html += renderFatture(data);
 
   container.innerHTML = html;
 
