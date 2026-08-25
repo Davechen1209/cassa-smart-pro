@@ -1,4 +1,7 @@
 import { Store } from './hk-store.js';
+// Stesso parser dell'import movimenti dell'app ospite: un CSV va letto come
+// testo, e una sola implementazione evita che le due strade divergano.
+import { csvMatrixFromBuffer } from '../csv-parse.js';
 
 /* Minimal .xlsx reader: ZIP central-directory parser + DecompressionStream("deflate-raw")
    + DOMParser for sheet XML. No external libraries. */
@@ -117,6 +120,16 @@ export const XLSXLite = (function () {
   }
 
   /* ---------- workbook ---------- */
+
+  /* Un CSV ha un solo foglio: si presenta con la stessa forma del workbook,
+     cosi' mapSheet e il wizard non sanno da dove arrivano le righe. */
+  function readCsv(buffer, name) {
+    var rows;
+    try { rows = csvMatrixFromBuffer(buffer); } catch (e) { return Promise.reject(e); }
+    if (!rows.length) return Promise.reject(codedError("emptyCsv", "Empty CSV"));
+    return Promise.resolve({ sheets: [{ name: name || "CSV", rows: rows }] });
+  }
+
 
   function readWorkbook(buffer) {
     if (!supported) return Promise.reject(codedError("unsupported", "unsupported"));
@@ -358,6 +371,7 @@ export const XLSXLite = (function () {
   return {
     supported: supported,
     readWorkbook: readWorkbook,
+    readCsv: readCsv,
     serialToISO: serialToISO,
     parseDateCell: parseDateCell,
     mapSheet: mapSheet

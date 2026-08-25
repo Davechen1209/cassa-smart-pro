@@ -994,10 +994,11 @@ export const FattureApp = (function () {
       } else if (wizard.error) {
         var errMsg;
         if (wizard.errorCode === "notXlsx") errMsg = t("import.errNotXlsx");
+        else if (wizard.errorCode === "emptyCsv") errMsg = t("import.errEmptyCsv");
         else if (wizard.errorCode === "unsupported") errMsg = t("import.errUnsupported");
         else errMsg = t("import.errFile", { x: wizard.error });
         body = '<div class="banner error" style="margin:0 0 12px">' + esc(errMsg) + "</div>" +
-          '<input type="file" id="wizFile" accept=".xlsx">';
+          '<input type="file" id="wizFile" accept=".xlsx,.csv,.txt,.tsv">';
       } else if (wizard.loading) {
         body = "<p>" + esc(t("import.reading")) + "</p>";
       } else if (wizard.workbook) {
@@ -1010,7 +1011,7 @@ export const FattureApp = (function () {
               esc(sh.name) + " — " + esc(t("import.sheetRows", { n: sh.mappedRowCount })) + "</button>";
           }).join("") + "</div>";
       } else {
-        body = '<input type="file" id="wizFile" accept=".xlsx">';
+        body = '<input type="file" id="wizFile" accept=".xlsx,.csv,.txt,.tsv">';
       }
     } else if (wizard.step === 2) {
       var mp = wizard.mapped;
@@ -1059,8 +1060,12 @@ export const FattureApp = (function () {
         if (!file) return;
         wizard.loading = true; wizard.error = null; wizard.errorCode = null;
         renderWizard();
+        // I CSV non passano dal lettore xlsx: la' dentro "500,00" diventerebbe
+        // 50000. Si riconoscono dal nome, perche' il tipo che arriva dal
+        // telefono e' spesso vuoto o generico.
+        var isCsv = /\.(csv|tsv|txt)$/i.test(file.name);
         file.arrayBuffer().then(function (buf) {
-          return X.readWorkbook(buf);
+          return isCsv ? X.readCsv(buf, file.name) : X.readWorkbook(buf);
         }).then(function (wb) {
           wizard.loading = false;
           wizard.workbook = wb;

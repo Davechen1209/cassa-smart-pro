@@ -178,8 +178,8 @@ export const I18N = (function () {
     "sup.search": "Cerca fornitore…",
     "sup.viewMovs": "Vedi movimenti",
 
-    "dati.import": "Importa da Excel",
-    "dati.importDesc": "Importa un file .xlsx (colonne A–K: 到货日期, 公司名, 发票号码, 金额, 现金支付, 支票/汇款, 付款周期, 货款到期日, 备注).",
+    "dati.import": "Importa da Excel o CSV",
+    "dati.importDesc": "Importa un file .xlsx o .csv (colonne A–K: 到货日期, 公司名, 发票号码, 金额, 现金支付, 支票/汇款, 付款周期, 货款到期日, 备注; valgono anche le intestazioni italiane).",
     "dati.export": "Esporta CSV",
     "dati.exportDesc": "CSV con separatore «;», virgola decimale e BOM UTF-8: si apre direttamente in Excel italiano.",
     "dati.backup": "Backup e ripristino",
@@ -199,7 +199,7 @@ export const I18N = (function () {
     "dati.infoLine": "{n} movimenti · {kb} KB usati",
     "dati.storageNote": "I dati vivono solo su questo computer — scarica una copia di backup.",
 
-    "import.title": "Importa da Excel",
+    "import.title": "Importa da Excel o CSV",
     "import.step1": "1 · File",
     "import.step2": "2 · Anteprima",
     "import.step3": "3 · Risultato",
@@ -212,7 +212,8 @@ export const I18N = (function () {
     "import.noRows": "Nessuna riga valida trovata in questo foglio.",
     "import.reading": "Lettura del file…",
     "import.errFile": "Impossibile leggere il file: {x}",
-    "import.errNotXlsx": "Il file non è un file .xlsx valido.",
+    "import.errNotXlsx": "Il file non è un file .xlsx valido. Se è un CSV, salvalo con estensione .csv.",
+    "import.errEmptyCsv": "Il file CSV è vuoto.",
     "import.errUnsupported": "Questo browser non supporta la decompressione ZIP (DecompressionStream). Aggiorna Edge/Chrome.",
     "import.done": "Importazione completata",
 
@@ -429,8 +430,8 @@ export const I18N = (function () {
     "sup.search": "搜索公司…",
     "sup.viewMovs": "查看记录",
 
-    "dati.import": "导入Excel",
-    "dati.importDesc": "导入 .xlsx 文件（A–K列：到货日期、公司名、发票号码、金额、现金支付、支票/汇款、付款周期、货款到期日、备注）。",
+    "dati.import": "导入Excel或CSV",
+    "dati.importDesc": "导入 .xlsx 或 .csv 文件（A–K列：到货日期、公司名、发票号码、金额、现金支付、支票/汇款、付款周期、货款到期日、备注）。",
     "dati.export": "导出CSV",
     "dati.exportDesc": "CSV使用分号「;」、小数逗号和UTF-8 BOM，可直接在意大利版Excel中打开。",
     "dati.backup": "备份与恢复",
@@ -450,7 +451,7 @@ export const I18N = (function () {
     "dati.infoLine": "{n}条记录 · 已用{kb} KB",
     "dati.storageNote": "数据只保存在这台电脑上，请下载备份。",
 
-    "import.title": "导入Excel",
+    "import.title": "导入Excel或CSV",
     "import.step1": "1 · 文件",
     "import.step2": "2 · 预览",
     "import.step3": "3 · 结果",
@@ -463,7 +464,8 @@ export const I18N = (function () {
     "import.noRows": "该工作表中没有有效数据。",
     "import.reading": "正在读取文件…",
     "import.errFile": "无法读取文件：{x}",
-    "import.errNotXlsx": "该文件不是有效的 .xlsx 文件。",
+    "import.errNotXlsx": "该文件不是有效的 .xlsx 文件。如果是 CSV，请用 .csv 扩展名保存。",
+    "import.errEmptyCsv": "CSV 文件是空的。",
     "import.errUnsupported": "此浏览器不支持ZIP解压（DecompressionStream），请更新Edge/Chrome。",
     "import.done": "导入完成",
 

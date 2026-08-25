@@ -455,8 +455,13 @@ body {
 .modal-overlay.show,
 .excel-overlay.show { opacity: 1; pointer-events: all; }
 
+/* Il selettore era il nudo `.modal`: l'app fatture innestata usa quella stessa
+   classe per le sue finestre, che si prendevano il translateY(100%) di questo
+   foglio senza avere il `.modal-overlay.show` che lo annulla. Restavano
+   parcheggiate un'altezza sotto lo schermo: quella dell'import, corta,
+   spariva del tutto e il pulsante sembrava morto. */
 .expense-sheet,
-.modal,
+.modal-overlay .modal,
 .excel-sheet {
     background: var(--card);
     border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;

@@ -429,6 +429,11 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
     border-radius: 20px 20px 0 0;
     padding: 16px 16px 0;
   }
+  /* .wide e .small portano una classe in piu' e batterebbero la regola qui
+     sopra: la finestra dell'import restava larga 900px su uno schermo da 390,
+     con meta' contenuto fuori dal bordo. Su telefono il foglio e' sempre a
+     tutta larghezza. */
+  .hk-app .modal.wide, .hk-app .modal.small { width: 100%; }
 
   .hk-app .modal input[type="text"],
   .hk-app .modal input[type="number"],
