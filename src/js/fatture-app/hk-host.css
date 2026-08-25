@@ -102,6 +102,10 @@
 
 /* Spazio per non finire sotto la barra delle tab flottante. */
 #s5 { padding-bottom: 96px; }
+/* Sul telefono sotto la tab ci sono due cose che galleggiano: la barra delle
+   tab (62px) e il "+ Nuovo arrivo" (46px a 92px dal fondo). Senza questo
+   spazio l'ultima fattura e la barra dei totali restano dietro. */
+@media (max-width: 760px) { #s5 { padding-bottom: 156px; } }
 
 /* La lingua si sceglie dalle impostazioni dell'ospite: il selettore interno
    sparisce. Serve !important perche' il display:flex dell'app batte [hidden]. */
@@ -418,7 +422,11 @@ body.tab-fatture #dashboard-card { display: none; }
   .hk-app .strip-seg { min-width: 0; padding-left: 8px; }
   .hk-app .strip-seg .lbl {
     font-size: 9px; letter-spacing: .02em;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    /* "Da pagare entro domenica" ha bisogno di 157px e ne aveva 149: finiva
+       a puntini proprio sul giorno, cioe' sull'unica parola che serve. Con
+       due righe ci sta, e i quattro riquadri restano alti uguali. */
+    white-space: normal; overflow: visible; text-overflow: clip;
+    line-height: 1.25; min-height: 2.5em;
   }
   .hk-app .strip-seg .val { font-size: 13px; white-space: nowrap; }
 
@@ -476,7 +484,11 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
   .hk-app .chip-filter { min-height: 36px; display: inline-flex; align-items: center; }
   .hk-app .adv-summary { min-height: 36px; }
   .hk-app .btn { min-height: 40px; }
-  .hk-app #movTableWrap .row-actions .btn { min-height: 40px; }
+  .hk-app #movTableWrap .row-actions .btn { min-height: 44px; }
+  /* Modifica ed Elimina sono a sola icona: erano larghe 32 e 34px, cioe'
+     meno del polpastrello, e una delle due cancella una fattura. */
+  .hk-app #movTableWrap .row-actions .btn.icon,
+  .hk-app #movTableWrap .row-actions .btn:not(:first-child) { min-width: 44px; }
   .hk-app .toolbar > input.search { min-height: 42px; }
 }
 
@@ -577,3 +589,18 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
 .hk-app .btn-primary,
 .hk-app .btn-primary:hover,
 .hk-app .chip-filter.active { color: var(--on-accent); }
+
+/* ── Il numero piu' grande della scheda non diceva cosa fosse ──
+   In alto a destra campeggiava il residuo, senza etichetta, mentre importo e
+   pagato stavano in piccolo in fondo: si leggeva quel numero come "l'importo
+   della fattura". L'etichetta c'e' gia' nel markup (data-label), bastava
+   mostrarla. */
+@media (max-width: 760px) {
+  .hk-app #movTableWrap table.grid tbody td:nth-child(7)::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--muted);
+    line-height: 1.4;
+  }
+}

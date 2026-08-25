@@ -109,7 +109,12 @@ export function fornitoriUnificati() {
  * fatture. Restituisce quanti ne ha aggiunti.
  */
 export function allineaRubricaFornitori() {
-  const presenti = new Set((d.fornitori || []).map(n => n.trim().toLowerCase()));
+  // La funzione qui sopra normalizza con String(nome || ''), questa no: una
+  // voce non testuale in rubrica (dati vecchi, o arrivati dal cloud di una
+  // versione precedente) faceva morire l'avvio dell'app, non solo questa riga.
+  const presenti = new Set(
+    (d.fornitori || []).map(n => String(n == null ? '' : n).trim().toLowerCase()).filter(Boolean)
+  );
   let aggiunti = 0;
   HkStore.records().forEach(r => {
     const nome = String(r.supplier || '').trim();

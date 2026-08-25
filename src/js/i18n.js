@@ -158,6 +158,11 @@ const translations = {
     'backup.templateDone': 'Template scaricato! Compilalo e ricaricalo',
     'backup.fileEmpty': 'File vuoto',
     'backup.noValidData': 'Nessun dato valido trovato',
+    'date.prev': 'Giorno precedente',
+    'date.next': 'Giorno successivo',
+    'autoBackup.toggleAria': 'Backup automatico ogni settimana',
+    'autoBackup.askTitle': 'Copia di sicurezza',
+    'autoBackup.askMsg': 'E\' passata una settimana dall\'ultima copia. Vuoi scaricare adesso un backup dei tuoi dati?',
     'backup.noColumns': 'Colonne non riconosciute ({cols}). Usa il template o rinomina le colonne.',
     'backup.fileError': 'Errore lettura file: ',
     'backup.moreItems': '...e altri {n} movimenti',
@@ -494,6 +499,7 @@ const translations = {
     'offline.backOnline': 'Connessione ripristinata, sincronizzazione in corso...',
 
     // Search
+    'search.aria': 'Cerca',
     'search.placeholder': 'Cerca in tutto...',
     'search.cancel': 'Annulla',
     'search.noResults': 'Nessun risultato trovato',
@@ -704,6 +710,11 @@ const translations = {
     'backup.templateDone': '模板已下载，填好后重新上传',
     'backup.fileEmpty': '文件是空的',
     'backup.noValidData': '没有找到有效数据',
+    'date.prev': '前一天',
+    'date.next': '后一天',
+    'autoBackup.toggleAria': '每周自动备份',
+    'autoBackup.askTitle': '数据备份',
+    'autoBackup.askMsg': '距离上次备份已过去一周。现在下载一份数据备份吗？',
     'backup.noColumns': '无法识别列名（{cols}）。请使用模板或重命名列。',
     'backup.fileError': '读取文件出错：',
     'backup.moreItems': '...还有{n}条',
@@ -1039,6 +1050,7 @@ const translations = {
     'offline.backOnline': '已恢复网络连接，正在同步...',
 
     // Search
+    'search.aria': '搜索',
     'search.placeholder': '全局搜索...',
     'search.cancel': '取消',
     'search.noResults': '未找到相关结果',
@@ -1190,6 +1202,12 @@ export function applyLanguage() {
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     const key = el.getAttribute('data-i18n-title');
     if (key) el.title = t(key);
+  });
+  // I comandi a sola icona (cerca, rubriche, impostazioni, frecce del giorno)
+  // non hanno testo: senza questo, chi usa VoiceOver sente solo "pulsante".
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria');
+    if (key) el.setAttribute('aria-label', t(key));
   });
   // Update lang toggle buttons
   document.querySelectorAll('.lang-btn').forEach(btn => {

@@ -265,6 +265,31 @@ document.getElementById('exp-voice-search').addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { chiudiElencoVoci(); e.target.blur(); }
 });
 
+// Esc chiude cio' che e' aperto. Prima l'unica via d'uscita era il pulsante
+// giusto: se una finestra copriva lo schermo e il pulsante era fuori vista,
+// da tastiera non se ne usciva. Si chiude solo la piu' esterna aperta.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const aperti = [
+    'search-overlay', 'confirm-overlay', 'modal-overlay', 'excel-overlay',
+    'share-preview-overlay', 'pdf-report-overlay', 'voice-overlay',
+    'expense-overlay', 'dataset-menu-overlay',
+  ];
+  for (const id of aperti) {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('show')) {
+      el.classList.remove('show');
+      e.preventDefault();
+      return;
+    }
+  }
+  const impostazioni = document.getElementById('settings-page');
+  if (impostazioni && impostazioni.classList.contains('open')) {
+    impostazioni.classList.remove('open');
+    document.body.classList.remove('settings-open');
+  }
+});
+
 // Keyboard events
 document.getElementById('modal-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && !blockedInReadOnly('modalConfirm')) modalConfirm();

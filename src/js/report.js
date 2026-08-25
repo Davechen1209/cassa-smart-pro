@@ -401,14 +401,21 @@ function renderTrend(data) {
   if (series.length < 2) return '';
 
   const max = Math.max(...series.map(s => Math.max(s.income, s.expense)), 1);
-  const bars = series.map(s => `
+  // Quattordici colonne su un telefono danno 19px a testa, e "12 ago" ne
+  // chiede 39: le etichette uscivano tutte tagliate a meta'. Se ne scrive
+  // una ogni tanto, sempre compresa l'ultima, e quelle scritte si leggono.
+  const passo = Math.max(1, Math.ceil(series.length / 5));
+  const bars = series.map((s, i) => {
+    const conEtichetta = i % passo === 0 || i === series.length - 1;
+    return `
     <div class="report-bar-group">
       <div class="report-bars">
-        <div class="report-bar green" style="height:${(s.income / max * 100).toFixed(1)}%" title="${fmtEuro(s.income)}"></div>
-        <div class="report-bar red" style="height:${(s.expense / max * 100).toFixed(1)}%" title="${fmtEuro(s.expense)}"></div>
+        <div class="report-bar green" style="height:${(s.income / max * 100).toFixed(1)}%" title="${s.label}: ${fmtEuro(s.income)}"></div>
+        <div class="report-bar red" style="height:${(s.expense / max * 100).toFixed(1)}%" title="${s.label}: ${fmtEuro(s.expense)}"></div>
       </div>
-      <div class="report-bar-label">${s.label}</div>
-    </div>`).join('');
+      <div class="report-bar-label">${conEtichetta ? s.label : ''}</div>
+    </div>`;
+  }).join('');
 
   return `
     <div class="card">

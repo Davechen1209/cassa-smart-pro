@@ -9,7 +9,7 @@ import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './da
 import { renderPendingList } from './expense.js';
 import { renderRubriche } from './rubrica.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
-import { t, getLang, translateLogDesc } from './i18n.js';
+import { t, getLang, translateLogDesc, parseIncasso } from './i18n.js';
 import { parseImportoOrNull } from './money.js';
 import { renderReport } from './report.js';
 import { FattureApp } from './fatture-app/hk-app.js';
@@ -278,16 +278,38 @@ export function renderHistory() {
     return;
   }
 
-  let html = '';
-  let lastDate = '';
+  // Le righe vanno raggruppate prima di scriverle: l'intestazione del giorno
+  // porta il saldo della giornata, e per farlo deve conoscere le righe che
+  // stanno sotto di lei.
+  const giorni = [];
+  filtered.forEach(riga => {
+    const ultimo = giorni[giorni.length - 1];
+    if (ultimo && ultimo.data === riga.entry.d) ultimo.righe.push(riga);
+    else giorni.push({ data: riga.entry.d, righe: [riga] });
+  });
 
-  filtered.forEach(({ entry: l, origIndex }) => {
-    if (l.d !== lastDate) {
-      lastDate = l.d;
-      html += `<div class="history-date-header">${escapeHtml(l.d)}</div>`;
-    }
-    const isIncome = l.a >= 0;
-    html += `
+  const euro = n => n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC';
+
+  let html = '';
+  giorni.forEach(({ data, righe }) => {
+    const totale = righe.reduce((s, r) => s + r.entry.a, 0);
+    html += `<div class="history-date-header">
+        <span>${escapeHtml(data)}</span>
+        <span class="history-day-total ${totale >= 0 ? 'positive' : 'negative'}">${totale >= 0 ? '+' : ''}${euro(totale)}</span>
+      </div>`;
+
+    righe.forEach(({ entry: l, origIndex }) => {
+      const isIncome = l.a >= 0;
+      const desc = translateLogDesc(l.v);
+      // "Incasso Contanti (TOTALE:850 POS:210)" e' come lo scrive la macchina:
+      // andava a capo su tre righe e si leggeva come una riga di log. Il nome
+      // resta corto, il dettaglio scende sotto in piccolo.
+      const inc = parseIncasso(desc);
+      const nome = inc ? t('fatt.incassoCash') : desc;
+      const dettaglio = inc
+        ? `${t('excel.colTotal')} ${euro(inc.totale)} \u00B7 POS ${euro(inc.pos)}`
+        : '';
+      html += `
       <div class="history-item">
         <div class="history-icon ${isIncome ? 'income' : 'expense'}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -295,17 +317,18 @@ export function renderHistory() {
           </svg>
         </div>
         <div class="history-info">
-          <div class="history-name">${escapeHtml(translateLogDesc(l.v))}</div>
-          <div class="history-date">${escapeHtml(l.d)}</div>
+          <div class="history-name">${escapeHtml(nome)}</div>
+          ${dettaglio ? `<div class="history-date">${escapeHtml(dettaglio)}</div>` : ''}
         </div>
         <div class="history-amount ${isIncome ? 'positive' : 'negative'}">
-          ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC
+          ${isIncome ? '+' : ''}${euro(l.a)}
         </div>
-        <button class="history-delete" data-action="deleteLog" data-index="${origIndex}" data-name="${escapeHtml(translateLogDesc(l.v))}">
+        <button class="history-delete" data-action="deleteLog" data-index="${origIndex}" data-name="${escapeHtml(nome)}" aria-label="${escapeHtml(t('history.deleteTitle'))}: ${escapeHtml(nome)}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
     `;
+    });
   });
   el.innerHTML = html;
 }

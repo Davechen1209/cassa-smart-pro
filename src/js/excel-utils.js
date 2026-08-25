@@ -357,11 +357,24 @@ export function checkAutoBackup() {
   if (!isAutoBackupEnabled()) return;
   // In vista condivisa il dataset non e' nostro: niente backup automatico.
   if (isReadOnly()) return;
-  const lastTs = parseInt(localStorage.getItem('cassa_auto_backup_ts') || '0', 10);
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
-  if (Date.now() - lastTs > sevenDays && d.log.length > 0) {
-    setTimeout(() => triggerAutoBackupDownload(), 2000);
-  }
+  const unGiorno = 24 * 60 * 60 * 1000;
+  const lastTs = parseInt(localStorage.getItem('cassa_auto_backup_ts') || '0', 10);
+  // Senza timestamp il confronto partiva dal 1970: "sono passati sette
+  // giorni" era vero al primo avvio in assoluto, e la prima cosa che l'app
+  // faceva era proporre (prima: scaricare) un backup di un archivio appena
+  // nato. Il conto parte da adesso.
+  if (!lastTs) { localStorage.setItem('cassa_auto_backup_ts', Date.now().toString()); return; }
+  if (Date.now() - lastTs <= sevenDays || d.log.length === 0) return;
+  // Prima partiva da solo: due secondi dopo l'apertura il telefono si
+  // ritrovava un file scaricato senza aver chiesto niente a nessuno. Ora lo
+  // propone, e se la risposta e' no non torna a chiedere prima di domani.
+  const chiestoIl = parseInt(localStorage.getItem('cassa_auto_backup_asked') || '0', 10);
+  if (Date.now() - chiestoIl < unGiorno) return;
+  setTimeout(() => {
+    localStorage.setItem('cassa_auto_backup_asked', Date.now().toString());
+    showConfirm(t('autoBackup.askTitle'), t('autoBackup.askMsg'), () => triggerAutoBackupDownload());
+  }, 2000);
 }
 
 export async function triggerAutoBackupDownload() {
@@ -379,7 +392,8 @@ export function renderAutoBackupCard() {
   el.innerHTML = `
     <div class="auto-backup-row">
       <span class="auto-backup-label">${t('autoBackup.lastLabel')}: <strong>${lastStr}</strong></span>
-      <button class="toggle-switch ${enabled ? 'on' : ''}" data-action="toggleAutoBackup"></button>
+      <button class="toggle-switch ${enabled ? 'on' : ''}" data-action="toggleAutoBackup"
+        role="switch" aria-checked="${enabled}" aria-label="${t('autoBackup.toggleAria')}"></button>
     </div>
     <button class="btn-sm blue" data-action="triggerManualBackup" style="width:100%;margin-top:12px;">
       ${t('autoBackup.manualBtn')}

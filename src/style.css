@@ -19,6 +19,7 @@
     --accent: var(--blue);
     --accent-weak: #EDF1FE;   /* fondo tenue dell'accento */
     --accent-ink: #1E3AA8;    /* accento su fondo chiaro, per il testo */
+    --red-ink: #9B2118;      /* rosso leggibile su fondo tenue */
     --on-accent: #FFFFFF;     /* testo sopra una superficie d'accento */
 
     /* ─── Superfici ─── */
@@ -87,6 +88,7 @@
 
         --accent-weak: #1B2340;
         --accent-ink: #A9BCFF;
+        --red-ink: #FF9A90;
         /* Al buio l'accento e' chiaro: sopra ci va inchiostro, non bianco. */
         --on-accent: #0B0D13;
 
@@ -181,7 +183,7 @@ body {
 .tab-btn {
     background: none; border: none;
     display: flex; flex-direction: column; align-items: center; gap: 3px;
-    color: var(--gray2); cursor: pointer;
+    color: var(--text3); cursor: pointer;
     padding: 7px 16px;
     border-radius: var(--radius-md);
     transition: color var(--duration-fast) ease, background var(--duration-fast) ease;
@@ -417,7 +419,9 @@ body {
 }
 .pending-total-amount { color: var(--red); font-size: 17px; font-variant-numeric: tabular-nums; }
 .pending-empty {
-    text-align: center; padding: 16px; color: var(--gray3);
+    /* Era var(--gray3): 1,92:1. Un testo che spiega perche' un elenco e'
+       vuoto e' proprio quello che deve leggersi. */
+    text-align: center; padding: 16px; color: var(--text3);
     font-size: 14px; font-weight: 500;
 }
 
@@ -454,7 +458,9 @@ body {
 .btn-sm:active { transform: scale(0.95); opacity: 0.85; }
 .btn-sm.blue { background: var(--blue); color: white; }
 .btn-sm.gray { background: var(--gray5); color: var(--text); }
-.btn-sm.red { background: rgba(255,59,48,0.12); color: var(--red); }
+/* Era rosso pallido su rosa pallido: 1,47:1, praticamente illeggibile, e
+   sopra ci sta scritto "Elimina". Ora e' pieno, come il peso dell'azione. */
+.btn-sm.red { background: var(--red); color: #FFFFFF; }
 
 /* ═══════════════════════════════════════════════════
    BOTTOM SHEETS — Shared Styles
@@ -680,40 +686,55 @@ body {
 
 
 .history-date-header {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
     font-size: 13px; font-weight: 700; color: var(--text3);
     text-transform: uppercase; padding: 10px 0 6px;
     letter-spacing: 0.3px;
 }
+/* Il saldo della giornata sta accanto alla data: chi scorre lo storico
+   cerca prima "com'e' andato il giorno", poi le singole voci. */
+.history-day-total { font-size: 14px; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.history-day-total.positive { color: var(--green); }
+.history-day-total.negative { color: var(--red); }
 .history-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 0;
     border-bottom: 0.5px solid var(--separator);
     transition: opacity 0.2s ease;
 }
 .history-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    width: 34px; height: 34px; border-radius: var(--radius-sm);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
 }
-.history-icon.income { background: rgba(52,199,89,0.12); color: var(--green); }
-.history-icon.expense { background: rgba(255,59,48,0.12); color: var(--red); }
+.history-icon.income { background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); }
+.history-icon.expense { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
 .history-icon svg { width: 18px; height: 18px; }
 .history-info { flex: 1; min-width: 0; }
-.history-name { font-size: 15px; font-weight: 600; letter-spacing: -0.1px; }
+.history-name {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.1px;
+    /* Una riga sola tagliava "Stipendio Mario Ro..."; nessun limite faceva
+       crescere la riga a tre. Due righe: i nomi lunghi si leggono interi e
+       la lista resta scandibile. */
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; line-height: 1.3;
+}
 .history-date { font-size: 12px; color: var(--gray); margin-top: 2px; }
-.history-amount { font-size: 17px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.history-amount { font-size: 16px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .history-amount.positive { color: var(--green); }
 .history-amount.negative { color: var(--red); }
 .history-delete {
-    background: none; border: none; padding: 8px;
-    cursor: pointer; opacity: 0.4; transition: opacity 0.15s;
+    background: none; border: none; padding: 12px 8px;
+    min-width: 44px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.65; transition: opacity 0.15s;
 }
 .history-delete:active { opacity: 1; }
 .history-delete svg { width: 16px; height: 16px; color: var(--red); }
 
 .empty-state { text-align: center; padding: 48px 24px; color: var(--gray); }
 .empty-state-icon { font-size: 52px; margin-bottom: 14px; opacity: 0.35; }
-.empty-state-text { font-size: 15px; font-weight: 500; color: var(--gray2); line-height: 1.5; }
+.empty-state-text { font-size: 15px; font-weight: 500; color: var(--text3); line-height: 1.5; }
 
 /* ═══════════════════════════════════════════════════
    SETTINGS PAGE — Full-screen slide from right
@@ -779,9 +800,10 @@ body {
     font-size: 13px; color: var(--text3); line-height: 1.5; margin-bottom: 14px;
 }
 .btn-danger {
-    width: 100%; padding: 14px;
-    background: rgba(255,59,48,0.1); color: var(--red);
-    border: 1.5px solid rgba(255,59,48,0.25);
+    width: 100%; padding: 14px; min-height: 48px;
+    background: color-mix(in srgb, var(--red) 10%, transparent);
+    color: var(--red-ink);
+    border: 1.5px solid color-mix(in srgb, var(--red) 35%, transparent);
     border-radius: var(--radius-sm);
     font-size: 15px; font-weight: 700;
     cursor: pointer; transition: all 0.15s ease;
@@ -882,10 +904,14 @@ body {
     backdrop-filter: blur(24px) saturate(200%);
     -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-pill);
-    padding: 14px 24px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    /* Era una pastiglia senza larghezza massima: un messaggio lungo diventava
+       un blocco stretto su tre righe appiccicato sopra il titolo dell'app. */
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    max-width: min(92vw, 420px); width: max-content;
+    box-shadow: var(--shadow-float);
     display: flex; align-items: center; gap: 10px;
+    text-align: left; line-height: 1.35;
     font-size: 15px; font-weight: 600;
     transition: transform 0.55s var(--spring);
     max-width: calc(100% - 32px);
@@ -1143,9 +1169,9 @@ body {
     background: rgba(142,142,147,0.08); margin-bottom: 12px;
 }
 .cloud-disconnected-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gray3); flex-shrink: 0; }
-.cloud-disconnected-text { font-size: 14px; font-weight: 500; color: var(--gray); }
-.cloud-info { font-size: 12px; color: var(--gray); margin-bottom: 8px; line-height: 1.4; }
-.cloud-last-sync { font-size: 12px; color: var(--gray); margin-bottom: 12px; }
+.cloud-disconnected-text { font-size: 14px; font-weight: 500; color: var(--text3); }
+.cloud-info { font-size: 12px; color: var(--text3); margin-bottom: 8px; line-height: 1.4; }
+.cloud-last-sync { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
 
 .setup-steps { margin: 12px 0; }
 .setup-step {
@@ -1173,7 +1199,7 @@ body {
 .cloud-actions .btn-sm { flex: 1; text-align: center; }
 .cloud-divider {
     margin: 16px 0 12px;
-    text-align: center; font-size: 11px; color: var(--gray3);
+    text-align: center; font-size: 11px; color: var(--text3);
     display: flex; align-items: center; gap: 8px;
 }
 .cloud-divider::before, .cloud-divider::after {
@@ -1915,9 +1941,10 @@ body.readonly-mode [data-owner-only] { display: none !important; }
 .report-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .report-chip {
     background: var(--gray6); border: none;
-    color: var(--text3); font-family: inherit;
+    color: var(--text2); font-family: inherit;
     font-size: 13px; font-weight: 600;
-    padding: 8px 13px; border-radius: var(--radius-pill);
+    padding: 0 14px; min-height: 44px; display: inline-flex; align-items: center;
+    border-radius: var(--radius-pill);
     cursor: pointer; white-space: nowrap;
     transition: background 0.2s ease, color 0.2s ease, transform 0.12s var(--spring);
 }
@@ -2001,9 +2028,11 @@ body.readonly-mode [data-owner-only] { display: none !important; }
 .report-bar.red { background: var(--red); }
 .report-bar.blue { background: var(--blue); width: 14px; }
 .report-bar-label {
-    margin-top: 6px; font-size: 10px; font-weight: 600; color: var(--gray);
+    margin-top: 6px; font-size: 10px; font-weight: 600; color: var(--text3);
     text-transform: capitalize; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+    /* Le colonne senza etichetta lasciano spazio a quelle che ce l'hanno:
+       niente ritaglio, il testo puo' sconfinare sui vicini vuoti. */
+    overflow: visible; height: 13px;
 }
 .report-legend { display: flex; justify-content: center; gap: 16px; margin-top: 12px; }
 .report-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--gray); font-weight: 500; }
@@ -2014,7 +2043,9 @@ body.readonly-mode [data-owner-only] { display: none !important; }
 .report-cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
 .report-cat-row:last-child { margin-bottom: 0; }
 .report-cat-name {
-    width: 88px; flex-shrink: 0; font-size: 13px; font-weight: 500;
+    /* Erano 88px fissi: "Spesa generica" ne chiede 100 e finiva a puntini. */
+    flex: 0 1 auto; min-width: 88px; max-width: 45%;
+    font-size: 13px; font-weight: 500;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .report-cat-bar-wrap { flex: 1; min-width: 0; height: 7px; background: var(--gray6); border-radius: 4px; overflow: hidden; }
@@ -2032,7 +2063,7 @@ body.readonly-mode [data-owner-only] { display: none !important; }
 }
 .report-avg span {
     display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
-    text-transform: uppercase; color: var(--gray); margin-bottom: 4px;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 4px;
 }
 .report-avg strong { font-size: 14px; font-weight: 800; letter-spacing: -0.3px; }
 .report-avg strong.green { color: var(--green); }
@@ -2107,14 +2138,14 @@ body.readonly-mode [data-owner-only] { display: none !important; }
     background: color-mix(in srgb, var(--accent) 9%, transparent);
     border: 0.5px solid color-mix(in srgb, var(--accent) 22%, transparent);
     border-radius: var(--radius-pill);
-    padding: 7px 12px 7px 14px;
-    font-family: inherit; font-size: 12px; font-weight: 500; color: var(--text3);
+    padding: 0 12px 0 14px; min-height: 44px;
+    font-family: inherit; font-size: 12px; font-weight: 500; color: var(--text2);
     line-height: 1.35; text-align: center; cursor: pointer;
     transition: background 0.2s ease, transform 0.12s var(--spring);
 }
 .report-compare-badge:active { transform: scale(0.96); background: color-mix(in srgb, var(--accent) 16%, transparent); }
 .report-compare-badge svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--blue); }
-.report-compare-badge strong { font-weight: 700; color: var(--blue); white-space: nowrap; }
+.report-compare-badge strong { font-weight: 700; color: var(--accent-ink); white-space: nowrap; }
 .report-compare-caret { width: 12px !important; height: 12px !important; opacity: 0.7; transition: transform 0.2s var(--ease-out-quart); }
 .report-compare-wrap.open .report-compare-caret { transform: rotate(180deg); }
 
@@ -2196,14 +2227,25 @@ body.readonly-mode #registration-form { display: none !important; }
         min-height: 44px; display: inline-flex; align-items: center;
         padding-left: 10px; padding-right: 4px;
     }
-    /* L'interruttore resta della sua misura, che e' quella giusta a vedersi:
-       si allarga solo l'area che risponde al dito. */
-    .toggle-switch { position: relative; }
-    .toggle-switch::after {
-        content: ''; position: absolute;
-        top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 100%; height: 44px; min-width: 52px;
+    /* L'interruttore si vede della sua misura ma risponde su 44px.
+       Il tentativo precedente allargava uno pseudo-elemento: sovrascriveva
+       ::after, cioe' la pallina (sul telefono restava una pastiglia bianca,
+       identica accesa e spenta), e il tocco fuori sagoma non prendeva
+       comunque. Qui il pulsante e' alto davvero 44px e il tracciato viene
+       disegnato dentro, centrato. */
+    .toggle-switch {
+        height: 44px; background: transparent;
     }
+    .toggle-switch::before {
+        content: ''; position: absolute; left: 0; right: 0; top: 50%;
+        transform: translateY(-50%); height: 31px;
+        border-radius: var(--radius-pill); background: var(--gray4);
+        transition: background 0.25s var(--ease-out-quart);
+    }
+    .toggle-switch.on { background: transparent; }
+    .toggle-switch.on::before { background: var(--green); }
+    .toggle-switch::after { top: 50%; transform: translateY(-50%); }
+    .toggle-switch.on::after { transform: translate(20px, -50%); }
 }
 
 /* ─── Ricerca fra le voci della spesa ───
