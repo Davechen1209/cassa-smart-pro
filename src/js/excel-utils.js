@@ -24,12 +24,144 @@ export function downloadTemplate() {
   showToast(t('backup.templateDone'), 'check');
 }
 
-function findCol(headers, keywords) {
-  for (const h of headers) {
-    const lower = h.toLowerCase().trim();
-    if (keywords.some(k => lower === k || lower.includes(k))) return h;
+const HEADER_KEYS = {
+  date: ['日期', 'data', 'date', 'giorno'],
+  expDesc: ['支出项目', 'descrizione', 'desc', 'voce', 'causale', 'nome'],
+  totalZ: ['总金额', 'totale z', 'totale_z', 'totale'],
+  pos: ['pos'],
+  expAmount: ['现金支出', 'uscita', 'spesa', 'expense'],
+  cash: ['现金', 'cash', 'contanti'],
+  deposit: ['存钱', 'deposito', 'versamento'],
+  refund: ['退钱', 'rimborso', 'reso', 'refund'],
+  simpleAmount: ['importo', 'amount', 'valore'],
+};
+
+function normalizeHeader(h) {
+  return String(h).replace(/^﻿/, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+// Prima passata sui titoli identici, poi su quelli che contengono la parola:
+// cosi' "Contanti" non viene rubata da "Uscita Cash", che contiene "cash".
+// Le colonne gia' assegnate escono dalla ricerca successiva.
+function findCol(headers, keywords, used) {
+  const free = used ? headers.filter(h => !used.has(h)) : headers;
+  for (const h of free) {
+    if (keywords.includes(normalizeHeader(h))) { if (used) used.add(h); return h; }
+  }
+  for (const h of free) {
+    const lower = normalizeHeader(h);
+    if (lower && keywords.some(k => lower.includes(k))) { if (used) used.add(h); return h; }
   }
   return null;
+}
+
+/* ---------- Lettura CSV ---------- */
+
+// Excel italiano salva i CSV in Windows-1252: se i byte non sono UTF-8 validi
+// li decodifichiamo cosi', invece di riempire i dati di caratteri sbagliati.
+function decodeText(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let text;
+  // "Testo Unicode" di Excel e' UTF-16: si riconosce dal BOM.
+  if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+    text = new TextDecoder('utf-16le').decode(bytes);
+  } else if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+    text = new TextDecoder('utf-16be').decode(bytes);
+  } else {
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch (err) {
+      text = new TextDecoder('windows-1252').decode(bytes);
+    }
+  }
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  return text;
+}
+
+// Il separatore piu' frequente fuori dalle virgolette vince; a parita' si
+// preferisce il ';', perche' nei file italiani la virgola e' il decimale.
+function detectSeparator(text) {
+  const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim() !== '').slice(0, 5);
+  let best = ';';
+  let bestScore = 0;
+  [';', ',', '\t', '|'].forEach(sep => {
+    let score = 0;
+    lines.forEach(line => {
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') inQuotes = !inQuotes;
+        else if (ch === sep && !inQuotes) score++;
+      }
+    });
+    if (score > bestScore) { bestScore = score; best = sep; }
+  });
+  return best;
+}
+
+function parseCSVMatrix(text, sep) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch !== '"') { field += ch; continue; }
+      if (text[i + 1] === '"') { field += '"'; i++; continue; }
+      inQuotes = false;
+      continue;
+    }
+    if (ch === '"') { inQuotes = true; continue; }
+    if (ch === sep) { row.push(field); field = ''; continue; }
+    if (ch === '\r' || ch === '\n') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
+      continue;
+    }
+    field += ch;
+  }
+  if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+const HEADER_HINTS = Object.keys(HEADER_KEYS).reduce((all, k) => all.concat(HEADER_KEYS[k]), []);
+
+function looksLikeHeader(cells) {
+  return cells.some(c => {
+    const v = normalizeHeader(c);
+    return v !== '' && HEADER_HINTS.some(h => v === h || v.includes(h));
+  });
+}
+
+// I CSV esportati da gestionali spesso hanno righe di intestazione libere prima
+// della tabella: si parte dalla prima riga che assomiglia a dei titoli.
+function csvToObjects(matrix) {
+  let headerIdx = 0;
+  for (let i = 0; i < Math.min(matrix.length, 10); i++) {
+    if (looksLikeHeader(matrix[i])) { headerIdx = i; break; }
+  }
+
+  const seen = {};
+  const headers = matrix[headerIdx].map((h, i) => {
+    let name = String(h).replace(/^﻿/, '').trim() || 'col' + (i + 1);
+    if (seen[name]) { seen[name]++; name = name + ' (' + seen[name] + ')'; }
+    else seen[name] = 1;
+    return name;
+  });
+
+  const out = [];
+  for (let i = headerIdx + 1; i < matrix.length; i++) {
+    const row = {};
+    headers.forEach((h, c) => { row[h] = matrix[i][c] !== undefined ? matrix[i][c] : ''; });
+    out.push(row);
+  }
+  return out;
 }
 
 function parseRawDate(raw) {
@@ -59,86 +191,114 @@ function parseNumber(val) {
   return parseFloat(s) || 0;
 }
 
+function rowsToMovimenti(rows) {
+  const headers = Object.keys(rows[0]);
+  const used = new Set();
+  const newData = [];
+
+  const colDate = findCol(headers, HEADER_KEYS.date, used);
+  const colExpDesc = findCol(headers, HEADER_KEYS.expDesc, used);
+  const colTotalZ = findCol(headers, HEADER_KEYS.totalZ, used);
+  const colPOS = findCol(headers, HEADER_KEYS.pos, used);
+  const colExpAmount = findCol(headers, HEADER_KEYS.expAmount, used);
+  const colCash = findCol(headers, HEADER_KEYS.cash, used);
+  const colDeposit = findCol(headers, HEADER_KEYS.deposit, used);
+  const colRefund = findCol(headers, HEADER_KEYS.refund, used);
+  const colSimpleAmount = findCol(headers, HEADER_KEYS.simpleAmount, used);
+
+  const matched = !!(colTotalZ || colCash || colExpAmount || colDeposit || colRefund || colSimpleAmount);
+  const isSimpleFormat = colSimpleAmount && !colTotalZ && !colExpAmount;
+
+  rows.forEach(row => {
+    const dateStr = parseRawDate(colDate ? row[colDate] : null);
+
+    if (isSimpleFormat) {
+      const amount = parseNumber(row[colSimpleAmount]);
+      if (amount === 0) return;
+      const desc = colExpDesc ? String(row[colExpDesc] || t('excel.imported')).trim() : t('excel.imported');
+      newData.push({ date: dateStr, desc, amount });
+      return;
+    }
+
+    const totalZ = parseNumber(colTotalZ ? row[colTotalZ] : 0);
+    const pos = parseNumber(colPOS ? row[colPOS] : 0);
+    const cash = parseNumber(colCash ? row[colCash] : 0);
+    const expAmt = parseNumber(colExpAmount ? row[colExpAmount] : 0);
+    const expDesc = colExpDesc ? String(row[colExpDesc] || '').trim() : '';
+    const deposit = parseNumber(colDeposit ? row[colDeposit] : 0);
+    const refund = parseNumber(colRefund ? row[colRefund] : 0);
+
+    let incomeAmount = 0;
+    if (cash > 0) {
+      incomeAmount = cash;
+    } else if (totalZ > 0) {
+      incomeAmount = totalZ - pos;
+    }
+
+    if (incomeAmount > 0) {
+      const desc = totalZ > 0 ? t('fatt.incassoCash') + ' (Z:' + totalZ + ' POS:' + pos + ')' : t('fatt.incassoCash');
+      newData.push({ date: dateStr, desc, amount: incomeAmount });
+    }
+
+    if (expAmt > 0) {
+      const desc = expDesc || t('exp.genericExpense');
+      newData.push({ date: dateStr, desc, amount: -Math.abs(expAmt) });
+    }
+
+    if (deposit > 0) {
+      newData.push({ date: dateStr, desc: t('excel.deposit'), amount: -Math.abs(deposit) });
+    }
+
+    if (refund > 0) {
+      newData.push({ date: dateStr, desc: t('excel.refund'), amount: -Math.abs(refund) });
+    }
+  });
+
+  return { data: newData, matched, headers };
+}
+
 export function importExcel(event) {
   const file = event.target.files[0];
   if (!file) return;
   event.target.value = '';
 
+  // I CSV non passano da SheetJS: leggendoli come foglio di calcolo "500,00"
+  // diventa 50000 e "1.000,00" diventa 1. Li parsiamo noi come testo.
+  const isCSV = /\.(csv|tsv|txt)$/i.test(file.name) || file.type === 'text/csv' || file.type === 'text/tab-separated-values';
+
   const reader = new FileReader();
+  reader.onerror = function () { showToast(t('backup.readError'), 'warn'); };
   reader.onload = function (e) {
     try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      let rows;
+
+      if (isCSV) {
+        const text = decodeText(e.target.result);
+        if (!text.trim()) { showToast(t('backup.fileEmpty'), 'warn'); return; }
+        const sep = /\.tsv$/i.test(file.name) ? '\t' : detectSeparator(text);
+        const matrix = parseCSVMatrix(text, sep);
+        if (matrix.length < 2) { showToast(t('backup.fileEmpty'), 'warn'); return; }
+        rows = csvToObjects(matrix);
+      } else {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      }
 
       if (rows.length === 0) { showToast(t('backup.fileEmpty'), 'warn'); return; }
 
-      const headers = Object.keys(rows[0]);
-      const newData = [];
-
-      const colDate = findCol(headers, ['\u65E5\u671F', 'data', 'date', 'giorno']);
-      const colTotalZ = findCol(headers, ['\u603B\u91D1\u989D', 'totale z', 'totale_z']);
-      const colPOS = findCol(headers, ['pos']);
-      const colCash = findCol(headers, ['\u73B0\u91D1', 'cash', 'contanti']);
-      const colExpAmount = findCol(headers, ['\u73B0\u91D1\u652F\u51FA', 'uscita', 'spesa', 'expense']);
-      const colExpDesc = findCol(headers, ['\u652F\u51FA\u9879\u76EE', 'descrizione', 'desc', 'voce', 'causale', 'nome']);
-      const colDeposit = findCol(headers, ['\u5B58\u94B1', 'deposito', 'versamento']);
-      const colRefund = findCol(headers, ['\u9000\u94B1', 'rimborso', 'reso', 'refund']);
-      const colSimpleAmount = findCol(headers, ['importo', 'amount', 'valore']);
-
-      const isSimpleFormat = colSimpleAmount && !colTotalZ && !colExpAmount;
-
-      rows.forEach(row => {
-        const dateStr = parseRawDate(colDate ? row[colDate] : null);
-
-        if (isSimpleFormat) {
-          const amount = parseNumber(row[colSimpleAmount]);
-          if (amount === 0) return;
-          const desc = colExpDesc ? String(row[colExpDesc] || t('excel.imported')).trim() : t('excel.imported');
-          newData.push({ date: dateStr, desc, amount });
-          return;
-        }
-
-        const totalZ = parseNumber(colTotalZ ? row[colTotalZ] : 0);
-        const pos = parseNumber(colPOS ? row[colPOS] : 0);
-        const cash = parseNumber(colCash ? row[colCash] : 0);
-        const expAmt = parseNumber(colExpAmount ? row[colExpAmount] : 0);
-        const expDesc = colExpDesc ? String(row[colExpDesc] || '').trim() : '';
-        const deposit = parseNumber(colDeposit ? row[colDeposit] : 0);
-        const refund = parseNumber(colRefund ? row[colRefund] : 0);
-
-        let incomeAmount = 0;
-        if (cash > 0) {
-          incomeAmount = cash;
-        } else if (totalZ > 0) {
-          incomeAmount = totalZ - pos;
-        }
-
-        if (incomeAmount > 0) {
-          const desc = totalZ > 0 ? t('fatt.incassoCash') + ' (Z:' + totalZ + ' POS:' + pos + ')' : t('fatt.incassoCash');
-          newData.push({ date: dateStr, desc, amount: incomeAmount });
-        }
-
-        if (expAmt > 0) {
-          const desc = expDesc || t('exp.genericExpense');
-          newData.push({ date: dateStr, desc, amount: -Math.abs(expAmt) });
-        }
-
-        if (deposit > 0) {
-          newData.push({ date: dateStr, desc: t('excel.deposit'), amount: -Math.abs(deposit) });
-        }
-
-        if (refund > 0) {
-          newData.push({ date: dateStr, desc: t('excel.refund'), amount: -Math.abs(refund) });
-        }
-      });
+      const parsed = rowsToMovimenti(rows);
 
       setImportMode('movimenti');
-      setParsedImportData(newData);
+      setParsedImportData(parsed.data);
 
-      if (newData.length === 0) {
-        showToast(t('backup.noValidData'), 'warn');
+      if (parsed.data.length === 0) {
+        if (!parsed.matched) {
+          showToast(t('backup.noColumns', { cols: parsed.headers.slice(0, 6).join(', ') }), 'warn');
+        } else {
+          showToast(t('backup.noValidData'), 'warn');
+        }
         return;
       }
 
