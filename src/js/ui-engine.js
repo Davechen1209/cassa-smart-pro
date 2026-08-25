@@ -332,7 +332,10 @@ export function tab(n) {
 }
 
 export function toggleSettings() {
-  document.getElementById('settings-page').classList.toggle('open');
+  const open = document.getElementById('settings-page').classList.toggle('open');
+  // I pulsanti flottanti (microfono, "+ Nuovo arrivo" delle fatture) vivono
+  // sopra tutto: senza questo restavano appesi davanti alle impostazioni.
+  document.body.classList.toggle('settings-open', open);
   renderCustomCatsSettings();
   renderAziendaSettings();
   renderOcrApiSettings();
@@ -428,6 +431,7 @@ export function manualSaldo() {
     ui();
     document.getElementById('set-saldo').value = '';
     document.getElementById('settings-page').classList.remove('open');
+    document.body.classList.remove('settings-open');
     showToast(t('saldo.updated'), 'check');
   }
 }

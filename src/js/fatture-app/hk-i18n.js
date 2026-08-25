@@ -235,10 +235,10 @@ export const I18N = (function () {
     "seed.refreshKeep": "Mantieni gli attuali",
     "seed.refreshDone": "Archivio aggiornato: {n} movimenti caricati.",
 
-    "empty.fresh": "Nessun movimento. Importa il tuo Excel o aggiungi il primo arrivo.",
+    "empty.fresh": "Nessun movimento. Importa un file Excel o CSV, oppure aggiungi il primo arrivo.",
     "empty.filtered": "Nessun risultato con questi filtri.",
     "empty.scadenzario": "Tutto pagato. Nessuna scadenza in vista ✓",
-    "empty.import": "Importa da Excel",
+    "empty.import": "Importa file",
 
     "confirm.delete": "Eliminare il movimento di {s} ({x})?",
     "storage.corrupt": "I dati salvati erano danneggiati e sono stati messi da parte; si riparte da un archivio pulito.",

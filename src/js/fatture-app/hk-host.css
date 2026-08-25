@@ -7,6 +7,83 @@
    (che manderebbe in scroll orizzontale tutta l'app ospite, barra inferiore
    compresa) la larghezza resta confinata qui dentro. */
 .hk-app { min-width: 0; height: auto; background: transparent; }
+
+/* ═══════════════════════════════════════════════════
+   STESSA LINGUA VISIVA DELL'OSPITE
+   L'app fatture arriva con la sua tavolozza (verde petrolio, grigi
+   ardesia, font di Windows) e dentro la nostra sembrava un'altra
+   applicazione. Invece di riscriverne il foglio di stile, le sue
+   variabili vengono ridefinite qui sui token dell'ospite: cambia tutto
+   l'aspetto, e hk-app.css resta rigenerabile.
+   ═══════════════════════════════════════════════════ */
+.hk-app {
+  --bg: transparent;
+  --surface: var(--card);
+  --thead: var(--card-sunken);
+  --divider: var(--separator);
+  --border: var(--hairline);
+  --ink: var(--text);
+  --ink2: var(--text2);
+  --muted: var(--gray);
+  --accent: var(--blue);
+  --accent-hover: var(--accent-ink);
+  --accent-bg: var(--accent-weak);
+  --danger: var(--red);
+  --danger-hover: var(--red);
+  --success: var(--green);
+  --warning: var(--orange);
+  --red-text: var(--red);
+  --sel: var(--accent-weak);
+  --shadow: var(--shadow-float);
+  /* Il font di sistema dell'ospite, con le riserve cinesi che servono qui. */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI',
+    "Microsoft YaHei UI", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 15px;
+}
+
+/* Schede e riquadri come quelli delle altre tab: bordo a filo di capello,
+   stesso raggio, ombra solo per cio' che galleggia. */
+.hk-app .card,
+.hk-app .panel,
+.hk-app .modal,
+.hk-app .sheet-pick .btn,
+.hk-app .table-wrap { border-radius: var(--radius-lg); }
+.hk-app .btn { border-radius: var(--radius-sm); min-height: 40px; font-weight: 600; }
+.hk-app .btn-primary { background: var(--accent); border-color: var(--accent); }
+.hk-app .chip-filter { border-radius: var(--radius-pill); }
+.hk-app input, .hk-app select, .hk-app textarea { border-radius: var(--radius-sm); }
+.hk-app .money, .hk-app .num, .hk-app .cashstrip { font-variant-numeric: tabular-nums; }
+
+/* La striscia dei totali era una fascia a tutta larghezza con bordi
+   colorati a sinistra: l'unico elemento squadrato in mezzo a schede
+   arrotondate. Diventa una scheda come le altre. */
+.hk-app .cashstrip {
+  background: transparent; border-bottom: none;
+  padding: 12px 12px 0;
+}
+.hk-app .cashstrip-inner {
+  padding: 4px 12px; height: auto; gap: 0;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: grid; grid-template-columns: 1fr 1fr;
+}
+.hk-app .strip-seg {
+  min-width: 0; border-left: none;
+  padding: 10px 8px;
+  gap: 2px;
+}
+/* Su schermo largo i quattro totali stanno in fila. */
+@media (min-width: 761px) {
+  .hk-app .cashstrip-inner { grid-template-columns: repeat(4, 1fr); }
+}
+.hk-app .strip-seg .lbl {
+  font-size: 10px; letter-spacing: .06em; color: var(--gray);
+  /* l'etichetta lunga andava a puntini: meglio due righe */
+  white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25;
+}
+.hk-app .strip-seg .val { font-size: 17px; font-weight: 700; }
 .hk-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .hk-scroll > .app { min-width: 1000px; }
 
@@ -494,3 +571,9 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
 @media (max-width: 760px) {
     .hk-app .sup-row { min-height: 44px; font-size: 16px; }
 }
+
+/* Testo sopra l'accento: al buio l'accento e' chiaro e il bianco non si legge.
+   Il token arriva dall'ospite. */
+.hk-app .btn-primary,
+.hk-app .btn-primary:hover,
+.hk-app .chip-filter.active { color: var(--on-accent); }
