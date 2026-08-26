@@ -904,16 +904,23 @@ export const FattureApp = (function () {
   }
 
   function exportCSV() {
+    // La data di pagamento va anche in uscita: senza, un giro
+    // esporta-reimporta perderebbe per strada quello che ora sappiamo.
+    // Con piu' pagamenti si scrive l'ultimo, che e' quello che il file
+    // reimportato sa rappresentare.
     var header = ["id", t("col.arrival"), t("col.supplier"), t("col.invoice"), t("col.amount"),
       t("form.paidCash"), t("form.paidOther"), t("col.unpaid"), t("col.status"),
-      t("col.terms"), t("col.due"), t("col.notes"), t("col.checkNo"), t("form.oldDebt"), "createdAt"];
+      t("col.terms"), t("col.due"), t("pay.dateLabel"), t("col.notes"), t("col.checkNo"),
+      t("form.oldDebt"), "createdAt"];
     var lines = [header.map(csvField).join(";")];
     allDecorated().forEach(function (d) {
       var r = d.rec;
+      var pag = S.normalizePayments(r.payments);
+      var dataPag = pag.length ? pag[pag.length - 1].date : "";
       lines.push([
         r.id, r.arrivalDate || "", r.supplier, r.invoice,
         csvAmount(d.amount), csvAmount(S.toCents(r.paidCash)), csvAmount(S.toCents(r.paidOther)), csvAmount(d.unpaid),
-        t("status." + d.status), r.terms, r.dueDate || "", r.notes, r.checkNo || "",
+        t("status." + d.status), r.terms, r.dueDate || "", dataPag, r.notes, r.checkNo || "",
         r.oldDebt ? t("misc.yes") : t("misc.no"), r.createdAt
       ].map(csvField).join(";"));
     });

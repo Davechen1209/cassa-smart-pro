@@ -181,7 +181,7 @@ export const I18N = (function () {
     "sup.viewMovs": "Vedi movimenti",
 
     "dati.import": "Importa da Excel o CSV",
-    "dati.importDesc": "Importa un file .xlsx o .csv (colonne A–K: 到货日期, 公司名, 发票号码, 金额, 现金支付, 支票/汇款, 付款周期, 货款到期日, 备注; valgono anche le intestazioni italiane).",
+    "dati.importDesc": "Importa un file .xlsx o .csv (colonne A–K: 到货日期, 公司名, 发票号码, 金额, 现金支付, 支票/汇款, 付款周期, 货款到期日, 备注; valgono anche le intestazioni italiane). Se c'e' una colonna «data pagamento» (付款日期) viene letta anche quella.",
     "dati.export": "Esporta CSV",
     "dati.exportDesc": "CSV con separatore «;», virgola decimale e BOM UTF-8: si apre direttamente in Excel italiano.",
     "dati.backup": "Backup e ripristino",
@@ -435,7 +435,7 @@ export const I18N = (function () {
     "sup.viewMovs": "查看记录",
 
     "dati.import": "导入Excel或CSV",
-    "dati.importDesc": "导入 .xlsx 或 .csv 文件（A–K列：到货日期、公司名、发票号码、金额、现金支付、支票/汇款、付款周期、货款到期日、备注）。",
+    "dati.importDesc": "导入 .xlsx 或 .csv 文件（A–K列：到货日期、公司名、发票号码、金额、现金支付、支票/汇款、付款周期、货款到期日、备注）。如有「付款日期」列也会一并读取。",
     "dati.export": "导出CSV",
     "dati.exportDesc": "CSV使用分号「;」、小数逗号和UTF-8 BOM，可直接在意大利版Excel中打开。",
     "dati.backup": "备份与恢复",

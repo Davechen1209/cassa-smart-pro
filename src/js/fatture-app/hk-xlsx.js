@@ -263,7 +263,8 @@ export const XLSXLite = (function () {
     terms: ["付款周期", "termini"],
     due: ["货款到期日", "到期日", "scadenza"],
     notes: ["备注", "note"],
-    checkNo: ["支票号码", "支票号", "n. assegno", "numero assegno", "n assegno"]
+    checkNo: ["支票号码", "支票号", "n. assegno", "numero assegno", "n assegno"],
+    payDate: ["付款日期", "支付日期", "汇款日期", "已付日期", "data pagamento", "data pag", "pagato il", "data di pagamento", "payment date", "paid on"]
   };
 
   function detectColumns(headerRow) {
@@ -284,7 +285,10 @@ export const XLSXLite = (function () {
     }
     if (map.supplier == null || map.amount == null) {
       // fallback: fixed A..L layout
-      return { arrival: 0, supplier: 1, invoice: 2, amount: 3, cash: 4, other: 5, unpaid: 6, paid: 7, terms: 8, due: 9, notes: 10, checkNo: 11, headerDetected: false };
+      // Il vecchio tracciato a colonne fisse non prevedeva la data di
+      // pagamento: senza intestazioni riconosciute resta assente, e il pagato
+      // entra come "senza data".
+      return { arrival: 0, supplier: 1, invoice: 2, amount: 3, cash: 4, other: 5, unpaid: 6, paid: 7, terms: 8, due: 9, notes: 10, checkNo: 11, payDate: null, headerDetected: false };
     }
     map.headerDetected = true;
     return map;
@@ -351,18 +355,28 @@ export const XLSXLite = (function () {
       var oldDebt = /老货款|旧账|老账/.test(terms + " " + notes);
       var checkNo = cols.checkNo != null ? cellStr(row[cols.checkNo]) : "";
       if (checkNo === "0") checkNo = ""; // the ledger uses a bare 0 as "none"
+      // Se il file dice quando e' stato pagato, il pagato entra datato e
+      // finisce nei conti per periodo; altrimenti resta "senza data".
+      var paidCashE = cash == null ? 0 : cash / 100;
+      var paidOtherE = other == null ? 0 : other / 100;
+      var dataPagamento = cols.payDate != null ? parseDateCell(row[cols.payDate]) : null;
+      var pagamenti = [];
+      if (dataPagamento && (paidCashE > 0 || paidOtherE > 0)) {
+        pagamenti.push({ date: dataPagamento, cash: paidCashE, other: paidOtherE });
+      }
       out.push({
         arrivalDate: parseDateCell(row[cols.arrival]),
         supplier: supplier,
         invoice: cellStr(row[cols.invoice]),
         amount: amountCents / 100,
-        paidCash: cash == null ? 0 : cash / 100,
-        paidOther: other == null ? 0 : other / 100,
+        paidCash: paidCashE,
+        paidOther: paidOtherE,
         terms: terms,
         dueDate: parseDateCell(row[cols.due]),
         notes: notes,
         oldDebt: oldDebt,
-        checkNo: checkNo
+        checkNo: checkNo,
+        payments: pagamenti
       });
     }
     return { rows: out, skipped: skipped, headerDetected: !!cols.headerDetected };
