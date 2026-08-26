@@ -204,6 +204,8 @@ const translations = {
     'excel.imported': 'Importato',
     'excel.deposit': 'Deposito',
     'excel.refund': 'Reso cliente',
+    'exp.reso': 'Reso al cliente',
+    'exp.resoPlaceholder': 'Cliente o motivo (facoltativo)',
     'excel.colArrivalDate': 'Data Arrivo',
     'excel.colNumber': 'Numero',
     'excel.colSupplier': 'Azienda/Fornitore',
@@ -775,6 +777,8 @@ const translations = {
     'excel.imported': '已导入',
     'excel.deposit': '存款',
     'excel.refund': '退款',
+    'exp.reso': '客人退钱',
+    'exp.resoPlaceholder': '客人或原因（可选）',
     'excel.colArrivalDate': '到达日期',
     'excel.colNumber': '编号',
     'excel.colSupplier': '供应商',
@@ -1149,6 +1153,7 @@ const typeKeys = [
   { itVal: 'Spesa', zhVal: '支出', key: 'exp.expense' },
   { itVal: 'Anticipo', zhVal: '借支', key: 'ant.logAdvance' },
   { itVal: 'Spesa generica', zhVal: '其他支出', key: 'exp.genericExpense' },
+  { itVal: 'Reso al cliente', zhVal: '客人退钱', key: 'exp.reso' },
 ];
 // Le entrate sono state scritte in forme diverse nel tempo: etichetta "Z" nelle
 // versioni vecchie e "TOTALE" in quelle nuove, in italiano o in cinese, con o
@@ -1200,6 +1205,12 @@ export function translateLogDesc(desc) {
         return t(tk.key) + ': ' + rest;
       }
     }
+  }
+
+  // Voci che sono solo la tipologia, senza nome dopo i due punti: un reso al
+  // cliente si registra spesso cosi', e restava non tradotto.
+  for (const tk of typeKeys) {
+    if (desc === tk.itVal || desc === tk.zhVal) return t(tk.key);
   }
 
   return desc;

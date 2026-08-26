@@ -78,7 +78,10 @@ export function registra() {
 
   pendingExpenses.forEach(e => {
     d.saldo -= e.amount;
-    const desc = e.type + ': ' + e.name + (e.note ? ' (' + e.note + ')' : '');
+    // Quando il nome coincide con la tipologia (il reso al cliente senza altro
+    // dettaglio) la riga diventerebbe "Reso al cliente: Reso al cliente".
+    const testa = e.name && e.name !== e.type ? e.type + ': ' + e.name : e.type;
+    const desc = testa + (e.note ? ' (' + e.note + ')' : '');
     const logEntry = { d: oggi, v: desc, a: -e.amount };
     if (e.fatturaNum) logEntry.fatt = e.fatturaNum;
     d.log.push(logEntry);

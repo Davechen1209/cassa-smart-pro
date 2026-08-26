@@ -562,14 +562,17 @@ body {
    SEGMENTED CONTROL
    ═══════════════════════════════════════════════════ */
 .segment-control {
-    display: flex; gap: 2px; padding: 3px;
+    /* Con cinque tipologie ("Reso al cliente" compreso) una riga sola su 390px
+       darebbe 70px a testa e le parole si taglierebbero: si va a capo. */
+    display: flex; flex-wrap: wrap; gap: 2px; padding: 3px;
     background: var(--card-sunken);
     border: 1px solid var(--hairline);
     border-radius: var(--radius-sm);
     margin-bottom: 14px;
 }
 .segment-btn {
-    flex: 1; padding: 8px 6px; border: none;
+    flex: 1 1 auto; min-width: calc(33.33% - 2px);
+    padding: 8px 6px; border: none;
     border-radius: 9px; background: none;
     font-size: 13px; font-weight: 600; color: var(--gray);
     cursor: pointer;
@@ -611,7 +614,10 @@ body {
     transition: max-height 0.3s ease, opacity var(--duration-fast) ease;
     margin-bottom: 0;
 }
-.free-name-wrap.open { max-height: 70px; opacity: 1; margin-bottom: 12px; }
+/* L'etichetta del campo galleggia 8px sopra il bordo, ma il contenitore ha
+   overflow:hidden per l'animazione: la tagliava a meta'. Con lo spazio in
+   cima ci sta dentro tutta. */
+.free-name-wrap.open { max-height: 84px; opacity: 1; margin-bottom: 12px; padding-top: 10px; }
 
 /* ═══════════════════════════════════════════════════
    RUBRICA
