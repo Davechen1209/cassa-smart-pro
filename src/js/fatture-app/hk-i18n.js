@@ -70,6 +70,8 @@ export const I18N = (function () {
     "footer.totals": "{n} movimenti · Importo {a} · Pagato {p} · Residuo {r}",
     "footer.suppliers": "{n} fornitori · Importo {a} · Pagato {p} · Residuo {r}",
 
+    "pay.dateLabel": "Data pagamento",
+    "pay.dateHelp": "Vale per quanto registri adesso.",
     "pay.title": "Registra pagamento",
     "pay.remaining": "Residuo",
     "pay.amount": "Importo",
@@ -322,6 +324,8 @@ export const I18N = (function () {
     "footer.totals": "{n}条 · 金额{a} · 已付{p} · 未付{r}",
     "footer.suppliers": "{n}家公司 · 金额{a} · 已付{p} · 未付{r}",
 
+    "pay.dateLabel": "付款日期",
+    "pay.dateHelp": "适用于此次登记的金额。",
     "pay.title": "登记付款",
     "pay.remaining": "未付",
     "pay.amount": "金额",

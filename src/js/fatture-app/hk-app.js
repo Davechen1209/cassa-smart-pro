@@ -506,6 +506,8 @@ export const FattureApp = (function () {
       '<div class="gpay-list">' + rows + "</div>" +
       '<div class="gpay-total"><span>' + esc(t("gpay.total")) + "</span><span>" + esc(formatMoney(total)) + "</span></div>" +
       '<div class="gpay-fields">' +
+      '<div class="form-field" style="margin-top:12px"><label for="gpayPayDate">' + esc(t("pay.dateLabel")) + "</label>" +
+      '<input type="date" id="gpayPayDate" value="' + esc(TODAY) + '"></div>' +
       '<div class="form-field" style="margin-top:12px"><label for="gpayCheckNo">' + esc(t("gpay.checkNo")) + "</label>" +
       '<input type="text" id="gpayCheckNo" autocomplete="off"></div>' +
       '<div class="form-field" style="margin-top:12px"><label for="gpayDue">' + esc(t("gpay.newDue")) + "</label>" +
@@ -554,6 +556,8 @@ export const FattureApp = (function () {
       if (warn) warn.textContent = t("gpay.deferNeed");
       return;
     }
+    var payDateEl = document.getElementById("gpayPayDate");
+    var dataPag = payDateEl && S.isValidISO(payDateEl.value) ? payDateEl.value : TODAY;
     var snapshots = [];
     var paidTotal = 0, count = 0, cashTotal = 0, otherTotal = 0;
     groupPay.ids.forEach(function (id) {
@@ -561,12 +565,13 @@ export const FattureApp = (function () {
       if (!rec) return;
       var d = decorate(rec);
       if (d.unpaid <= 0) return;
-      snapshots.push({ id: id, paidCash: rec.paidCash, paidOther: rec.paidOther, checkNo: rec.checkNo, dueDate: rec.dueDate });
+      snapshots.push({ id: id, paidCash: rec.paidCash, paidOther: rec.paidOther, checkNo: rec.checkNo, dueDate: rec.dueDate, payments: S.normalizePayments(rec.payments) });
       var upd = {};
       for (var k in rec) upd[k] = rec[k];
       if (method === "settle") {
-        if (inferPayMethod(rec) === "cash") { upd.paidCash = (S.toCents(rec.paidCash) + d.unpaid) / 100; cashTotal += d.unpaid; }
-        else { upd.paidOther = (S.toCents(rec.paidOther) + d.unpaid) / 100; otherTotal += d.unpaid; }
+        var metodo = inferPayMethod(rec);
+        upd = S.conPagamento(rec, dataPag, d.unpaid, metodo);
+        if (metodo === "cash") cashTotal += d.unpaid; else otherTotal += d.unpaid;
       }
       if (newDue) upd.dueDate = newDue;
       upd.checkNo = appendCheckNo(rec.checkNo, checkNo);
@@ -593,6 +598,7 @@ export const FattureApp = (function () {
           var u = {};
           for (var k in cur) u[k] = cur[k];
           u.paidCash = s.paidCash; u.paidOther = s.paidOther; u.checkNo = s.checkNo; u.dueDate = s.dueDate;
+          u.payments = s.payments;
           S.updateRecord(s.id, u);
         });
         render();
@@ -1278,6 +1284,9 @@ export const FattureApp = (function () {
       (S.toCents(r.amount) > 0 && S.toCents(r.paidCash) + S.toCents(r.paidOther) >= S.toCents(r.amount) ? " checked" : "") + '>' +
       '<div><label for="fPaidFull" style="font-weight:600">' + esc(t("form.paidFull")) + '</label>' +
       '<div class="help">' + esc(t("form.paidFullHelp")) + "</div></div></div>" +
+      '<div class="form-field"><label for="fPayDate">' + esc(t("pay.dateLabel")) + "</label>" +
+      '<input type="date" id="fPayDate" value="' + esc(ultimoPagamentoISO(r) || TODAY) + '">' +
+      '<span class="hint">' + esc(t("pay.dateHelp")) + "</span></div>" +
       '<div class="form-field"><label for="fCheckNo">' + esc(t("form.checkNo")) + "</label>" +
       '<input type="text" id="fCheckNo" value="' + esc(r.checkNo || "") + '" autocomplete="off"></div>' +
       '<div class="residuo-line" id="fResiduo"></div>' +
@@ -1376,6 +1385,11 @@ export const FattureApp = (function () {
 
   /* payments (in cents) resulting from the "already paid" checkbox:
      checked = fully paid; unchecked keeps existing partial payments */
+  function ultimoPagamentoISO(rec) {
+    var lista = S.normalizePayments(rec && rec.payments);
+    return lista.length ? lista[lista.length - 1].date : null;
+  }
+
   function formPaymentsCents(amountC) {
     var prev = form && form.mode === "edit" ? S.getRecord(form.id) : null;
     var prevCash = prev ? S.toCents(prev.paidCash) : 0;
@@ -1431,6 +1445,14 @@ export const FattureApp = (function () {
     var other = pays.other;
     var arrival = document.getElementById("fArrival").value;
     var due = document.getElementById("fDue").value;
+    // updateRecord sostituisce il record: senza riportare qui i pagamenti
+    // datati, ogni salvataggio del modulo li cancellerebbe.
+    var prevRec = form.mode === "edit" ? S.getRecord(form.id) : null;
+    var prevPagamenti = prevRec ? S.normalizePayments(prevRec.payments) : [];
+    var elPayDate = document.getElementById("fPayDate");
+    var dataPag = elPayDate && S.isValidISO(elPayDate.value) ? elPayDate.value : TODAY;
+    var deltaCash = cash - (prevRec ? S.toCents(prevRec.paidCash) : 0);
+    var pagamenti = S.riconciliaPagamenti(prevPagamenti, cash + other, dataPag, deltaCash > 0 ? "cash" : "other");
     return {
       supplier: supplier,
       arrivalDate: S.isValidISO(arrival) ? arrival : null,
@@ -1442,7 +1464,8 @@ export const FattureApp = (function () {
       dueDate: S.isValidISO(due) ? due : null,
       notes: document.getElementById("fNotes").value.trim(),
       oldDebt: form.mode === "edit" && S.getRecord(form.id) ? !!S.getRecord(form.id).oldDebt : false,
-      checkNo: document.getElementById("fCheckNo").value.trim()
+      checkNo: document.getElementById("fCheckNo").value.trim(),
+      payments: pagamenti
     };
   }
 
@@ -1529,6 +1552,8 @@ export const FattureApp = (function () {
       '<span class="resid">' + esc(t("pay.remaining")) + ": " + esc(formatMoney(d.unpaid)) + "</span></div>" +
       '<input type="text" class="pay-amount" id="payAmount" inputmode="decimal" value="' + esc(formatAmountInput(d.unpaid)) + '">' +
       '<div class="pay-warn" id="payWarn"></div>' +
+      '<div class="form-field" style="margin-top:10px"><label for="payDate">' + esc(t("pay.dateLabel")) + "</label>" +
+      '<input type="date" id="payDate" value="' + esc(TODAY) + '"></div>' +
       '<div class="form-field" style="margin-top:10px"><label for="payCheckNo">' + esc(t("gpay.checkNo")) + "</label>" +
       '<input type="text" id="payCheckNo" autocomplete="off"></div>' +
       '<div class="pay-methods">' +
@@ -1560,11 +1585,11 @@ export const FattureApp = (function () {
     var rec = S.getRecord(payState.id);
     if (!rec) { closeModal(); return; }
     var prevCash = rec.paidCash, prevOther = rec.paidOther, prevCheckNo = rec.checkNo;
+    var prevPayments = S.normalizePayments(rec.payments);
     var payCheckEl = document.getElementById("payCheckNo");
-    var upd = {};
-    for (var k in rec) upd[k] = rec[k];
-    if (method === "cash") upd.paidCash = (S.toCents(rec.paidCash) + cents) / 100;
-    else upd.paidOther = (S.toCents(rec.paidOther) + cents) / 100;
+    var payDateEl = document.getElementById("payDate");
+    var dataPag = payDateEl && S.isValidISO(payDateEl.value) ? payDateEl.value : TODAY;
+    var upd = S.conPagamento(rec, dataPag, cents, method);
     upd.checkNo = appendCheckNo(rec.checkNo, payCheckEl ? payCheckEl.value.trim() : "");
     S.updateRecord(rec.id, upd);
     flashId = rec.id;
@@ -1576,6 +1601,7 @@ export const FattureApp = (function () {
         var u = {};
         for (var k2 in cur) u[k2] = cur[k2];
         u.paidCash = prevCash; u.paidOther = prevOther; u.checkNo = prevCheckNo;
+        u.payments = prevPayments;
         S.updateRecord(id, u);
         render();
       });

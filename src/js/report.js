@@ -256,8 +256,22 @@ function getFattureData(r) {
     .sort((a, b) => b[1].totale - a[1].totale)
     .slice(0, 5);
 
+  // Pagato nel periodo: adesso i pagamenti portano una data. Quello registrato
+  // prima di questa versione (o arrivato da un import) non ce l'ha: resta
+  // fuori dal conto del periodo e viene detto a parte, cosi' i numeri tornano
+  // senza attribuire a un mese soldi che potrebbero essere di un altro.
+  let pagatoNelPeriodo = 0;
+  let pagatoSenzaData = 0;
+  tutte.forEach(x => {
+    pagatoNelPeriodo += HkStore.paidInRangeCents(x, daISO, aISO) / 100;
+    pagatoSenzaData += (HkStore.recCents(x).paid - HkStore.paidDatedCents(x)) / 100;
+  });
+  const pagatoPrec = tutte.reduce(
+    (s, x) => s + HkStore.paidInRangeCents(x, toISODate(r.prevFrom), toISODate(r.prevTo)) / 100, 0);
+
   return {
     conArchivio: tutte.length > 0,
+    pagato: { periodo: pagatoNelPeriodo, precedente: pagatoPrec, senzaData: pagatoSenzaData },
     arrivate: { n: arrivate.length, totale: sommaEuro(arrivate, 'amount'), residuo: sommaEuro(arrivate, 'unpaid') },
     arrivatePrecTotale: sommaEuro(arrivatePrec, 'amount'),
     inScadenza: { n: inScadenza.length, residuo: sommaEuro(inScadenza, 'unpaid') },
@@ -550,6 +564,12 @@ function renderFatture(data) {
           <div class="report-sum-note">${nFatture(f.arrivate.n)}</div>
           ${deltaHtml(f.arrivate.totale, f.arrivatePrecTotale, null)}
         </div>
+        <div class="report-sum-card green">
+          <div class="report-sum-label">${t('report.fattPagato')}</div>
+          <div class="report-sum-value">${fmtShort(f.pagato.periodo)}</div>
+          <div class="report-sum-note">${t('report.fattNelPeriodo')}</div>
+          ${deltaHtml(f.pagato.periodo, f.pagato.precedente, null)}
+        </div>
         <div class="report-sum-card orange">
           <div class="report-sum-label">${t('report.fattDaPagare')}</div>
           <div class="report-sum-value">${fmtShort(f.aperte.residuo)}</div>
@@ -570,6 +590,11 @@ function renderFatture(data) {
           <span>${t('report.fattResiduoArrivate')}</span>
           <strong>${fmtEuro(f.arrivate.residuo)}</strong>
         </div>
+        ${f.pagato.senzaData > 0.005 ? `
+        <div class="report-fatt-riga">
+          <span>${t('report.fattSenzaData')}</span>
+          <strong>${fmtEuro(f.pagato.senzaData)}</strong>
+        </div>` : ''}
       </div>
       ${barre ? `<div class="report-section-subtitle">${t('report.fattTopFornitori')}</div><div class="report-fatt-fornitori">${barre}</div>` : ''}
       <div class="report-fatt-nota">${t('report.fattNota')}</div>

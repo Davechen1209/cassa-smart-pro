@@ -84,6 +84,20 @@ function buildPrintArea(year, month) {
     .sort((a, b) => String(a.arrivalDate).localeCompare(String(b.arrivalDate)));
   const totFatture = fattureMese.reduce((s2, r) => s2 + euro(HkStore.recCents(r).amount), 0);
   const residuoMese = fattureMese.reduce((s2, r) => s2 + euro(HkStore.recCents(r).unpaid), 0);
+  // Pagamenti del mese: ora i pagamenti portano una data, quindi si possono
+  // elencare. Quelli senza data (registrati prima o importati) restano fuori.
+  const primoDelMese = curMonthKey + '-01';
+  const ultimoDelMese = curMonthKey + '-31';
+  const pagamentiMese = [];
+  HkStore.records().forEach(r => {
+    HkStore.normalizePayments(r.payments).forEach(p => {
+      if (p.date < primoDelMese || p.date > ultimoDelMese) return;
+      pagamentiMese.push({ data: p.date, fornitore: r.supplier, fattura: r.invoice, importo: p.cash + p.other });
+    });
+  });
+  pagamentiMese.sort((a, b) => a.data.localeCompare(b.data));
+  const totPagamentiMese = pagamentiMese.reduce((s2, p) => s2 + p.importo, 0);
+
   const scadute = HkStore.records()
     .filter(r => HkStore.computeStatus(r, oggiISO) === 'overdue')
     .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
@@ -112,6 +126,7 @@ function buildPrintArea(year, month) {
           <tr><td>${t('day.shareUscite')}</td><td class="print-amount negative">${fmt(totalExpenses)}</td></tr>
           <tr class="print-total-row"><td>${t('stats.net')} (${t('report.nettoFormula')})</td><td class="print-amount ${net >= 0 ? 'positive' : 'negative'}">${fmt(net)}</td></tr>
           ${fattureMese.length > 0 ? `<tr><td>${t('report.fattArrivate')} (${fattureMese.length})</td><td class="print-amount">${fmt(totFatture)}</td></tr>` : ''}
+          ${totPagamentiMese > 0 ? `<tr><td>${t('pdf.fattPagamenti')}</td><td class="print-amount">${fmt(totPagamentiMese)}</td></tr>` : ''}
           ${residuoScaduto > 0 ? `<tr><td>${t('report.fattScadute')} · ${t('report.fattAOggi')}</td><td class="print-amount negative">${fmt(residuoScaduto)}</td></tr>` : ''}
         </table>
       </div>
@@ -168,6 +183,29 @@ function buildPrintArea(year, month) {
             <td class="print-amount">${fmt(totFatture - residuoMese)}</td>
             <td class="print-amount">${fmt(residuoMese)}</td>
             <td></td>
+          </tr></tfoot>
+        </table>
+      </div>` : ''}
+
+      ${pagamentiMese.length > 0 ? `
+      <div class="print-section">
+        <div class="print-section-title">${t('pdf.fattPagamenti')} (${pagamentiMese.length})</div>
+        <table class="print-table">
+          <thead><tr>
+            <th>${t('excel.colDate')}</th><th>${t('excel.colSupplier')}</th><th>${t('excel.colNumber')}</th>
+            <th class="print-amount">${t('excel.colAmount')}</th>
+          </tr></thead>
+          <tbody>
+            ${pagamentiMese.map(p => `<tr>
+              <td>${dataIT(p.data)}</td>
+              <td>${escapeHtml(p.fornitore)}</td>
+              <td>${escapeHtml(p.fattura)}</td>
+              <td class="print-amount">${fmt(p.importo)}</td>
+            </tr>`).join('')}
+          </tbody>
+          <tfoot><tr class="print-total-row">
+            <td colspan="3">${t('report.total')}</td>
+            <td class="print-amount">${fmt(totPagamentiMese)}</td>
           </tr></tfoot>
         </table>
       </div>` : ''}

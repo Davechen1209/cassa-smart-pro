@@ -182,6 +182,91 @@ export const Store = (function () {
     return { records: [], meta: { schemaVersion: 1, nextId: 1, lang: null, seedBannerCount: null, bankUrl: DEFAULT_BANK_URL } };
   }
 
+  /* I pagamenti datati: [{ date: "YYYY-MM-DD", cash, other }].
+     paidCash/paidOther restano i totali che comandano — tutto il resto del
+     programma li legge — e questi sono il dettaglio di quando sono entrati.
+     Un archivio che viene da prima non ha date: quella parte di pagato resta
+     "senza data" ed e' la differenza fra i totali e la somma di qui, cosi'
+     i conti tornano sempre senza inventare un giorno che nessuno ha scritto. */
+  function normalizePayments(list) {
+    if (!Array.isArray(list)) return [];
+    var out = [];
+    list.forEach(function (p) {
+      if (!p || typeof p !== "object") return;
+      if (!isValidISO(p.date)) return;
+      var cash = toCents(p.cash || 0);
+      var other = toCents(p.other || 0);
+      if (cash === 0 && other === 0) return;
+      out.push({ date: p.date, cash: fromCents(cash), other: fromCents(other) });
+    });
+    out.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    return out;
+  }
+
+  /* Quanto del pagato porta una data. */
+  function paidDatedCents(rec) {
+    return normalizePayments(rec && rec.payments).reduce(function (s, p) {
+      return s + toCents(p.cash) + toCents(p.other);
+    }, 0);
+  }
+
+  /* Pagato in un intervallo, per i report. */
+  function paidInRangeCents(rec, fromISO, toISO) {
+    return normalizePayments(rec && rec.payments).reduce(function (s, p) {
+      if (p.date < fromISO || p.date > toISO) return s;
+      return s + toCents(p.cash) + toCents(p.other);
+    }, 0);
+  }
+
+  /* Somma un pagamento datato al record, tenendo allineati i totali. */
+  function conPagamento(rec, dateISO, cents, metodo) {
+    var upd = {};
+    for (var k in rec) upd[k] = rec[k];
+    if (metodo === "cash") upd.paidCash = (toCents(rec.paidCash) + cents) / 100;
+    else upd.paidOther = (toCents(rec.paidOther) + cents) / 100;
+    var lista = normalizePayments(rec.payments).slice();
+    if (isValidISO(dateISO) && cents > 0) {
+      lista.push({
+        date: dateISO,
+        cash: metodo === "cash" ? cents / 100 : 0,
+        other: metodo === "cash" ? 0 : cents / 100
+      });
+    }
+    upd.payments = lista;
+    return upd;
+  }
+
+  /* Il modulo cambia i totali a mano: qui il dettaglio datato viene riportato
+     dentro i totali nuovi. Se il pagato cresce, la differenza diventa un
+     pagamento con la data indicata; se cala, si tagliano i piu' recenti. */
+  function riconciliaPagamenti(payments, nuovoPagatoCents, dataDelta, metodo) {
+    var lista = normalizePayments(payments).slice();
+    var datati = lista.reduce(function (s, p) { return s + toCents(p.cash) + toCents(p.other); }, 0);
+    var diff = nuovoPagatoCents - datati;
+    if (diff > 0) {
+      if (isValidISO(dataDelta)) {
+        lista.push({
+          date: dataDelta,
+          cash: metodo === "cash" ? diff / 100 : 0,
+          other: metodo === "cash" ? 0 : diff / 100
+        });
+      }
+      return normalizePayments(lista);
+    }
+    // il pagato e' sceso sotto quanto risulta datato: si tolgono gli ultimi
+    var daTogliere = -diff;
+    for (var i = lista.length - 1; i >= 0 && daTogliere > 0; i--) {
+      var pc = toCents(lista[i].cash), po = toCents(lista[i].other);
+      var tot = pc + po;
+      if (tot <= daTogliere) { daTogliere -= tot; lista.splice(i, 1); continue; }
+      var resta = tot - daTogliere;
+      var quotaCash = Math.min(pc, resta);
+      lista[i] = { date: lista[i].date, cash: quotaCash / 100, other: (resta - quotaCash) / 100 };
+      daTogliere = 0;
+    }
+    return normalizePayments(lista);
+  }
+
   function normalizeRecord(r, idNum) {
     return {
       id: typeof r.id === "string" && /^r\d{4,}$/.test(r.id) ? r.id : ("r" + String(idNum).padStart(4, "0")),
@@ -196,6 +281,7 @@ export const Store = (function () {
       notes: String(r.notes == null ? "" : r.notes),
       oldDebt: !!r.oldDebt,
       checkNo: String(r.checkNo == null ? "" : r.checkNo),
+      payments: normalizePayments(r.payments),
       createdAt: typeof r.createdAt === "string" ? r.createdAt : todayISO()
     };
   }
@@ -427,6 +513,11 @@ export const Store = (function () {
     fromCents: fromCents,
     parseAmount: parseAmount,
     recCents: recCents,
+    normalizePayments: normalizePayments,
+    paidDatedCents: paidDatedCents,
+    paidInRangeCents: paidInRangeCents,
+    conPagamento: conPagamento,
+    riconciliaPagamenti: riconciliaPagamenti,
     computeStatus: computeStatus,
     dedupKey: dedupKey,
     todayISO: todayISO,
