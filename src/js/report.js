@@ -150,8 +150,12 @@ function accumulate(bucket, l) {
   }
 }
 
+// Il netto e' quello della cassa, non del giro d'affari: in cassa entrano i
+// contanti, il POS va in banca, e le uscite si pagano tutte di tasca. E'
+// anche l'unico netto che torna col saldo, che si muove di soli contanti
+// (casse.js: d.saldo += c.cash).
 function withNet(bucket) {
-  return { ...bucket, net: bucket.income - bucket.expense };
+  return { ...bucket, net: bucket.cash - bucket.expense };
 }
 
 function totals(logs) {
@@ -391,6 +395,7 @@ function renderSummary(data) {
       <div class="report-sum-card ${now.net >= 0 ? 'blue' : 'orange'}">
         <div class="report-sum-label">${t('stats.net')}</div>
         <div class="report-sum-value">${now.net >= 0 ? '+' : '−'}${fmtShort(Math.abs(now.net))}</div>
+        <div class="report-sum-note">${t('report.nettoFormula')}</div>
         ${deltaHtml(now.net, prev.net, true)}
       </div>
     </div>
@@ -471,8 +476,12 @@ function renderTrend(data) {
   // chiede 39: le etichette uscivano tutte tagliate a meta'. Se ne scrive
   // una ogni tanto, sempre compresa l'ultima, e quelle scritte si leggono.
   const passo = Math.max(1, Math.ceil(series.length / 5));
+  const ultima = series.length - 1;
+  // L'ultima colonna e' sempre etichettata, ma se quella "a passo" le finisce
+  // accanto le due scritte si toccano: in quel caso vince l'ultima.
+  const conEtichettaA = i => (i % passo === 0 && ultima - i >= 2) || i === ultima;
   const bars = series.map((s, i) => {
-    const conEtichetta = i % passo === 0 || i === series.length - 1;
+    const conEtichetta = conEtichettaA(i);
     return `
     <div class="report-bar-group">
       <div class="report-bars">

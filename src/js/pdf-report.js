@@ -1,7 +1,7 @@
 // ─── Monthly PDF Report ───
 
 import { d } from './state.js';
-import { t, getLang, translateLogDesc } from './i18n.js';
+import { t, getLang, translateLogDesc, parseIncasso } from './i18n.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
 import { escapeHtml } from './modals.js';
 
@@ -45,9 +45,18 @@ function buildPrintArea(year, month) {
 
   const income = monthLogs.filter(l => l.a >= 0);
   const expenses = monthLogs.filter(l => l.a < 0);
-  const totalIncome = income.reduce((s, l) => s + l.a, 0);
+  // Come nella tab Report: il registro salva i soli contanti, il totale Z e il
+  // POS stanno nella descrizione. Prima qui "Totale incassi" sommava gli
+  // importi di riga, cioe' i contanti: stessa etichetta della tab, numero
+  // diverso, per lo stesso mese.
+  const perIncasso = l => { const inc = parseIncasso(l.v); return inc || { totale: l.a, pos: 0, cash: l.a }; };
+  const totalIncome = income.reduce((s, l) => s + perIncasso(l).totale, 0);
+  const totalCash = income.reduce((s, l) => s + perIncasso(l).cash, 0);
+  const totalPos = income.reduce((s, l) => s + perIncasso(l).pos, 0);
   const totalExpenses = expenses.reduce((s, l) => s + Math.abs(l.a), 0);
-  const net = totalIncome - totalExpenses;
+  // In cassa entrano i contanti e le uscite si pagano di tasca: il netto e'
+  // quello, ed e' l'unico che torna col saldo.
+  const net = totalCash - totalExpenses;
 
   // Category breakdown
   const catMap = {};
@@ -98,8 +107,10 @@ function buildPrintArea(year, month) {
         <div class="print-section-title">${t('pdf.summary')}</div>
         <table class="print-table">
           <tr><td>${t('report.totalTakings')}</td><td class="print-amount positive">${fmt(totalIncome)}</td></tr>
+          <tr><td>${t('report.cash')}</td><td class="print-amount">${fmt(totalCash)}</td></tr>
+          <tr><td>${t('excel.colPos')}</td><td class="print-amount">${fmt(totalPos)}</td></tr>
           <tr><td>${t('day.shareUscite')}</td><td class="print-amount negative">${fmt(totalExpenses)}</td></tr>
-          <tr class="print-total-row"><td>${t('stats.net')}</td><td class="print-amount ${net >= 0 ? 'positive' : 'negative'}">${fmt(net)}</td></tr>
+          <tr class="print-total-row"><td>${t('stats.net')} (${t('report.nettoFormula')})</td><td class="print-amount ${net >= 0 ? 'positive' : 'negative'}">${fmt(net)}</td></tr>
           ${fattureMese.length > 0 ? `<tr><td>${t('report.fattArrivate')} (${fattureMese.length})</td><td class="print-amount">${fmt(totFatture)}</td></tr>` : ''}
           ${residuoScaduto > 0 ? `<tr><td>${t('report.fattScadute')} · ${t('report.fattAOggi')}</td><td class="print-amount negative">${fmt(residuoScaduto)}</td></tr>` : ''}
         </table>
