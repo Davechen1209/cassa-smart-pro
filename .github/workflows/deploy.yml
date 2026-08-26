@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Pubblicazione a mano, dal pulsante "Run workflow" nella scheda Actions.
+  # Serve quando una run fallisce senza che il build parta (nessun runner la
+  # prende): senza questo, l'unico modo per ripubblicare lo stesso codice era
+  # spingere un altro commit.
+  workflow_dispatch:
 
 permissions:
   contents: read
