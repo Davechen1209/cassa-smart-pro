@@ -561,27 +561,42 @@ body {
 /* ═══════════════════════════════════════════════════
    SEGMENTED CONTROL
    ═══════════════════════════════════════════════════ */
+/* ─── Tipologie della spesa ───
+   Con cinque voci, dividere la larghezza in parti uguali non funziona: o le
+   parole si tagliano, o si va a capo e la seconda riga resta spaiata. Qui la
+   riga e' una sola e scorre, come i periodi del Report: ogni pastiglia e'
+   larga quanto la sua parola, e la sfumatura a destra dice che ce n'e' ancora. */
 .segment-control {
-    /* Con cinque tipologie ("Reso al cliente" compreso) una riga sola su 390px
-       darebbe 70px a testa e le parole si taglierebbero: si va a capo. */
-    display: flex; flex-wrap: wrap; gap: 2px; padding: 3px;
-    background: var(--card-sunken);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-sm);
-    margin-bottom: 14px;
+    display: flex; flex-wrap: nowrap; gap: 6px;
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 0 2px;
+    background: none; border: none;
+    /* A destra 24px in piu' del margine: cosi' a fine scorrimento l'ultima
+       pastiglia esce dalla sfumatura invece di sbiadire a meta'. */
+    margin: 0 -16px 14px; padding-left: 16px; padding-right: 40px;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
 }
+.segment-control::-webkit-scrollbar { display: none; }
 .segment-btn {
-    flex: 1 1 auto; min-width: calc(33.33% - 2px);
-    padding: 8px 6px; border: none;
-    border-radius: 9px; background: none;
-    font-size: 13px; font-weight: 600; color: var(--gray);
+    flex: 0 0 auto;
+    min-height: 44px; padding: 0 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-pill);
+    background: var(--card-sunken);
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    white-space: nowrap;
     cursor: pointer;
-    transition: all 0.25s var(--ease-out-quart);
+    transition: background var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
     text-align: center;
 }
+/* Scelta = pastiglia piena, come i filtri altrove nell'app. */
 .segment-btn.active {
-    background: var(--card); color: var(--text);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.04);
+    background: var(--accent); color: var(--on-accent);
+    border-color: var(--accent);
     font-weight: 700;
 }
 .segment-btn:active { transform: scale(0.96); }

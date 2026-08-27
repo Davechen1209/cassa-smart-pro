@@ -55,6 +55,20 @@ export function updateExpSegments() {
   const btns = document.querySelectorAll('#exp-segments .segment-btn');
   const cats = ['fornitori', 'stipendi', 'abit', 'libera', 'reso'];
   btns.forEach((btn, i) => btn.classList.toggle('active', cats[i] === expCat));
+  // La riga scorre: se la tipologia scelta e' oltre il bordo va portata in
+  // vista, altrimenti si apre la scheda senza vedere qual e' selezionata.
+  // scrollIntoView la porta a filo del bordo destro, cioe' dentro la
+  // sfumatura: si scorre di quei pochi pixel in piu' perche' ne esca.
+  const scelta = [...btns].find(b => b.classList.contains('active'));
+  const riga = document.getElementById('exp-segments');
+  if (scelta && riga && scelta.scrollIntoView) {
+    scelta.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const SFUMATURA = 24;
+    const rr = riga.getBoundingClientRect();
+    const rs = scelta.getBoundingClientRect();
+    const avanzo = rr.right - rs.right;
+    if (avanzo < SFUMATURA) riga.scrollLeft += SFUMATURA - avanzo;
+  }
 
   // Render custom category chips
   const customContainer = document.getElementById('exp-custom-cats');
