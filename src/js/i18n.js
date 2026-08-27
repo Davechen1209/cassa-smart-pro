@@ -47,6 +47,13 @@ const translations = {
     'report.dailyTrend': 'Andamento giornaliero',
     'report.averages': 'Medie e giorni',
     'report.nettoFormula': 'contanti − uscite',
+    'report.depTitolo': 'Depositi in banca',
+    'report.depNota': "Non sono una spesa: spostano i contanti dalla cassa alla banca, percio' restano fuori da uscite e netto.",
+    'report.depMovimenti': '{n} versamenti',
+    'report.depMovimentiUno': '1 versamento',
+    'report.depRestano': 'Restano in cassa',
+    'report.depRestanoFormula': 'netto − depositi',
+    'report.depVersato': 'Versato',
     'pdf.fattPagato': 'Pagato',
     'pdf.fattPagamenti': 'Pagamenti alle fatture nel mese',
     'pdf.fattResiduo': 'Residuo',
@@ -301,6 +308,19 @@ const translations = {
     'exp.fornitore': 'Fornitore',
     'exp.stipendio': 'Stipendio',
 
+    // Depositi in banca
+    'dep.title': 'Depositi in banca',
+    'dep.add': 'Aggiungi Deposito',
+    'dep.sheetTitle': 'Deposito in banca',
+    'dep.log': 'Deposito in banca',
+    'dep.note': 'Banca o nota (opzionale)',
+    'dep.notePlaceholder': 'Es. versamento del mattino',
+    'dep.noPending': 'Nessun deposito aggiunto',
+    'dep.total': 'Totale depositi',
+    'dep.added': ' messo in deposito',
+    'dep.removed': ' rimosso',
+    'dep.hint': 'Contanti portati in banca: escono dalla cassa ma non sono una spesa.',
+
     // Rubrica
     'rub.fornitori': 'Fornitori',
     'rub.stipendi': 'Stipendi',
@@ -354,6 +374,7 @@ const translations = {
     'day.yesterdayBalance': 'Saldo ieri',
     'day.shareIncassi': 'Incassi',
     'day.shareUscite': 'Uscite',
+    'day.shareDepositi': 'Depositi in banca',
     'day.shareTotalCash': 'Totale contanti',
     'day.shareRemaining': 'Rimasto in cassa',
     'day.deleteTitle': 'Elimina Movimento',
@@ -537,6 +558,7 @@ const translations = {
     'pdf.print': 'Stampa / PDF',
     'pdf.summary': 'Riepilogo del mese',
     'pdf.expenseCategories': 'Uscite per categoria',
+    'pdf.depositi': 'Depositi in banca',
     'pdf.invoices': 'Fatture del mese',
     'pdf.status': 'Stato',
     'pdf.generated': 'Generato il',
@@ -620,6 +642,13 @@ const translations = {
     'report.dailyTrend': '每日走势',
     'report.averages': '平均值与单日',
     'report.nettoFormula': '现金 − 支出',
+    'report.depTitolo': '银行存款',
+    'report.depNota': '存款不是支出：只是把现金从收银台转到银行，所以不计入支出和净额。',
+    'report.depMovimenti': '{n} 笔',
+    'report.depMovimentiUno': '1 笔',
+    'report.depRestano': '留在收银台',
+    'report.depRestanoFormula': '净额 − 存款',
+    'report.depVersato': '存入',
     'pdf.fattPagato': '已付',
     'pdf.fattPagamenti': '本月发票付款',
     'pdf.fattResiduo': '未付余额',
@@ -874,6 +903,19 @@ const translations = {
     'exp.fornitore': '供应商',
     'exp.stipendio': '工资',
 
+    // Depositi in banca
+    'dep.title': '银行存款',
+    'dep.add': '添加存款',
+    'dep.sheetTitle': '银行存款',
+    'dep.log': '银行存款',
+    'dep.note': '银行或备注（可选）',
+    'dep.notePlaceholder': '例如：早上存款',
+    'dep.noPending': '暂无存款',
+    'dep.total': '存款合计',
+    'dep.added': '已存入',
+    'dep.removed': '已移除',
+    'dep.hint': '存入银行的现金：从收银台出去，但不是支出。',
+
     // Rubrica
     'rub.fornitori': '供应商',
     'rub.stipendi': '工资',
@@ -927,6 +969,7 @@ const translations = {
     'day.yesterdayBalance': '昨日余额',
     'day.shareIncassi': '收入',
     'day.shareUscite': '支出',
+    'day.shareDepositi': '银行存款',
     'day.shareTotalCash': '现金总额',
     'day.shareRemaining': '剩余现金',
     'day.deleteTitle': '删除记录',
@@ -1108,6 +1151,7 @@ const translations = {
     'pdf.print': '打印 / PDF',
     'pdf.summary': '本月概览',
     'pdf.expenseCategories': '支出分类',
+    'pdf.depositi': '银行存款',
     'pdf.invoices': '本月账单',
     'pdf.status': '状态',
     'pdf.generated': '生成于',
@@ -1174,6 +1218,33 @@ export function parseIncasso(desc) {
   if (!isFinite(totale) || !isFinite(pos)) return null;
   return { prefix: m[1].trim(), totale, pos, cash: totale - pos };
 }
+// ─── Depositi in banca ───
+// Un deposito esce dalla cassa come un'uscita, ma non e' una spesa: i soldi
+// sono ancora nostri, solo in banca. Va riconosciuto ovunque si sommino le
+// uscite, altrimenti gonfia le spese e affossa il netto.
+// Le voci nuove portano il contrassegno `dep`; quelle vecchie e quelle
+// arrivate da un import si riconoscono dalla descrizione, nelle due lingue.
+const DEPOSITO_LABELS = ['Deposito in banca', '\u94f6\u884c\u5b58\u6b3e', 'Deposito', '\u5b58\u6b3e'];
+
+// { nota } se la descrizione e' un deposito, altrimenti null.
+export function parseDeposito(desc) {
+  const s = String(desc || '').trim();
+  for (const etichetta of DEPOSITO_LABELS) {
+    if (s === etichetta) return { nota: '' };
+    if (s.startsWith(etichetta + ' (') && s.endsWith(')')) {
+      return { nota: s.slice(etichetta.length + 2, -1) };
+    }
+  }
+  return null;
+}
+
+// Una riga del registro e' un deposito solo se toglie soldi dalla cassa: cosi'
+// un'entrata che per caso si chiamasse "Deposito" non sparisce dalle uscite.
+export function isDeposito(l) {
+  if (!l || l.a >= 0) return false;
+  return l.dep === true || parseDeposito(l.v) !== null;
+}
+
 const repayPatterns = [
   /^Rimborso anticipo:\s*(.+)$/,
   /^归还借支:\s*(.+)$/,
@@ -1181,6 +1252,10 @@ const repayPatterns = [
 
 export function translateLogDesc(desc) {
   if (!desc) return desc;
+
+  // Deposito in banca, con l'eventuale nota fra parentesi.
+  const dep = parseDeposito(desc);
+  if (dep) return t('dep.log') + (dep.nota ? ' (' + dep.nota + ')' : '');
 
   // Incasso: si riscrive nella lingua e nelle etichette correnti.
   const inc = parseIncasso(desc);

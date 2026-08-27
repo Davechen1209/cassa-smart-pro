@@ -38,6 +38,7 @@ if (!d.aziendaData) d.aziendaData = {};
 let casseList = [{ id: 1 }];
 let casseNextId = 2;
 let pendingExpenses = [];
+let pendingDeposits = [];
 let expCat = 'fornitori';
 let expSelectedVoice = null;
 let openRubriche = {};
@@ -111,13 +112,14 @@ function resetData() {
   d.customCats = [];
   d.aziendaData = {};
   pendingExpenses = [];
+  pendingDeposits = [];
   save();
 }
 
 export {
   d, save, resetData, STORAGE_KEY,
   casseList, casseNextId,
-  pendingExpenses,
+  pendingExpenses, pendingDeposits,
   expCat, expSelectedVoice,
   openRubriche,
   confirmCallback,
@@ -132,6 +134,7 @@ export {
 export function setCasseList(val) { casseList = val; }
 export function setCasseNextId(val) { casseNextId = val; }
 export function setPendingExpenses(val) { pendingExpenses = val; }
+export function setPendingDeposits(val) { pendingDeposits = val; }
 export function setExpCat(val) { expCat = val; }
 export function setExpSelectedVoice(val) { expSelectedVoice = val; }
 export function setConfirmCallback(val) { confirmCallback = val; }

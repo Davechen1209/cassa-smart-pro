@@ -1,11 +1,12 @@
 // ─── Multi-Cassa ───
 
 import {
-  d, fullSave, casseList, casseNextId, pendingExpenses, selectedDate,
+  d, fullSave, casseList, casseNextId, pendingExpenses, pendingDeposits, selectedDate,
   setCasseList, setCasseNextId
 } from './state.js';
 import { showToast } from './modals.js';
 import { renderPendingList } from './expense.js';
+import { renderPendingDeposits } from './deposit.js';
 import { t } from './i18n.js';
 import { parseImporto } from './money.js';
 import { fattureDaSpese } from './fatture-bridge.js';
@@ -62,7 +63,7 @@ export function registra() {
   const casse = getCasseData();
   const oggi = selectedDate.toLocaleDateString('it-IT');
 
-  if (casse.length === 0 && pendingExpenses.length === 0) {
+  if (casse.length === 0 && pendingExpenses.length === 0 && pendingDeposits.length === 0) {
     showToast(t('uscite.noData'), 'warn');
     return;
   }
@@ -89,6 +90,15 @@ export function registra() {
 
   });
 
+  // Il deposito toglie contanti dalla cassa come un'uscita, ma il registro lo
+  // contrassegna (dep) perche' i conti non lo scambino per una spesa: i soldi
+  // non sono usciti, sono solo in banca.
+  pendingDeposits.forEach(x => {
+    d.saldo -= x.amount;
+    const desc = t('dep.log') + (x.note ? ' (' + x.note + ')' : '');
+    d.log.push({ d: oggi, v: desc, a: -x.amount, dep: true });
+  });
+
   // Una spesa a fornitore e' una fattura pagata in contanti: compare da sola
   // nella tab Fatture, gia' saldata.
   const fattureCreate = fattureDaSpese(pendingExpenses, oggi);
@@ -99,11 +109,18 @@ export function registra() {
     messages.push(pendingExpenses.length + ' ' + t('uscite.expenses') + ': -' + totalExp.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC');
   }
 
+  if (pendingDeposits.length > 0) {
+    const totDep = pendingDeposits.reduce((s, x) => s + x.amount, 0);
+    messages.push(t('dep.title') + ': -' + totDep.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u20AC');
+  }
+
   setCasseList([{ id: 1 }]);
   setCasseNextId(2);
   renderCasse();
   pendingExpenses.length = 0;
   renderPendingList();
+  pendingDeposits.length = 0;
+  renderPendingDeposits();
 
   const btn = document.getElementById('btn-registra');
   btn.classList.add('success');

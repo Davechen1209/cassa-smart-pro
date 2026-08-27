@@ -7,9 +7,10 @@ import {
 import { showToast, showConfirm, escapeHtml } from './modals.js';
 import { formatDateDisplay, toISODate, parseDateIT, calcSaldoAtDate } from './date-utils.js';
 import { renderPendingList } from './expense.js';
+import { renderPendingDeposits } from './deposit.js';
 import { renderRubriche } from './rubrica.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
-import { t, getLang, translateLogDesc, parseIncasso } from './i18n.js';
+import { t, getLang, translateLogDesc, parseIncasso, isDeposito, parseDeposito } from './i18n.js';
 import { parseImportoOrNull } from './money.js';
 import { renderReport } from './report.js';
 import { FattureApp } from './fatture-app/hk-app.js';
@@ -68,13 +69,18 @@ export function renderDaySummary() {
 
   dayLogs.forEach((l) => {
     const isIncome = l.a >= 0;
+    // Il deposito toglie contanti come un'uscita, ma non e' una spesa: si
+    // legge subito che quei soldi sono in banca, non spesi.
+    const deposito = isDeposito(l);
+    const segno = isIncome ? 'income' : (deposito ? 'deposit' : 'expense');
+    const tinta = isIncome ? 'positive' : (deposito ? 'deposit' : 'negative');
     total += l.a;
     const realIndex = d.log.indexOf(l);
     rows += `
       <div class="day-summary-row">
-        <div class="day-summary-dot ${isIncome ? 'income' : 'expense'}"></div>
+        <div class="day-summary-dot ${segno}"></div>
         <div class="day-summary-name">${escapeHtml(translateLogDesc(l.v))}</div>
-        <div class="day-summary-amount ${isIncome ? 'positive' : 'negative'}">
+        <div class="day-summary-amount ${tinta}">
           ${isIncome ? '+' : ''}${l.a.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u20AC
         </div>
         ${editingDay ? `
@@ -136,12 +142,17 @@ function generateDayText(dateStr, dayLogs) {
   yesterday.setDate(yesterday.getDate() - 1);
   const saldoYesterday = calcSaldoAtDate(yesterday);
   const incassi = dayLogs.filter(l => l.a >= 0);
-  const uscite = dayLogs.filter(l => l.a < 0);
+  // Uscite e depositi si elencano separati: tolgono entrambi contanti dalla
+  // cassa, ma solo le prime sono soldi spesi. Il totale a fondo pagina li
+  // somma comunque, perche' e' quello che resta davvero nel cassetto.
+  const negativi = dayLogs.filter(l => l.a < 0);
+  const uscite = negativi.filter(l => !isDeposito(l));
+  const depositi = negativi.filter(l => isDeposito(l));
 
   let totalIncassi = 0;
   let totalUscite = 0;
   incassi.forEach(l => { totalIncassi += l.a; });
-  uscite.forEach(l => { totalUscite += l.a; });
+  negativi.forEach(l => { totalUscite += l.a; });
   totalIncassi = Math.round(totalIncassi * 100) / 100;
   totalUscite = Math.round(totalUscite * 100) / 100;
 
@@ -177,6 +188,15 @@ function generateDayText(dateStr, dayLogs) {
   if (uscite.length > 0) {
     lines.push('\u2501\u2501 ' + t('day.shareUscite') + ' \u2501\u2501');
     uscite.forEach(l => {
+      lines.push('- ' + fmtEur(Math.abs(l.a)) + '\u20AC  ' + translateLogDesc(l.v));
+    });
+    lines.push('');
+  }
+
+  // ━━ Depositi in banca ━━
+  if (depositi.length > 0) {
+    lines.push('\u2501\u2501 ' + t('day.shareDepositi') + ' \u2501\u2501');
+    depositi.forEach(l => {
       lines.push('- ' + fmtEur(Math.abs(l.a)) + '\u20AC  ' + translateLogDesc(l.v));
     });
     lines.push('');
@@ -300,27 +320,33 @@ export function renderHistory() {
 
     righe.forEach(({ entry: l, origIndex }) => {
       const isIncome = l.a >= 0;
+      const deposito = isDeposito(l);
       const desc = translateLogDesc(l.v);
       // "Incasso Contanti (TOTALE:850 POS:210)" e' come lo scrive la macchina:
       // andava a capo su tre righe e si leggeva come una riga di log. Il nome
       // resta corto, il dettaglio scende sotto in piccolo.
       const inc = parseIncasso(desc);
-      const nome = inc ? t('fatt.incassoCash') : desc;
+      // Stesso trattamento per il deposito: il nome resta corto e la nota
+      // ("versamento del mattino") scende sotto invece di essere troncata.
+      const dep = deposito ? parseDeposito(desc) : null;
+      const nome = inc ? t('fatt.incassoCash') : (dep ? t('dep.log') : desc);
       const dettaglio = inc
         ? `${t('excel.colTotal')} ${euro(inc.totale)} \u00B7 POS ${euro(inc.pos)}`
-        : '';
+        : (dep && dep.nota ? dep.nota : '');
       html += `
       <div class="history-item">
-        <div class="history-icon ${isIncome ? 'income' : 'expense'}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            ${isIncome ? '<path d="M12 19V5m0 0-7 7m7-7 7 7"/>' : '<path d="M12 5v14m0 0 7-7m-7 7-7-7"/>'}
+        <div class="history-icon ${isIncome ? 'income' : (deposito ? 'deposit' : 'expense')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            ${deposito && !isIncome
+              ? '<path d="M3 10h18L12 3 3 10Z"/><path d="M5 10v8m5-8v8m4-8v8m5-8v8"/><path d="M3 21h18"/>'
+              : (isIncome ? '<path d="M12 19V5m0 0-7 7m7-7 7 7"/>' : '<path d="M12 5v14m0 0 7-7m-7 7-7-7"/>')}
           </svg>
         </div>
         <div class="history-info">
           <div class="history-name">${escapeHtml(nome)}</div>
           ${dettaglio ? `<div class="history-date">${escapeHtml(dettaglio)}</div>` : ''}
         </div>
-        <div class="history-amount ${isIncome ? 'positive' : 'negative'}">
+        <div class="history-amount ${isIncome ? 'positive' : (deposito ? 'deposit' : 'negative')}">
           ${isIncome ? '+' : ''}${euro(l.a)}
         </div>
         <button class="history-delete" data-action="deleteLog" data-index="${origIndex}" data-name="${escapeHtml(nome)}" aria-label="${escapeHtml(t('history.deleteTitle'))}: ${escapeHtml(nome)}">
@@ -493,6 +519,7 @@ export function ui() {
   }
 
   renderPendingList();
+  renderPendingDeposits();
   renderRubriche();
   renderHistory();
   renderDaySummary();
@@ -551,6 +578,8 @@ export function renderDashboard() {
   let speseExtra = 0;
   d.log.forEach(l => {
     if (!l.d || l.a >= 0) return;
+    // Un deposito non e' una spesa del mese: sposta i contanti, non li consuma.
+    if (isDeposito(l)) return;
     const parts = l.d.split('/');
     if (parts.length === 3) {
       const lm = parts[2] + '-' + parts[1];

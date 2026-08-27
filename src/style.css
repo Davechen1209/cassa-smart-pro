@@ -291,6 +291,7 @@ body {
 }
 .subsection-icon.green { background: rgba(52,199,89,0.15); color: var(--green); }
 .subsection-icon.red { background: rgba(255,59,48,0.15); color: var(--red); }
+.subsection-icon.blue { background: rgba(0,122,255,0.15); color: var(--blue); }
 
 /* ═══════════════════════════════════════════════════
    INPUT FIELDS
@@ -409,12 +410,23 @@ body {
 .pending-icon.stipendi { background: var(--purple); }
 .pending-icon.abit { background: var(--blue); }
 .pending-icon.libera { background: var(--gray); }
+/* Il deposito non e' una spesa: l'icona porta il blu della cassa, non un
+   colore da uscita, e dentro ci sta un simbolo invece di una lettera. */
+.pending-icon.deposito { background: var(--blue); }
+.pending-icon.deposito svg { width: 20px; height: 20px; }
+/* Stessa ragione per le cifre: escono dalla cassa, ma non sono soldi persi. */
+.pending-item.deposito .pending-amount,
+.pending-total.deposito .pending-total-amount { color: var(--blue); }
 .pending-info { flex: 1; min-width: 0; }
 .pending-name { font-size: 15px; font-weight: 600; letter-spacing: -0.1px; }
 .pending-cat { font-size: 12px; color: var(--gray); margin-top: 2px; }
 .pending-amount { font-size: 17px; font-weight: 700; color: var(--red); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pending-remove {
+    /* 34x37: si sbagliava mira su un comando che cancella una riga. I 44px si
+       prendono anche dal margine della scheda, per non stringere l'importo. */
     background: none; border: none; padding: 8px; cursor: pointer;
+    min-width: 44px; min-height: 44px; margin-right: -8px;
+    display: flex; align-items: center; justify-content: center;
     opacity: 0.4; transition: opacity 0.15s;
 }
 .pending-remove:active { opacity: 1; }
@@ -523,6 +535,13 @@ body {
     font-size: 18px; font-weight: 800; text-align: center;
     margin-bottom: 22px; letter-spacing: -0.4px;
 }
+/* Una riga che spiega la scheda, non un avviso: colore del testo secondario,
+   niente sfondo che rubi l'occhio ai campi. */
+.sheet-note {
+    font-size: 12.5px; line-height: 1.45; color: var(--text2);
+    background: var(--card-sunken); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 4px;
+}
 .sheet-actions, .modal-actions { display: flex; gap: 10px; margin-top: 12px; }
 .sheet-actions .btn-sm, .modal-actions .btn-sm { flex: 1; text-align: center; }
 
@@ -550,11 +569,21 @@ body {
     margin-bottom: 20px; flex-wrap: wrap;
 }
 .quick-amt {
-    padding: 8px 16px; border-radius: var(--radius-pill);
+    /* Erano alte 33px: il comando piu' toccato della scheda, e il piu' piccolo.
+       Ora come le pastiglie delle tipologie, appena sotto. */
+    min-height: 44px; padding: 8px 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-pill);
     background: var(--gray6); border: 1px solid var(--separator);
     font-size: 13px; font-weight: 600; color: var(--text2);
     cursor: pointer; transition: all 0.2s var(--ease-out-quart);
     font-variant-numeric: tabular-nums;
+}
+/* "Altro" e' l'unica pastiglia piena: aveva il testo bianco fisso, che al buio
+   sul blu chiaro faceva 2,75:1. La coppia accento/inchiostro vale in entrambi
+   i temi. */
+.quick-amt.altro {
+    background: var(--accent); color: var(--on-accent); border-color: var(--accent);
 }
 .quick-amt:active { transform: scale(0.92); background: var(--blue); color: white; border-color: var(--blue); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent); }
 
@@ -736,6 +765,9 @@ body {
 }
 .history-icon.income { background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); }
 .history-icon.expense { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
+/* I depositi non sono uscite: nello storico si distinguono a colpo d'occhio
+   dal rosso delle spese. */
+.history-icon.deposit { background: color-mix(in srgb, var(--blue) 12%, transparent); color: var(--blue); }
 .history-icon svg { width: 18px; height: 18px; }
 .history-info { flex: 1; min-width: 0; }
 .history-name {
@@ -750,6 +782,7 @@ body {
 .history-amount { font-size: 16px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .history-amount.positive { color: var(--green); }
 .history-amount.negative { color: var(--red); }
+.history-amount.deposit { color: var(--blue); }
 .history-delete {
     background: none; border: none; padding: 12px 8px;
     min-width: 44px; min-height: 44px;
@@ -1254,10 +1287,12 @@ body {
 .day-summary-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .day-summary-dot.income { background: var(--green); }
 .day-summary-dot.expense { background: var(--red); }
+.day-summary-dot.deposit { background: var(--blue); }
 .day-summary-name { flex: 1; font-size: 14px; font-weight: 500; }
 .day-summary-amount { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .day-summary-amount.positive { color: var(--green); }
 .day-summary-amount.negative { color: var(--red); }
+.day-summary-amount.deposit { color: var(--blue); }
 .day-summary-total {
     display: flex; justify-content: space-between;
     padding-top: 10px; margin-top: 4px;

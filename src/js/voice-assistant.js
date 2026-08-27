@@ -5,7 +5,7 @@
 
 import { d, fullSave } from './state.js';
 import { showToast, escapeHtml } from './modals.js';
-import { t, getLang } from './i18n.js';
+import { t, getLang, isDeposito } from './i18n.js';
 import { fatturaDaSpesaContanti } from './fatture-bridge.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
 import { parseDateIT } from './date-utils.js';
@@ -284,7 +284,10 @@ function buildSnapshot() {
     if (p.length !== 3) return;
     const k = p[2] + '-' + p[1];
     if (!agg[k]) return;
-    if (l.a >= 0) agg[k].incassi += l.a; else agg[k].spese += Math.abs(l.a);
+    // I depositi in banca non sono spese: restano fuori anche da qui,
+    // altrimenti il resoconto a voce dice che si e' speso il doppio.
+    if (l.a >= 0) agg[k].incassi += l.a;
+    else if (!isDeposito(l)) agg[k].spese += Math.abs(l.a);
   });
 
 

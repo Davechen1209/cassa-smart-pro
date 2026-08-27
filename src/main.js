@@ -48,6 +48,12 @@ import {
 } from './js/expense.js';
 
 import {
+  openDepositSheet, closeDepositSheet, closeDepositOutside,
+  setDepositAmount, customDepositAmount, addDeposit,
+  renderPendingDeposits, removePendingDeposit
+} from './js/deposit.js';
+
+import {
   toggleRubrica, toggleRubricaPage, deleteItem, editItem, openModalRubrica, modalConfirm
 } from './js/rubrica.js';
 
@@ -87,6 +93,8 @@ const WRITE_ACTIONS = new Set([
   'addCassa', 'removeCassa', 'registra',
   'openExpenseSheet', 'setQuickAmount', 'customAmount', 'switchExpCat',
   'selectExpVoice', 'addNewVoiceFromSheet', 'addExpense', 'removePending',
+  'openDepositSheet', 'setDepositAmount', 'customDepositAmount', 'addDeposit',
+  'removePendingDeposit',
   'editItem', 'deleteItem', 'openModalRubrica', 'modalConfirm',
   'startEditDay', 'deleteDayLog', 'deleteLog',
   'openVoiceAssistant', 'toggleVoiceRecording', 'confirmVoiceAction',
@@ -169,6 +177,14 @@ document.body.addEventListener('click', (e) => {
     case 'addExpense': addExpense(); break;
     case 'removePending': removePending(Number(btn.dataset.index)); break;
 
+    // Depositi in banca
+    case 'openDepositSheet': openDepositSheet(); break;
+    case 'closeDepositSheet': closeDepositSheet(); break;
+    case 'setDepositAmount': setDepositAmount(Number(btn.dataset.amount)); break;
+    case 'customDepositAmount': customDepositAmount(); break;
+    case 'addDeposit': addDeposit(); break;
+    case 'removePendingDeposit': removePendingDeposit(Number(btn.dataset.index)); break;
+
     // Rubriche
     case 'toggleRubricaPage': toggleRubricaPage(); break;
     case 'toggleRubrica': toggleRubrica(btn.dataset.cat); break;
@@ -247,6 +263,7 @@ document.body.addEventListener('click', (e) => {
 
 // Overlay click-to-close
 document.getElementById('expense-overlay').addEventListener('click', closeExpenseOutside);
+document.getElementById('deposit-overlay').addEventListener('click', closeDepositOutside);
 document.getElementById('modal-overlay').addEventListener('click', closeModalOutside);
 document.getElementById('pdf-report-overlay').addEventListener('click', closePdfReportOutside);
 document.getElementById('share-preview-overlay').addEventListener('click', closeSharePreviewOutside);
@@ -273,7 +290,7 @@ document.addEventListener('keydown', (e) => {
   const aperti = [
     'search-overlay', 'confirm-overlay', 'modal-overlay', 'excel-overlay',
     'share-preview-overlay', 'pdf-report-overlay', 'voice-overlay',
-    'expense-overlay', 'dataset-menu-overlay',
+    'expense-overlay', 'deposit-overlay', 'dataset-menu-overlay',
   ];
   for (const id of aperti) {
     const el = document.getElementById(id);

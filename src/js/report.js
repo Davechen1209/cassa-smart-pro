@@ -7,7 +7,7 @@
 // domanda: quanto e' arrivato, quanto resta da pagare, a chi.
 
 import { d } from './state.js';
-import { t, getLang, translateLogDesc, parseIncasso } from './i18n.js';
+import { t, getLang, translateLogDesc, parseIncasso, isDeposito } from './i18n.js';
 import { monthKeyOf, isoOf, parseDateIT, toISODate } from './date-utils.js';
 import { escapeHtml } from './modals.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
@@ -136,15 +136,21 @@ function incomeOf(l) {
 }
 
 function emptyBucket() {
-  return { income: 0, pos: 0, cash: 0, expense: 0 };
+  return { income: 0, pos: 0, cash: 0, expense: 0, deposit: 0, nDeposit: 0 };
 }
 
+// Il deposito in banca toglie contanti dalla cassa ma non e' una spesa: i
+// soldi sono ancora nostri. Sommarlo alle uscite gonfierebbe i costi e
+// mangerebbe il netto, cosi' ha un conto suo.
 function accumulate(bucket, l) {
   if (l.a >= 0) {
     const inc = incomeOf(l);
     bucket.income += inc.totale;
     bucket.pos += inc.pos;
     bucket.cash += inc.cash;
+  } else if (isDeposito(l)) {
+    bucket.deposit += Math.abs(l.a);
+    bucket.nDeposit++;
   } else {
     bucket.expense += Math.abs(l.a);
   }
@@ -155,7 +161,13 @@ function accumulate(bucket, l) {
 // anche l'unico netto che torna col saldo, che si muove di soli contanti
 // (casse.js: d.saldo += c.cash).
 function withNet(bucket) {
-  return { ...bucket, net: bucket.cash - bucket.expense };
+  return {
+    ...bucket,
+    net: bucket.cash - bucket.expense,
+    // Quello che resta materialmente nel cassetto: il netto meno i contanti
+    // portati in banca.
+    inCassa: bucket.cash - bucket.expense - bucket.deposit
+  };
 }
 
 function totals(logs) {
@@ -206,7 +218,8 @@ function categoryOf(l) {
 
 function byCategory(logs) {
   const map = {};
-  logs.filter(l => l.a < 0).forEach(l => {
+  // I depositi restano fuori: non sono una categoria di spesa.
+  logs.filter(l => l.a < 0 && !isDeposito(l)).forEach(l => {
     const c = categoryOf(l);
     map[c] = (map[c] || 0) + Math.abs(l.a);
   });
@@ -537,6 +550,35 @@ function renderCategories(data) {
     </div>`;
 }
 
+// I depositi in banca non sono ne' un incasso ne' una spesa: sono contanti che
+// cambiano posto. Stanno percio' in un riquadro loro, fuori dai totali di
+// sopra, con accanto quello che dopo i versamenti resta davvero nel cassetto.
+function renderDepositi(data) {
+  const dep = data.now.deposit;
+  if (dep <= 0.005 && data.prev.deposit <= 0.005) return '';
+  const n = data.now.nDeposit;
+  const restano = data.now.inCassa;
+
+  return `
+    <div class="card">
+      <div class="report-section-title">${t('report.depTitolo')}</div>
+      <div class="report-summary report-summary-fatture">
+        <div class="report-sum-card blue">
+          <div class="report-sum-label">${t('report.depVersato')}</div>
+          <div class="report-sum-value">${fmtShort(dep)}</div>
+          <div class="report-sum-note">${n === 1 ? t('report.depMovimentiUno') : t('report.depMovimenti', { n })}</div>
+          ${deltaHtml(dep, data.prev.deposit, null)}
+        </div>
+        <div class="report-sum-card ${restano >= 0 ? 'blue' : 'orange'}">
+          <div class="report-sum-label">${t('report.depRestano')}</div>
+          <div class="report-sum-value">${restano >= 0 ? '+' : '\u2212'}${fmtShort(Math.abs(restano))}</div>
+          <div class="report-sum-note">${t('report.depRestanoFormula')}</div>
+        </div>
+      </div>
+      <div class="report-fatt-nota">${t('report.depNota')}</div>
+    </div>`;
+}
+
 function renderFatture(data) {
   const f = data.fatture;
   if (!f.conArchivio) return '';
@@ -654,6 +696,7 @@ export function renderReport() {
     html += renderMonthTable(data);
     html += renderTrend(data);
     html += renderCategories(data);
+    html += renderDepositi(data);
     html += renderAverages(data);
   }
   // Le fatture sono un libro a parte: si mostrano anche quando in cassa non

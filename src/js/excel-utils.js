@@ -172,7 +172,8 @@ function rowsToMovimenti(rows) {
     }
 
     if (deposit > 0) {
-      newData.push({ date: dateStr, desc: t('excel.deposit'), amount: -Math.abs(deposit) });
+      // Contrassegnato come deposito: nei conti non va confuso con una spesa.
+      newData.push({ date: dateStr, desc: t('dep.log'), amount: -Math.abs(deposit), dep: true });
     }
 
     if (refund > 0) {
@@ -289,7 +290,9 @@ export function confirmFileImport() {
 
   parsedImportData.forEach(r => {
     d.saldo += r.amount;
-    d.log.push({ d: r.date, v: r.desc, a: r.amount });
+    const riga = { d: r.date, v: r.desc, a: r.amount };
+    if (r.dep) riga.dep = true;
+    d.log.push(riga);
   });
   const count = parsedImportData.length;
   fullSave();

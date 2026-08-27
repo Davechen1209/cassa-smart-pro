@@ -456,6 +456,25 @@
                     </button>
                 </div>
 
+                <div style="height:1px; background:var(--separator); margin:4px 0 20px;"></div>
+
+                <!-- DEPOSITI IN BANCA -->
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <div class="subsection-icon blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M3 10h18L12 3 3 10Z"/><path d="M5 10v8m5-8v8m4-8v8m5-8v8"/><path d="M3 21h18"/></svg>
+                        </div>
+                        <span data-i18n="dep.title">Depositi in banca</span>
+                    </div>
+
+                    <div id="pending-deposits"></div>
+
+                    <button class="add-expense-btn" data-action="openDepositSheet" style="border-color:var(--blue); color:var(--blue);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
+                        <span data-i18n="dep.add">Aggiungi Deposito</span>
+                    </button>
+                </div>
+
                 <button class="btn-main" id="btn-registra" data-action="registra" style="margin-top:16px;" data-i18n="uscite.registra">
                     Registra Chiusura
                 </button>
@@ -591,7 +610,7 @@
             <button class="quick-amt" data-action="setQuickAmount" data-amount="50">50€</button>
             <button class="quick-amt" data-action="setQuickAmount" data-amount="100">100€</button>
             <button class="quick-amt" data-action="setQuickAmount" data-amount="200">200€</button>
-            <button class="quick-amt" style="background:var(--blue);color:white;" data-action="customAmount" data-i18n="exp.other">Altro</button>
+            <button class="quick-amt altro" data-action="customAmount" data-i18n="exp.other">Altro</button>
         </div>
 
         <div class="voice-label" data-i18n="exp.type">Tipologia</div>
@@ -633,6 +652,40 @@
         <div class="sheet-actions">
             <button class="btn-sm gray" data-action="closeExpenseSheet" data-i18n="exp.cancel">Annulla</button>
             <button class="btn-sm blue" data-action="addExpense" data-i18n="exp.add">Aggiungi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Deposito in banca -->
+<div class="expense-overlay" id="deposit-overlay">
+    <div class="expense-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" data-i18n="dep.sheetTitle">Deposito in banca</div>
+
+        <div class="amount-display">
+            <div class="amount-currency" data-i18n="exp.currency">EUR</div>
+            <input type="text" class="amount-big-input" id="dep-amount" placeholder="0,00" inputmode="decimal">
+        </div>
+
+        <div class="quick-amounts">
+            <button class="quick-amt" data-action="setDepositAmount" data-amount="100">100€</button>
+            <button class="quick-amt" data-action="setDepositAmount" data-amount="200">200€</button>
+            <button class="quick-amt" data-action="setDepositAmount" data-amount="500">500€</button>
+            <button class="quick-amt" data-action="setDepositAmount" data-amount="1000">1000€</button>
+            <button class="quick-amt" data-action="setDepositAmount" data-amount="2000">2000€</button>
+            <button class="quick-amt altro" data-action="customDepositAmount" data-i18n="exp.other">Altro</button>
+        </div>
+
+        <div class="input-group" style="margin-bottom:12px;">
+            <label for="dep-note" data-i18n="dep.note">Banca o nota (opzionale)</label>
+            <input type="text" class="input-field" id="dep-note" data-i18n-placeholder="dep.notePlaceholder" placeholder="Es. versamento del mattino">
+        </div>
+
+        <div class="sheet-note" data-i18n="dep.hint">Contanti portati in banca: escono dalla cassa ma non sono una spesa.</div>
+
+        <div class="sheet-actions">
+            <button class="btn-sm gray" data-action="closeDepositSheet" data-i18n="exp.cancel">Annulla</button>
+            <button class="btn-sm blue" data-action="addDeposit" data-i18n="exp.add">Aggiungi</button>
         </div>
     </div>
 </div>
