@@ -161,13 +161,11 @@ function accumulate(bucket, l) {
 // anche l'unico netto che torna col saldo, che si muove di soli contanti
 // (casse.js: d.saldo += c.cash).
 function withNet(bucket) {
-  return {
-    ...bucket,
-    net: bucket.cash - bucket.expense,
-    // Quello che resta materialmente nel cassetto: il netto meno i contanti
-    // portati in banca.
-    inCassa: bucket.cash - bucket.expense - bucket.deposit
-  };
+  // Il deposito non e' una spesa, ma dalla cassa i contanti escono lo stesso:
+  // il netto e' quello che resta davvero nel cassetto, percio' li sottrae.
+  // Resta l'unico netto che torna col saldo (casse.js muove d.saldo di
+  // incassi, uscite e depositi).
+  return { ...bucket, net: bucket.cash - bucket.expense - bucket.deposit };
 }
 
 function totals(logs) {
@@ -422,7 +420,7 @@ function renderSummary(data) {
       <div class="report-sum-card ${now.net >= 0 ? 'blue' : 'orange'}">
         <div class="report-sum-label">${t('stats.net')}</div>
         <div class="report-sum-value">${now.net >= 0 ? '+' : '−'}${fmtShort(Math.abs(now.net))}</div>
-        <div class="report-sum-note">${t('report.nettoFormula')}</div>
+        <div class="report-sum-note">${now.deposit > 0.005 ? t('report.nettoFormulaDep') : t('report.nettoFormula')}</div>
         ${deltaHtml(now.net, prev.net, true)}
       </div>
     </div>
@@ -557,7 +555,6 @@ function renderDepositi(data) {
   const dep = data.now.deposit;
   if (dep <= 0.005 && data.prev.deposit <= 0.005) return '';
   const n = data.now.nDeposit;
-  const restano = data.now.inCassa;
 
   return `
     <div class="card">
@@ -568,11 +565,6 @@ function renderDepositi(data) {
           <div class="report-sum-value">${fmtShort(dep)}</div>
           <div class="report-sum-note">${n === 1 ? t('report.depMovimentiUno') : t('report.depMovimenti', { n })}</div>
           ${deltaHtml(dep, data.prev.deposit, null)}
-        </div>
-        <div class="report-sum-card ${restano >= 0 ? 'blue' : 'orange'}">
-          <div class="report-sum-label">${t('report.depRestano')}</div>
-          <div class="report-sum-value">${restano >= 0 ? '+' : '\u2212'}${fmtShort(Math.abs(restano))}</div>
-          <div class="report-sum-note">${t('report.depRestanoFormula')}</div>
         </div>
       </div>
       <div class="report-fatt-nota">${t('report.depNota')}</div>

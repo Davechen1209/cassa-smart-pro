@@ -57,11 +57,11 @@ function buildPrintArea(year, month) {
   const totalCash = income.reduce((s, l) => s + perIncasso(l).cash, 0);
   const totalPos = income.reduce((s, l) => s + perIncasso(l).pos, 0);
   const totalExpenses = expenses.reduce((s, l) => s + Math.abs(l.a), 0);
-  // In cassa entrano i contanti e le uscite si pagano di tasca: il netto e'
-  // quello, ed e' l'unico che torna col saldo.
-  const net = totalCash - totalExpenses;
   const totalDepositi = depositi.reduce((s2, l) => s2 + Math.abs(l.a), 0);
-  const restaInCassa = net - totalDepositi;
+  // In cassa entrano i contanti, le uscite si pagano di tasca e i depositi
+  // portano via il resto: il netto e' quello che rimane nel cassetto, ed e'
+  // l'unico che torna col saldo.
+  const net = totalCash - totalExpenses - totalDepositi;
 
   // Category breakdown
   const catMap = {};
@@ -129,9 +129,8 @@ function buildPrintArea(year, month) {
           <tr><td>${t('report.cash')}</td><td class="print-amount">${fmt(totalCash)}</td></tr>
           <tr><td>${t('excel.colPos')}</td><td class="print-amount">${fmt(totalPos)}</td></tr>
           <tr><td>${t('day.shareUscite')}</td><td class="print-amount negative">${fmt(totalExpenses)}</td></tr>
-          <tr class="print-total-row"><td>${t('stats.net')} (${t('report.nettoFormula')})</td><td class="print-amount ${net >= 0 ? 'positive' : 'negative'}">${fmt(net)}</td></tr>
           ${totalDepositi > 0 ? `<tr><td>${t('pdf.depositi')} (${depositi.length})</td><td class="print-amount">${fmt(totalDepositi)}</td></tr>` : ''}
-          ${totalDepositi > 0 ? `<tr><td>${t('report.depRestano')}</td><td class="print-amount ${restaInCassa >= 0 ? 'positive' : 'negative'}">${fmt(restaInCassa)}</td></tr>` : ''}
+          <tr class="print-total-row"><td>${t('stats.net')} (${totalDepositi > 0 ? t('report.nettoFormulaDep') : t('report.nettoFormula')})</td><td class="print-amount ${net >= 0 ? 'positive' : 'negative'}">${fmt(net)}</td></tr>
           ${fattureMese.length > 0 ? `<tr><td>${t('report.fattArrivate')} (${fattureMese.length})</td><td class="print-amount">${fmt(totFatture)}</td></tr>` : ''}
           ${totPagamentiMese > 0 ? `<tr><td>${t('pdf.fattPagamenti')}</td><td class="print-amount">${fmt(totPagamentiMese)}</td></tr>` : ''}
           ${residuoScaduto > 0 ? `<tr><td>${t('report.fattScadute')} · ${t('report.fattAOggi')}</td><td class="print-amount negative">${fmt(residuoScaduto)}</td></tr>` : ''}
