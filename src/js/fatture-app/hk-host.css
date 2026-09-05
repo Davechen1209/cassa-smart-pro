@@ -531,6 +531,16 @@ body.tab-fatture #dashboard-card { display: none; }
 .hk-app.sel-attiva #btnNew { display: none; }
 body:has(.hk-app.sel-attiva) .voice-fab { display: none; }
 
+/* ── "Elimina" spingeva "Salva" fuori dallo schermo ──
+   L'ospite ha un solo pulsante rosso, quello che azzera i dati nelle
+   impostazioni, e lo vuole largo tutta la riga: .btn-danger { width: 100% }.
+   Ma la classe e' la stessa che porta l'Elimina del modulo fattura, dove
+   accanto ci sono Annulla e Salva. Su telefono l'Elimina si prendeva 358px
+   dei 390 disponibili e gli altri due finivano oltre il bordo: da telefono
+   una fattura non si poteva piu' salvare. Qui il pulsante torna largo quanto
+   la sua scritta. */
+.hk-app .modal-footer .btn-danger { width: auto; }
+
 /* In sola lettura spariscono anche i comandi della tab fatture: il blocco vero
    e' nella delega dell'app, questo evita di offrire pulsanti che rifiutano. */
 body.readonly-mode .hk-app #btnNew,
@@ -623,7 +633,20 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
   }
   .hk-app .modal .modal-footer .btn { flex: 1; min-height: 46px; font-size: 15px; }
   /* Il pulsante che elimina non prende lo stesso spazio di quello che salva. */
-  .hk-app .modal .modal-footer .btn-danger { flex: 0 0 auto; padding: 0 16px; }
+  .hk-app .modal .modal-footer .btn-danger { flex: 0 0 auto; width: auto; padding: 0 16px; }
+  /* Il piede va a capo invece di buttare fuori dallo schermo cio' che non ci
+     sta, e "Salva" si prende tutta la seconda riga: e' l'azione che si cerca,
+     ed e' anche la piu' comoda da centrare col pollice. */
+  .hk-app .modal .modal-footer { flex-wrap: wrap; row-gap: 8px; }
+  .hk-app .modal .modal-footer .btn-primary { flex: 1 0 100%; }
+  /* I pulsanti dell'app sono inline-flex allineati a sinistra: finche' sono
+     larghi quanto la scritta non si nota, a tutta riga si'. */
+  .hk-app .modal .modal-footer .btn { justify-content: center; }
+  /* Il codice della fattura non e' un comando: cede spazio per primo. */
+  .hk-app .modal .modal-footer .meta {
+    flex: 0 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 
   /* Le tre caselle del pagamento cumulativo (data, n. assegno, nuova
      scadenza) stanno in fila: a 390px chiedono insieme piu' larghezza dello
