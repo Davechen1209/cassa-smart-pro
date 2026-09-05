@@ -85,6 +85,7 @@ export const I18N = (function () {
     "pay.invalidAmount": "Importo non valido",
 
     "sel.all": "Seleziona tutte le fatture da pagare",
+    "sel.allShort": "Tutte",
     "sel.bar": "{n} fatture selezionate · Residuo {x}",
     "sel.payTogether": "Paga insieme…",
     "sel.clear": "Deseleziona",
@@ -339,6 +340,7 @@ export const I18N = (function () {
     "pay.invalidAmount": "金额无效",
 
     "sel.all": "全选未付清的发票",
+    "sel.allShort": "全选",
     "sel.bar": "已选{n}张发票 · 未付{x}",
     "sel.payTogether": "合并付款…",
     "sel.clear": "取消选择",

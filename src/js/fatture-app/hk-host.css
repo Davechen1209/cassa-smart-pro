@@ -416,6 +416,17 @@ body.tab-fatture #dashboard-card { display: none; }
     box-shadow: 0 6px 20px rgba(15, 23, 42, .28);
   }
 
+  /* La barra della selezione nasce centrata e in una riga sola: a 390px
+     "3 fatture selezionate · Residuo 1.234,56" piu' tre pulsanti uscivano
+     dallo schermo da entrambi i lati. Qui sta dentro i margini e va a capo. */
+  .hk-app .selbar {
+    left: 12px; right: 12px; transform: none;
+    flex-wrap: wrap; justify-content: center;
+    white-space: normal; row-gap: 8px;
+  }
+  .hk-app .selbar > span { flex: 1 0 100%; text-align: center; }
+  .hk-app .selbar .btn { min-height: 42px; }
+
   /* ── Striscia totali: due per due, invece di quattro che scorrono ──
      A 375px i quattro segmenti sono 822px: tre quarti restavano fuori. E
      l'altezza fissa che avevo messo (42px contro 50 necessari) tagliava i
@@ -465,6 +476,35 @@ body.tab-fatture #dashboard-card { display: none; }
   .hk-app #movTableWrap table.grid tbody td:nth-child(5) { grid-row: 4; grid-column: 1; justify-content: flex-start; }
   .hk-app #movTableWrap table.grid tbody td:nth-child(6) { grid-row: 4; grid-column: 2; justify-content: flex-end; }
 
+  /* ── La casella del pagamento cumulativo ──
+     Trasformando la tabella in schede era finita sotto un display:none
+     insieme all'intestazione: su telefono non restava alcun modo di spuntare
+     piu' fatture per saldarle con un assegno solo, o per rinviarle tutte a
+     una nuova scadenza. La scheda guadagna percio' una colonnina a sinistra.
+     Il posto e' questo e non uno dei blocchi qui sopra: la scheda e' stata
+     rifatta tre volte e comanda l'ultima definizione: metterla prima
+     significherebbe scriverla e vedersela sovrascrivere. */
+  .hk-app #movTableWrap table.grid tbody tr { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(1) {
+    display: block; grid-column: 1; grid-row: 1 / span 2;
+    /* larghezza fissa: le fatture gia' pagate la casella non ce l'hanno, e
+       senza questa le loro schede partirebbero piu' a sinistra delle altre */
+    min-width: 32px; align-self: center;
+  }
+  /* Il quadratino resta piccolo, ma la label attorno prende tutta la
+     colonnina: e' quella che si tocca col dito. */
+  .hk-app #movTableWrap .selhit { min-width: 32px; min-height: 44px; margin: -12px 0; }
+  .hk-app #movTableWrap .sel-cb { width: 21px; height: 21px; }
+  /* Tutto il resto scala di una colonna. */
+  .hk-app #movTableWrap table.grid tbody td:nth-child(3),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(4),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(5),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(10) { grid-column: 2; }
+  .hk-app #movTableWrap table.grid tbody td:nth-child(6),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(7),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(8),
+  .hk-app #movTableWrap table.grid tbody td:nth-child(11) { grid-column: 3; }
+
   /* Dashboard e Dati: le griglie a colonne fisse sbordavano lo schermo. */
   .hk-app .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
   .hk-app .dash-cols { grid-template-columns: 1fr; gap: 12px; }
@@ -473,6 +513,23 @@ body.tab-fatture #dashboard-card { display: none; }
   .hk-app .card > *, .hk-app .view > * { max-width: 100%; }
   .hk-app .view table { max-width: 100%; }
 }
+
+/* ── La barra del pagamento cumulativo finiva dietro le tab ──
+   Nell'app da sola il fondo dello schermo era libero, e 18px bastavano. Qui
+   sotto c'e' la barra delle tab dell'ospite: fissa a ogni larghezza, alta 62px
+   e con z-index 200, cioe' davanti. La barra che compare spuntando piu'
+   fatture ci finiva esattamente dentro, e con lei sparivano "Paga insieme" e
+   il rinvio a una nuova scadenza. Va sopra, e sopra anche ai pulsanti
+   flottanti. */
+.hk-app .selbar {
+  bottom: calc(var(--tab-height, 64px) + var(--tab-inset, 10px) + max(12px, env(safe-area-inset-bottom)));
+  z-index: 320;
+}
+
+/* Finche' si sceglie, i due pulsanti flottanti (che stanno proprio in quella
+   fascia) si tolgono di mezzo. */
+.hk-app.sel-attiva #btnNew { display: none; }
+body:has(.hk-app.sel-attiva) .voice-fab { display: none; }
 
 /* In sola lettura spariscono anche i comandi della tab fatture: il blocco vero
    e' nella delega dell'app, questo evita di offrire pulsanti che rifiutano. */
@@ -567,6 +624,14 @@ body.readonly-mode .hk-app #selBar { display: none !important; }
   .hk-app .modal .modal-footer .btn { flex: 1; min-height: 46px; font-size: 15px; }
   /* Il pulsante che elimina non prende lo stesso spazio di quello che salva. */
   .hk-app .modal .modal-footer .btn-danger { flex: 0 0 auto; padding: 0 16px; }
+
+  /* Le tre caselle del pagamento cumulativo (data, n. assegno, nuova
+     scadenza) stanno in fila: a 390px chiedono insieme piu' larghezza dello
+     schermo, e non potendo stringersi spingevano fuori tutta la finestra —
+     il titolo e le etichette restavano tagliati a sinistra. In colonna. */
+  .hk-app .gpay-fields { flex-direction: column; gap: 0; }
+  .hk-app .gpay-fields .form-field { min-width: 0; }
+  .hk-app .gpay-row { flex-wrap: wrap; }
 
   /* Il titolo resta in vista mentre si scorre il modulo. */
   .hk-app .modal h2 {

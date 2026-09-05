@@ -253,6 +253,7 @@ export const FattureApp = (function () {
     else if (currentView === "fornitori") renderFornitori(v);
     else if (currentView === "dashboard") renderDashboard(v);
     else if (currentView === "dati") renderDati(v);
+    segnaSelezioneAttiva();
   }
 
   function gotoView(v) {
@@ -438,7 +439,7 @@ export const FattureApp = (function () {
       var trClass = (d.status === "overdue" ? "overdue-row " : "") + (d.status === "paid" ? "paid-row " : "") + (flashId === r.id ? "flash" : "");
       var paidTitle = t("misc.paidSplit", { c: formatMoney(S.toCents(r.paidCash)), o: formatMoney(S.toCents(r.paidOther)) });
       return '<tr class="' + trClass + '" data-id="' + esc(r.id) + '" data-action="edit-row">' +
-        '<td class="selcol">' + (d.unpaid > 0 ? '<input type="checkbox" class="sel-cb" data-action="sel-row" data-id="' + esc(r.id) + '"' + (selection[r.id] ? " checked" : "") + ">" : "") + "</td>" +
+        '<td class="selcol">' + (d.unpaid > 0 ? '<label class="selhit"><input type="checkbox" class="sel-cb" data-action="sel-row" data-id="' + esc(r.id) + '"' + (selection[r.id] ? " checked" : "") + "></label>" : "") + "</td>" +
         '<td class="nowrap num" data-label="' + esc(t("col.arrival")) + '">' + esc(formatDate(r.arrivalDate)) + "</td>" +
         '<td data-label="' + esc(t("col.supplier")) + '"><strong>' + esc(r.supplier) + "</strong></td>" +
         "<td>" + esc(r.invoice || "") + (r.notes ? '<span class="notes-dot" title="' + esc(r.notes) + '">📝</span>' : "") +
@@ -474,14 +475,32 @@ export const FattureApp = (function () {
     return allDecorated().filter(function (d) { return selection[d.rec.id] && d.unpaid > 0; });
   }
 
+  /* Mentre si sceglie quali fatture pagare insieme, la barra della selezione
+     occupa la fascia in fondo allo schermo: i pulsanti flottanti dell'ospite
+     ("Nuovo arrivo", contabile vocale) starebbero proprio li' sotto, e si
+     tolgono di mezzo finche' dura la scelta. */
+  function segnaSelezioneAttiva() {
+    var root = document.querySelector(".hk-app");
+    if (!root) return;
+    var attiva = currentView === "movimenti" && selectedDecorated().length > 0;
+    if (attiva) root.classList.add("sel-attiva");
+    else root.classList.remove("sel-attiva");
+  }
+
   function renderSelBar() {
     var el = document.getElementById("selBar");
     if (!el) return;
     var sel = selectedDecorated();
+    segnaSelezioneAttiva();
     if (!sel.length) { el.innerHTML = ""; return; }
     var total = sel.reduce(function (acc, d) { return acc + d.unpaid; }, 0);
+    // Su telefono la tabella diventa schede e l'intestazione sparisce: con
+    // lei spariva la casella "seleziona tutte", che qui torna come pulsante.
+    var daPagare = filteredMovimenti().filter(function (d) { return d.unpaid > 0; });
+    var tutte = daPagare.length > sel.length;
     el.innerHTML = '<div class="selbar">' +
       "<span>" + esc(t("sel.bar", { n: sel.length, x: formatMoney(total) })) + "</span>" +
+      (tutte ? '<button type="button" class="btn btn-sm selbar-clear" data-action="sel-all-btn" title="' + esc(t("sel.all")) + '">' + esc(t("sel.allShort")) + "</button>" : "") +
       '<button type="button" class="btn btn-primary btn-sm" data-action="gpay-open">' + esc(t("sel.payTogether")) + "</button>" +
       '<button type="button" class="btn btn-sm selbar-clear" data-action="sel-clear">' + esc(t("sel.clear")) + "</button>" +
       "</div>";
@@ -1737,6 +1756,10 @@ export const FattureApp = (function () {
         var isButton = false;
         while (t2 && t2 !== actionEl) {
           if (t2.tagName === "BUTTON" || t2.tagName === "A" || t2.tagName === "INPUT") { isButton = true; break; }
+          // La casella di selezione e' avvolta in una label larga quanto la
+          // colonna: il tocco arriva li' e non sull'input, e senza questo
+          // controllo aprirebbe la fattura invece di spuntarla.
+          if (t2.classList && t2.classList.contains("selcol")) { isButton = true; break; }
           t2 = t2.parentNode;
         }
         if (!isButton) {
@@ -1769,6 +1792,10 @@ export const FattureApp = (function () {
         renderMovTable();
         break;
       }
+      case "sel-all-btn":
+        filteredMovimenti().forEach(function (d) { if (d.unpaid > 0) selection[d.rec.id] = true; });
+        renderMovTable();
+        break;
       case "sel-clear": selection = {}; renderMovTable(); break;
       case "gpay-open": openGroupPay(); break;
       case "gpay-confirm": confirmGroupPay(actionEl.getAttribute("data-method")); break;

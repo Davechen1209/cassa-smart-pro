@@ -217,6 +217,9 @@
 /* combined payment */
 .hk-app th.selcol, .hk-app td.selcol{ width: 30px; text-align: center; }
 .hk-app .sel-cb{ width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
+/* La label avvolge la casella per allargarne il bersaglio senza ingrandire il
+   quadratino: su telefono la si tocca col dito, qui resta stretta. */
+.hk-app .selhit{ display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .hk-app .selbar{
   position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
   background: #0F172A; color: #fff; border-radius: 12px; padding: 10px 16px;
