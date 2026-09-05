@@ -56,6 +56,10 @@ export const Store = (function () {
       });
       state.meta = meta;
       state.meta.nextId = maxIdNum(state.records) + 1;
+      // L'archivio viene sostituito in blocco: le lapidi di quello vecchio
+      // non hanno piu' nulla da cancellare, e tenerle rischierebbe di far
+      // sparire una fattura appena arrivata che riusa lo stesso id.
+      state.meta.deleted = [];
       save();
     } finally {
       applyingRemote = false;
@@ -179,7 +183,54 @@ export const Store = (function () {
   var quotaError = false;
 
   function blankState() {
-    return { records: [], meta: { schemaVersion: 1, nextId: 1, lang: null, seedBannerCount: null, bankUrl: DEFAULT_BANK_URL } };
+    return { records: [], meta: { schemaVersion: 1, nextId: 1, lang: null, seedBannerCount: null, bankUrl: DEFAULT_BANK_URL, deleted: [] } };
+  }
+
+  /* ---------- lapidi: le fatture cancellate ----------
+     Cancellare una fattura qui la toglie da questo archivio, ma il cloud (o
+     un altro telefono) ne ha ancora una copia: alla prima fusione tornerebbe
+     viva. Di ogni cancellazione resta percio' una "lapide" { id, at }, che
+     viaggia nel cloud insieme ai record e dice "questa e' stata cancellata,
+     e quando". Si tengono le piu' recenti, non per sempre. */
+
+  var LAPIDI_MAX = 300;
+  var LAPIDI_GIORNI = 180;
+
+  function normalizeTombstones(list) {
+    if (!Array.isArray(list)) return [];
+    var out = [];
+    list.forEach(function (x) {
+      if (!x || typeof x !== "object") return;
+      var id = String(x.id == null ? "" : x.id);
+      var at = Number(x.at);
+      if (!id || !isFinite(at)) return;
+      out.push({ id: id, at: at });
+    });
+    return out;
+  }
+
+  /* Unisce due elenchi di lapidi: per ogni id resta la data piu' recente. */
+  function mergeTombstones(a, b) {
+    var perId = {};
+    normalizeTombstones(a).concat(normalizeTombstones(b)).forEach(function (x) {
+      if (!perId[x.id] || x.at > perId[x.id].at) perId[x.id] = x;
+    });
+    var limite = Date.now() - LAPIDI_GIORNI * 86400000;
+    var out = [];
+    Object.keys(perId).forEach(function (k) {
+      if (perId[k].at >= limite) out.push(perId[k]);
+    });
+    out.sort(function (x, y) { return y.at - x.at; });
+    return out.slice(0, LAPIDI_MAX);
+  }
+
+  /* Vera se la fattura risulta cancellata dopo l'ultima modifica che porta:
+     la cancellazione e' piu' recente e quindi comanda. */
+  function cancellataDopo(lapidi, rec) {
+    for (var i = 0; i < lapidi.length; i++) {
+      if (lapidi[i].id === rec.id) return lapidi[i].at >= (rec.updatedAt || 0);
+    }
+    return false;
   }
 
   /* I pagamenti datati: [{ date: "YYYY-MM-DD", cash, other }].
@@ -282,7 +333,11 @@ export const Store = (function () {
       oldDebt: !!r.oldDebt,
       checkNo: String(r.checkNo == null ? "" : r.checkNo),
       payments: normalizePayments(r.payments),
-      createdAt: typeof r.createdAt === "string" ? r.createdAt : todayISO()
+      createdAt: typeof r.createdAt === "string" ? r.createdAt : todayISO(),
+      // Momento dell'ultima modifica locale, in millisecondi. Serve alla
+      // fusione col cloud per sapere quale delle due copie e' la piu' fresca.
+      // 0 = archivio scritto da una versione precedente, che non lo segnava.
+      updatedAt: typeof r.updatedAt === "number" && isFinite(r.updatedAt) ? r.updatedAt : 0
     };
   }
 
@@ -385,6 +440,7 @@ export const Store = (function () {
     var rec = normalizeRecord(data, state.meta.nextId);
     rec.id = nextIdStr();
     rec.createdAt = todayISO();
+    rec.updatedAt = Date.now();
     state.records.push(rec);
     save();
     return rec;
@@ -397,6 +453,7 @@ export const Store = (function () {
     var rec = normalizeRecord(data, 0);
     rec.id = old.id;
     rec.createdAt = old.createdAt;
+    rec.updatedAt = Date.now();
     state.records[idx] = rec;
     save();
     return rec;
@@ -406,13 +463,20 @@ export const Store = (function () {
     var idx = indexOf(id);
     if (idx === -1) return null;
     var rec = state.records.splice(idx, 1)[0];
+    state.meta.deleted = mergeTombstones(state.meta.deleted, [{ id: id, at: Date.now() }]);
     save();
     return { record: rec, index: idx };
   }
 
   function restoreRecord(rec, index) {
     var idx = Math.max(0, Math.min(index == null ? state.records.length : index, state.records.length));
-    state.records.splice(idx, 0, rec);
+    var tornata = normalizeRecord(rec, 0);
+    tornata.updatedAt = Date.now();
+    state.records.splice(idx, 0, tornata);
+    // Annullata la cancellazione, va tolta anche la lapide.
+    state.meta.deleted = normalizeTombstones(state.meta.deleted).filter(function (x) {
+      return x.id !== tornata.id;
+    });
     save();
   }
 
@@ -434,6 +498,7 @@ export const Store = (function () {
     if (keepMeta) state.meta.lang = lang;
     var used = {};
     var i = 0;
+    var adesso = Date.now();
     state.records = (records || []).map(function (r) {
       i++;
       var rec = normalizeRecord(r, i);
@@ -443,6 +508,7 @@ export const Store = (function () {
         rec.id = "r" + String(n).padStart(4, "0");
       }
       used[rec.id] = true;
+      rec.updatedAt = adesso;
       return rec;
     });
     state.meta.nextId = maxIdNum(state.records) + 1;
@@ -474,6 +540,7 @@ export const Store = (function () {
       var rec = normalizeRecord(row, state.meta.nextId);
       rec.id = nextIdStr();
       rec.createdAt = todayISO();
+      rec.updatedAt = Date.now();
       state.records.push(rec);
       existing[key] = true;
       if (ak) existingAlt[ak] = true;
@@ -481,6 +548,71 @@ export const Store = (function () {
     });
     save();
     return { imported: imported, skipped: skipped };
+  }
+
+  /* ---------- fusione con la copia del cloud ----------
+     Il cloud non e' "la verita'": e' un'altra copia dello stesso archivio.
+     Sostituirlo alla nostra copia (quello che si faceva prima) cancellava i
+     pagamenti segnati qui e non ancora saliti, e le fatture pagate
+     ricomparivano fra le scadute. Qui si fondono invece riga per riga: di
+     ogni fattura resta la versione modificata piu' di recente, chi c'e' da
+     una parte sola resta, e chi e' stato cancellato resta cancellato.
+
+     Limite noto: due fatture create senza rete su due telefoni diversi
+     possono ricevere lo stesso id; in quel caso la fusione ne tiene una
+     sola. Succede solo se si scrive da due parti mentre entrambe sono
+     scollegate. */
+  function piuRecente(a, b) {
+    var ta = a.updatedAt || 0, tb = b.updatedAt || 0;
+    if (ta !== tb) return ta > tb ? a : b;
+    // Nessuna delle due porta la data di modifica (archivi scritti prima di
+    // questa versione): a parita' vince quella con il pagato piu' alto. Un
+    // pagamento gia' segnato non deve mai tornare indietro da solo.
+    var pa = toCents(a.paidCash) + toCents(a.paidOther);
+    var pb = toCents(b.paidCash) + toCents(b.paidOther);
+    return pb > pa ? b : a;
+  }
+
+  function mergeRemote(records, remoteMeta) {
+    var incoming = (records || []).map(function (r, i) { return normalizeRecord(r, i + 1); });
+    var lapidi = mergeTombstones(state.meta.deleted, remoteMeta && remoteMeta.deleted);
+    var primaRecords = JSON.stringify(state.records);
+    var primaLapidi = JSON.stringify(normalizeTombstones(state.meta.deleted));
+
+    var perId = {};
+    var ordine = [];
+    state.records.forEach(function (r) {
+      if (perId[r.id]) return;
+      perId[r.id] = r;
+      ordine.push(r.id);
+    });
+    incoming.forEach(function (rin) {
+      if (!perId[rin.id]) { perId[rin.id] = rin; ordine.push(rin.id); return; }
+      perId[rin.id] = piuRecente(perId[rin.id], rin);
+    });
+
+    var fusi = [];
+    ordine.forEach(function (id) {
+      var rec = perId[id];
+      if (!rec || cancellataDopo(lapidi, rec)) return;
+      fusi.push(rec);
+    });
+
+    state.records = fusi;
+    state.meta.deleted = lapidi;
+    state.meta.nextId = Math.max(state.meta.nextId || 1, maxIdNum(fusi) + 1);
+
+    var cambiato = JSON.stringify(state.records) !== primaRecords ||
+      JSON.stringify(lapidi) !== primaLapidi;
+    if (cambiato) save();
+    return { changed: cambiato };
+  }
+
+  /* Vera se la copia del cloud e' gia' identica alla nostra: allora non c'e'
+     nulla da risalire. */
+  function equalsRecords(list) {
+    var altri = (list || []).map(function (r, i) { return normalizeRecord(r, i + 1); });
+    return JSON.stringify(altri) === JSON.stringify(state.records);
   }
 
   function storageBytes() {
@@ -497,6 +629,9 @@ export const Store = (function () {
     setSharedMode: setSharedMode,
     setOnSave: setOnSave,
     applyRemote: applyRemote,
+    mergeRemote: mergeRemote,
+    equalsRecords: equalsRecords,
+    deletedList: function () { return normalizeTombstones(state.meta.deleted); },
     state: function () { return state; },
     records: function () { return state.records; },
     meta: function () { return state.meta; },

@@ -92,41 +92,75 @@ export function updateLastSyncTime() {
   if (el) el.textContent = t('cloud.lastSync') + ' ' + dateStr + ' ' + timeStr;
 }
 
+async function writeToCloud() {
+  setSyncStatus('syncing');
+  try {
+    // merge: true — cosi' il campo sharedWith (gestito a parte) non viene
+    // mai cancellato da un salvataggio dei dati.
+    await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
+      saldo: d.saldo,
+      fornitori: d.fornitori,
+      stipendi: d.stipendi,
+      abit: d.abit,
+      log: d.log,
+      anticipi: d.anticipi || [],
+      // L'archivio fatture ha un suo storage: viaggia come campo a parte.
+      fattureApp: HkStore.records(),
+      // Le fatture cancellate: senza questo elenco una fattura tolta qui
+      // tornerebbe viva alla prima fusione con la copia del cloud.
+      fattureDeleted: HkStore.deletedList(),
+      customCats: d.customCats || [],
+      aziendaData: d.aziendaData || {},
+      shopName: d.shopName || '',
+      ownerEmail: normalizeEmail(firebaseUser.email),
+      ownerName: firebaseUser.displayName || '',
+      lastUpdate: serverTimestamp(),
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+    setSyncStatus('synced');
+    updateLastSyncTime();
+  } catch (err) {
+    console.error('Sync error:', err);
+    setSyncStatus('error');
+  }
+}
+
 export async function syncToCloud() {
   if (!cloudSyncEnabled || !firebaseDb || !firebaseUser) return;
   // In vista condivisa i dati non sono nostri: non si scrive mai.
   if (isReadOnly()) return;
 
   clearTimeout(syncDebounceTimer);
-  setSyncDebounceTimer(setTimeout(async () => {
-    setSyncStatus('syncing');
-    try {
-      // merge: true — cosi' il campo sharedWith (gestito a parte) non viene
-      // mai cancellato da un salvataggio dei dati.
-      await setDoc(doc(firebaseDb, 'users', firebaseUser.uid), {
-        saldo: d.saldo,
-        fornitori: d.fornitori,
-        stipendi: d.stipendi,
-        abit: d.abit,
-        log: d.log,
-        anticipi: d.anticipi || [],
-        // L'archivio fatture ha un suo storage: viaggia come campo a parte.
-        fattureApp: HkStore.records(),
-        customCats: d.customCats || [],
-        aziendaData: d.aziendaData || {},
-        shopName: d.shopName || '',
-        ownerEmail: normalizeEmail(firebaseUser.email),
-        ownerName: firebaseUser.displayName || '',
-        lastUpdate: serverTimestamp(),
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-      setSyncStatus('synced');
-      updateLastSyncTime();
-    } catch (err) {
-      console.error('Sync error:', err);
-      setSyncStatus('error');
-    }
+  setSyncDebounceTimer(setTimeout(() => {
+    setSyncDebounceTimer(null);
+    writeToCloud();
   }, 500));
+}
+
+/* Il salvataggio nel cloud aspetta mezzo secondo per non scrivere a ogni
+   tasto. Se l'app viene chiusa (o mandata in secondo piano sul telefono)
+   dentro quel mezzo secondo, quella scrittura non parte piu': segnavi una
+   fattura come pagata e nel cloud restava da pagare. Qui l'attesa viene
+   saltata e si scrive subito. */
+export function flushPendingSync() {
+  if (!cloudSyncEnabled || !firebaseDb || !firebaseUser) return;
+  if (isReadOnly()) return;
+  if (!syncDebounceTimer) return;
+  clearTimeout(syncDebounceTimer);
+  setSyncDebounceTimer(null);
+  writeToCloud();
+}
+
+let appHidingWatched = false;
+function watchAppHiding() {
+  if (appHidingWatched) return;
+  appHidingWatched = true;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushPendingSync();
+  });
+  // pagehide copre la chiusura della scheda e il ritorno indietro su iOS,
+  // dove visibilitychange non sempre arriva.
+  window.addEventListener('pagehide', () => flushPendingSync());
 }
 
 export async function loadFromCloud() {
@@ -141,6 +175,14 @@ export async function loadFromCloud() {
       const cloudLogLen = (cloud.log || []).length;
       const localLogLen = d.log.length;
 
+      // L'archivio fatture ha una vita sua e non segue le sorti del registro
+      // di cassa: segnare una fattura come pagata non allunga il log e non
+      // cambia il saldo, quindi le regole qui sotto non lo vedrebbero mai.
+      // Prima si fondono le due copie riga per riga (vince la modifica piu'
+      // recente), poi si guarda se il cloud va aggiornato.
+      const fatture = HkStore.mergeRemote(cloud.fattureApp, { deleted: cloud.fattureDeleted });
+      const fattureDaSalire = !HkStore.equalsRecords(cloud.fattureApp);
+
       if (cloudLogLen > localLogLen || (cloudLogLen === localLogLen && cloud.saldo !== d.saldo)) {
         d.saldo = cloud.saldo ?? d.saldo;
         d.fornitori = cloud.fornitori || d.fornitori;
@@ -148,14 +190,18 @@ export async function loadFromCloud() {
         d.abit = cloud.abit || d.abit;
         d.log = cloud.log || d.log;
         d.anticipi = cloud.anticipi || d.anticipi;
-        if (Array.isArray(cloud.fattureApp)) HkStore.applyRemote(cloud.fattureApp);
         d.customCats = cloud.customCats || d.customCats;
         d.aziendaData = cloud.aziendaData || d.aziendaData;
         if (cloud.shopName) d.shopName = cloud.shopName;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
         callUi();
-      } else if (localLogLen > cloudLogLen) {
+      }
+      if (localLogLen > cloudLogLen || fattureDaSalire) {
         await syncToCloud();
+      }
+      if (fatture.changed) {
+        FattureApp.render();
+        callUi();
       }
     } else {
       await syncToCloud();
@@ -200,6 +246,7 @@ export async function forceSyncFromCloud() {
 
 export async function initFirebase() {
   const storedConfig = localStorage.getItem('cassa_firebase_config');
+  watchAppHiding();
 
   try {
     // Se l'utente ha salvato una config personalizzata la usa, altrimenti
