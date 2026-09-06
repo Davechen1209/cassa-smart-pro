@@ -15,6 +15,7 @@ import { parseImportoOrNull } from './money.js';
 import { renderReport } from './report.js';
 import { FattureApp } from './fatture-app/hk-app.js';
 import { fornitoriUnificati } from './fatture-bridge.js';
+import { provaChiave } from './voice-assistant.js';
 
 export function updateDateDisplay() {
   document.getElementById('date-display-text').textContent = formatDateDisplay(selectedDate);
@@ -470,6 +471,30 @@ export function saveGeminiKey() {
 export function removeGeminiKey() {
   localStorage.removeItem('cassa_gemini_key');
   renderGeminiApiSettings();
+}
+
+/* Chiede a Google se la chiave funziona davvero, e scrive l'esito qui sotto
+   invece che in un avviso che sparisce: quando qualcosa non va, questa riga
+   e' quella da leggere (e da riferire). */
+export async function provaGeminiKey() {
+  const out = document.getElementById('gemini-test-result');
+  const btn = document.querySelector('[data-action="provaGeminiKey"]');
+  if (out) {
+    out.style.display = 'block';
+    out.style.color = '';
+    out.textContent = t('gemini.testing');
+  }
+  if (btn) btn.disabled = true;
+  const esito = await provaChiave();
+  if (btn) btn.disabled = false;
+  if (!out) return;
+  if (esito.ok) {
+    out.style.color = 'var(--green)';
+    out.textContent = t('gemini.testOk', { m: esito.modello });
+  } else {
+    out.style.color = 'var(--red)';
+    out.textContent = esito.messaggio + (esito.dettaglio ? ' — ' + esito.dettaglio : '');
+  }
 }
 
 export function manualSaldo() {

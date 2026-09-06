@@ -8,7 +8,6 @@ import { showToast, escapeHtml } from './modals.js';
 import { t, getLang, isDeposito } from './i18n.js';
 import { fatturaDaSpesaContanti } from './fatture-bridge.js';
 import { Store as HkStore } from './fatture-app/hk-store.js';
-import { parseDateIT } from './date-utils.js';
 
 // Google Gemini (piano gratuito).
 const KEY_STORAGE = 'cassa_gemini_key';
@@ -64,6 +63,11 @@ export function closeVoiceAssistant() {
   const overlay = document.getElementById('voice-overlay');
   if (overlay) overlay.classList.remove('show');
   if (isRecording) stopRecording(true);
+  // Chiudere il pannello con una conferma in sospeso equivale ad annullarla:
+  // altrimenti riaprendo si ritrovava il riquadro di prima, e premere
+  // Conferma eseguiva un'operazione che si credeva abbandonata.
+  pendingActions = null;
+  hideConfirm();
   try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (_) {}
 }
 
@@ -152,8 +156,16 @@ async function onRecordingStop() {
     await think(text.trim());
   } catch (e) {
     console.error('[voice] error (' + step + '):', e);
-    const where = step === 'STT' ? t('voice.transcribing') : t('voice.thinking');
-    addBubble('assistant', t('voice.error') + '\n\n⚠️ [' + where + '] ' + ((e && e.message) || 'errore sconosciuto'));
+    const spiegazione = spiegaErrore(e);
+    // Il testo originale di Google va sotto, in piccolo, per i guasti che non
+    // abbiamo previsto. Quando l'abbiamo scritto noi (la rete irraggiungibile)
+    // ripeterebbe soltanto la frase di sopra.
+    const dettaglio = e && !e.network ? (e.message || '') : '';
+    addBubble('assistant', spiegazione + (dettaglio ? '\n\n⚠️ ' + dettaglio : ''));
+    // Detto a voce: chi sta usando il contabile a mani occupate non guarda lo
+    // schermo, e sentirsi dire "la chiave non e' valida" evita di riprovare
+    // dieci volte pensando di non essersi fatti capire.
+    speak(spiegazione);
     setStatus(t('voice.tapToSpeak'));
   } finally {
     setMicState('idle');
@@ -187,7 +199,11 @@ async function postGemini(model, body) {
   try { detail = (await res.json())?.error?.message || ''; } catch (_) {}
   const err = new Error(detail || ('HTTP ' + res.status));
   err.status = res.status;
-  err.modelIssue = res.status === 404 || /not found|not supported|unsupported|model/i.test(detail);
+  // Vale la pena riprovare con un altro modello solo se e' QUESTO modello a
+  // non esserci. "The model is overloaded" contiene la parola "model" ma e'
+  // Google occupato: riprovando si aspettava tre volte per lo stesso rifiuto.
+  err.modelIssue = res.status === 404 ||
+    (res.status === 400 && /not found|not supported|unsupported/i.test(detail));
   throw err;
 }
 
@@ -268,6 +284,39 @@ async function transcribe(blob) {
     generationConfig: { temperature: 0 }
   });
   return geminiText(json);
+}
+
+/* Gli errori di Google arrivano in inglese e dicono cosa e' successo, non cosa
+   fare: "API key not valid" non suggerisce di ricontrollare la chiave nelle
+   impostazioni. Qui diventano una frase nella lingua dell'app che dice il
+   prossimo passo. Il testo originale resta, in piccolo, sotto: serve quando
+   il guasto e' uno che non abbiamo previsto. */
+function spiegaErrore(e) {
+  if (!e) return t('voice.err.generic');
+  if (e.network) return t('voice.err.net');
+  const msg = String(e.message || '');
+  if (e.status === 400 && /api.?key not valid|api_key_invalid/i.test(msg)) return t('voice.err.key');
+  if (e.status === 403) return t('voice.err.denied');
+  if (e.status === 429) return t('voice.err.quota');
+  if (e.status === 404) return t('voice.err.model');
+  if (e.status === 503 || /overloaded|unavailable/i.test(msg)) return t('voice.err.busy');
+  return t('voice.err.generic');
+}
+
+/* Prova la chiave senza passare dal microfono: una domanda minima a Gemini.
+   Serve a sapere se il contabile puo' funzionare prima di parlargli, e a
+   distinguere "la chiave e' sbagliata" da "non ti ho sentito". */
+export async function provaChiave() {
+  if (!getKey()) return { ok: false, messaggio: t('gemini.noKey') };
+  try {
+    await callGemini({
+      contents: [{ role: 'user', parts: [{ text: 'Rispondi solo con: OK' }] }],
+      generationConfig: { temperature: 0, maxOutputTokens: 8 }
+    });
+    return { ok: true, modello: workingModel };
+  } catch (e) {
+    return { ok: false, messaggio: spiegaErrore(e), dettaglio: e.network ? '' : ((e && e.message) || '') };
+  }
 }
 
 // ─── Snapshot dati per il contesto AI ───

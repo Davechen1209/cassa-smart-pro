@@ -33,7 +33,7 @@ import {
   renderCustomCatsSettings, addCustomCat, removeCustomCat,
   toggleDashboard,
   saveAziendaData,
-  saveGeminiKey, removeGeminiKey
+  saveGeminiKey, removeGeminiKey, provaGeminiKey
 } from './js/ui-engine.js';
 
 import {
@@ -230,6 +230,7 @@ document.body.addEventListener('click', (e) => {
     case 'saveAziendaData': saveAziendaData(); break;
     case 'saveGeminiKey': saveGeminiKey(); break;
     case 'removeGeminiKey': removeGeminiKey(); break;
+    case 'provaGeminiKey': provaGeminiKey(); break;
 
     // Cloud
     case 'connectCloud': connectCloud(); break;

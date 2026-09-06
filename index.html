@@ -185,6 +185,10 @@
                             <div style="width:8px; height:8px; border-radius:50%; background:var(--green);"></div>
                             <span style="font-size:13px; font-weight:600;" data-i18n="ocr.configured">Configurato</span>
                         </div>
+                        <!-- "Configurato" dice solo che una chiave e' salvata, non che
+                             funzioni: questo lo chiede davvero a Google. -->
+                        <button class="btn-sm blue" data-action="provaGeminiKey" style="width:100%; margin-bottom:8px;" data-i18n="gemini.test">Prova la chiave</button>
+                        <div class="cloud-info" id="gemini-test-result" style="display:none; margin-bottom:8px;"></div>
                         <button class="btn-sm red" data-action="removeGeminiKey" style="width:100%;" data-i18n="ocr.remove">Rimuovi</button>
                     </div>
                 </div>
