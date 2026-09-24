@@ -162,7 +162,11 @@ function generateDayText(dateStr, dayLogs) {
   lines.push('');
 
   // ━━ Incassi ━━
+  // Totale battuto e POS si sommano su tutta la giornata: nel foglio che
+  // l'utente compila a mano sono due righe proprie, sopra il contante.
   let totalContanti = 0;
+  let totalZ = 0;
+  let totalPos = 0;
   if (incassi.length > 0) {
     lines.push('\u2501\u2501 ' + t('day.shareIncassi') + ' \u2501\u2501');
     incassi.forEach(l => {
@@ -177,9 +181,14 @@ function generateDayText(dateStr, dayLogs) {
         lines.push(name);
         lines.push('  ' + t('incassi.totaleLabel') + ': ' + fmtEur(z) + '\u20AC - POS: ' + fmtEur(pos) + '\u20AC = ' + fmtEur(l.a) + '\u20AC');
         totalContanti += (z - pos);
+        totalZ += z;
+        totalPos += pos;
       } else {
+        // Entrata senza distinzione fra carta e contante: e' tutta contante,
+        // cosi' totale = POS + contante torna comunque.
         lines.push('+ ' + fmtEur(l.a) + '\u20AC  ' + desc);
         totalContanti += l.a;
+        totalZ += l.a;
       }
     });
     lines.push('');
@@ -206,6 +215,12 @@ function generateDayText(dateStr, dayLogs) {
   // ━━━━━━━━━━━━━
   lines.push('\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501');
   totalContanti = Math.round(totalContanti * 100) / 100;
+  totalZ = Math.round(totalZ * 100) / 100;
+  totalPos = Math.round(totalPos * 100) / 100;
+  // Le tre righe si leggono insieme e nell'ordine del foglio a mano:
+  // totale battuto, quanto e' andato sul POS, quanto e' entrato in contanti.
+  lines.push(t('day.shareTotale') + ': ' + fmtEur(totalZ) + '\u20AC');
+  lines.push(t('day.sharePos') + ': ' + fmtEur(totalPos) + '\u20AC');
   lines.push(t('day.shareTotalCash') + ': ' + fmtEur(totalContanti) + '\u20AC');
   const rimasto = Math.round((totalIncassi + totalUscite) * 100) / 100;
   lines.push(t('day.shareRemaining') + ': ' + (rimasto >= 0 ? '+' : '') + fmtEur(rimasto) + '\u20AC');
