@@ -150,6 +150,13 @@ function fmtShareNum(n) {
   return getLang() === 'zh' ? n.toFixed(2) : fmtEur(n);
 }
 
+/* Le linee divisorie. Caratteri di disegno tabelle (U+2500 e U+2550): in un
+   messaggio si uniscono senza stacchi, e dove non ci fossero restano comunque
+   dei trattini leggibili. La lunghezza sta dentro lo schermo di un telefono
+   anche con il testo grande. */
+const LINEA = '\u2500'.repeat(18);
+const LINEA_TOT = '\u2550'.repeat(18);
+
 function fmtShareDate(date) {
   if (getLang() === 'zh') return (date.getMonth() + 1) + ' \u6708 ' + date.getDate() + ' \u65E5';
   return date.toLocaleDateString('it-IT');
@@ -186,12 +193,14 @@ function generateDayText(dayLogs) {
   });
   const r2 = (n) => Math.round(n * 100) / 100;
 
-  const lines = [];
-  lines.push(fmtShareDate(selectedDate));
-  lines.push(t('day.shareTotale') + ' ' + fmtShareNum(r2(totZ)));
-  lines.push(t('day.sharePos') + ' ' + fmtShareNum(r2(totPos)));
-  lines.push(t('day.shareTotalCash') + ' ' + fmtShareNum(r2(totCash)));
-  lines.push(t('day.yesterdayBalance') + ' ' + fmtShareNum(saldoYesterday));
+  // Le righe del corpo si raccolgono qui; le linee divisorie si intercalano
+  // alla fine, cosi' non vanno ripetute a ogni push.
+  const righe = [];
+  righe.push(fmtShareDate(selectedDate));
+  righe.push(t('day.shareTotale') + ' ' + fmtShareNum(r2(totZ)));
+  righe.push(t('day.sharePos') + ' ' + fmtShareNum(r2(totPos)));
+  righe.push(t('day.shareTotalCash') + ' ' + fmtShareNum(r2(totCash)));
+  righe.push(t('day.yesterdayBalance') + ' ' + fmtShareNum(saldoYesterday));
 
   // Le uscite: la prima accanto all'etichetta, come sul foglio, le altre
   // sotto. In una giornata senza uscite resta l'etichetta da sola, che sul
@@ -204,10 +213,10 @@ function generateDayText(dayLogs) {
     return '- ' + fmtShareNum(Math.abs(l.a)) + (desc ? '  ' + desc : '');
   };
   if (uscite.length === 0) {
-    lines.push(t('day.shareUscite'));
+    righe.push(t('day.shareUscite'));
   } else {
-    lines.push(t('day.shareUscite') + ' ' + voce(uscite[0]));
-    uscite.slice(1).forEach(l => lines.push(voce(l)));
+    righe.push(t('day.shareUscite') + ' ' + voce(uscite[0]));
+    uscite.slice(1).forEach(l => righe.push(voce(l)));
   }
 
   // I versamenti in banca non sono spese, ma i contanti li tolgono dal
@@ -215,14 +224,19 @@ function generateDayText(dayLogs) {
   // Compare solo nei giorni in cui ce ne sono.
   if (depositi.length > 0) {
     const etDep = t('day.shareDepositi');
-    lines.push(etDep + ' ' + voce(depositi[0], etDep));
-    depositi.slice(1).forEach(l => lines.push(voce(l, etDep)));
+    righe.push(etDep + ' ' + voce(depositi[0], etDep));
+    depositi.slice(1).forEach(l => righe.push(voce(l, etDep)));
   }
 
-  lines.push('');
-  lines.push(t('day.shareRemainingTotal') + ' ' + fmtShareNum(saldoCum));
+  // Ogni riga dentro la sua cella, come sul foglio: una linea sopra la prima,
+  // una fra l'una e l'altra, una in fondo. Il totale e' staccato da una linea
+  // doppia — sul foglio lo stacca una riga vuota, qui si legge meglio cosi'.
+  const out = [LINEA];
+  righe.forEach(r => { out.push(r, LINEA); });
+  out[out.length - 1] = LINEA_TOT;
+  out.push(t('day.shareRemainingTotal') + ' ' + fmtShareNum(saldoCum), LINEA_TOT);
 
-  return lines.join('\n');
+  return out.join('\n');
 }
 
 let pendingShareText = '';
