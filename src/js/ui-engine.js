@@ -169,9 +169,9 @@ function generateDayText(dayLogs) {
   const saldoYesterday = calcSaldoAtDate(yesterday);
 
   const incassi = dayLogs.filter(l => l.a >= 0);
+  // Uscite e versamenti in banca non si distinguono piu' qui: nel testo
+  // della giornata sono tutti soldi usciti dal cassetto.
   const negativi = dayLogs.filter(l => l.a < 0);
-  const uscite = negativi.filter(l => !isDeposito(l));
-  const depositi = negativi.filter(l => isDeposito(l));
 
   // Totale battuto e POS stanno dentro la descrizione dell'incasso
   // ("Incasso Contanti (TOTALE:4680.47 POS:2649.39)"); il contante e'
@@ -205,28 +205,21 @@ function generateDayText(dayLogs) {
   // Le uscite: la prima accanto all'etichetta, come sul foglio, le altre
   // sotto. In una giornata senza uscite resta l'etichetta da sola, che sul
   // foglio c'e' lo stesso.
-  const voce = (l, etichetta) => {
-    let desc = translateLogDesc(l.v);
-    // Il registro segna i versamenti con la stessa parola dell'etichetta:
-    // ripeterla ("银行存款 - 1500.00  银行存款") non aggiunge nulla.
-    if (etichetta && desc.indexOf(etichetta) === 0) desc = desc.slice(etichetta.length).trim();
+  const voce = (l) => {
+    const desc = translateLogDesc(l.v);
     return '- ' + fmtShareNum(Math.abs(l.a)) + (desc ? '  ' + desc : '');
   };
-  if (uscite.length === 0) {
-    righe.push(t('day.shareUscite'));
-  } else {
-    righe.push(t('day.shareUscite') + ' ' + voce(uscite[0]));
-    uscite.slice(1).forEach(l => righe.push(voce(l)));
+  // Tutto cio' che esce dal cassetto sta nella stessa cella: una spesa e un
+  // versamento in banca sono due cose diverse per i conti dell'anno, ma per
+  // chi legge la giornata sono soldi usciti, e basta. La prima voce accanto
+  // all'etichetta, le altre sotto, dentro la stessa riga: niente linee in
+  // mezzo. Senza uscite resta l'etichetta da sola, come sul foglio.
+  const cella = [t('day.shareUscite')];
+  if (negativi.length > 0) {
+    cella[0] += ' ' + voce(negativi[0]);
+    negativi.slice(1).forEach(l => cella.push('  ' + voce(l)));
   }
-
-  // I versamenti in banca non sono spese, ma i contanti li tolgono dal
-  // cassetto lo stesso: senza questa riga il conto in fondo non tornerebbe.
-  // Compare solo nei giorni in cui ce ne sono.
-  if (depositi.length > 0) {
-    const etDep = t('day.shareDepositi');
-    righe.push(etDep + ' ' + voce(depositi[0], etDep));
-    depositi.slice(1).forEach(l => righe.push(voce(l, etDep)));
-  }
+  righe.push(cella.join('\n'));
 
   // Ogni riga dentro la sua cella, come sul foglio: una linea sopra la prima,
   // una fra l'una e l'altra, una in fondo. Il totale e' staccato da una linea
