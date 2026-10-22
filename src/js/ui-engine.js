@@ -137,95 +137,90 @@ function fmtEur(n) {
   return n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function generateDayText(dateStr, dayLogs) {
+/* ─── Il testo che si manda ai soci ───
+   Ricalca la tabella che i soci rileggono ogni giorno, riga per riga: data,
+   totale battuto, POS, contanti, saldo di ieri, le uscite e quanto resta.
+   Niente altro, e i conti si verificano a vista:
+     saldo di ieri + contanti - uscite = rimasto totale. */
+
+/* I soci leggono i numeri come li scrivono sul loro foglio: punto decimale,
+   due cifre, nessun separatore delle migliaia. In italiano restano invece
+   nella forma di casa (1.234,56). */
+function fmtShareNum(n) {
+  return getLang() === 'zh' ? n.toFixed(2) : fmtEur(n);
+}
+
+function fmtShareDate(date) {
+  if (getLang() === 'zh') return (date.getMonth() + 1) + ' \u6708 ' + date.getDate() + ' \u65E5';
+  return date.toLocaleDateString('it-IT');
+}
+
+function generateDayText(dayLogs) {
   const saldoCum = calcSaldoAtDate(selectedDate);
   const yesterday = new Date(selectedDate);
   yesterday.setDate(yesterday.getDate() - 1);
   const saldoYesterday = calcSaldoAtDate(yesterday);
+
   const incassi = dayLogs.filter(l => l.a >= 0);
-  // Uscite e depositi si elencano separati: tolgono entrambi contanti dalla
-  // cassa, ma solo le prime sono soldi spesi. Il totale a fondo pagina li
-  // somma comunque, perche' e' quello che resta davvero nel cassetto.
   const negativi = dayLogs.filter(l => l.a < 0);
   const uscite = negativi.filter(l => !isDeposito(l));
   const depositi = negativi.filter(l => isDeposito(l));
 
-  let totalIncassi = 0;
-  let totalUscite = 0;
-  incassi.forEach(l => { totalIncassi += l.a; });
-  negativi.forEach(l => { totalUscite += l.a; });
-  totalIncassi = Math.round(totalIncassi * 100) / 100;
-  totalUscite = Math.round(totalUscite * 100) / 100;
+  // Totale battuto e POS stanno dentro la descrizione dell'incasso
+  // ("Incasso Contanti (TOTALE:4680.47 POS:2649.39)"); il contante e'
+  // l'importo stesso della riga.
+  let totZ = 0, totPos = 0, totCash = 0;
+  incassi.forEach(l => {
+    const desc = translateLogDesc(l.v);
+    const zMatch = desc.match(/(?:Z|TOTALE|总计):([\d.,]+)/);
+    const posMatch = desc.match(/POS:([\d.,]+)/);
+    if (zMatch && posMatch) {
+      totZ += parseFloat(zMatch[1].replace(',', '.'));
+      totPos += parseFloat(posMatch[1].replace(',', '.'));
+    } else {
+      // Entrata senza distinzione fra carta e contante: tutta contante,
+      // cosi' totale = POS + contanti torna comunque.
+      totZ += l.a;
+    }
+    totCash += l.a;
+  });
+  const r2 = (n) => Math.round(n * 100) / 100;
 
   const lines = [];
-  lines.push(t('day.shareTitle') + dateStr);
-  lines.push('');
+  lines.push(fmtShareDate(selectedDate));
+  lines.push(t('day.shareTotale') + ' ' + fmtShareNum(r2(totZ)));
+  lines.push(t('day.sharePos') + ' ' + fmtShareNum(r2(totPos)));
+  lines.push(t('day.shareTotalCash') + ' ' + fmtShareNum(r2(totCash)));
+  lines.push(t('day.yesterdayBalance') + ' ' + fmtShareNum(saldoYesterday));
 
-  // ━━ Incassi ━━
-  // Totale battuto e POS si sommano su tutta la giornata: nel foglio che
-  // l'utente compila a mano sono due righe proprie, sopra il contante.
-  let totalContanti = 0;
-  let totalZ = 0;
-  let totalPos = 0;
-  if (incassi.length > 0) {
-    lines.push('\u2501\u2501 ' + t('day.shareIncassi') + ' \u2501\u2501');
-    incassi.forEach(l => {
-      const desc = translateLogDesc(l.v);
-      // Parse Z and POS from description like "Incasso Cash (TOTALE:1500 POS:300)"
-      const zMatch = desc.match(/(?:Z|TOTALE|总计):([\d.,]+)/);
-      const posMatch = desc.match(/POS:([\d.,]+)/);
-      if (zMatch && posMatch) {
-        const z = parseFloat(zMatch[1].replace(',', '.'));
-        const pos = parseFloat(posMatch[1].replace(',', '.'));
-        const name = desc.replace(/\s*\((?:Z|TOTALE|总计):.*\)/, '').trim();
-        lines.push(name);
-        lines.push('  ' + t('incassi.totaleLabel') + ': ' + fmtEur(z) + '\u20AC - POS: ' + fmtEur(pos) + '\u20AC = ' + fmtEur(l.a) + '\u20AC');
-        totalContanti += (z - pos);
-        totalZ += z;
-        totalPos += pos;
-      } else {
-        // Entrata senza distinzione fra carta e contante: e' tutta contante,
-        // cosi' totale = POS + contante torna comunque.
-        lines.push('+ ' + fmtEur(l.a) + '\u20AC  ' + desc);
-        totalContanti += l.a;
-        totalZ += l.a;
-      }
-    });
-    lines.push('');
+  // Le uscite: la prima accanto all'etichetta, come sul foglio, le altre
+  // sotto. In una giornata senza uscite resta l'etichetta da sola, che sul
+  // foglio c'e' lo stesso.
+  const voce = (l, etichetta) => {
+    let desc = translateLogDesc(l.v);
+    // Il registro segna i versamenti con la stessa parola dell'etichetta:
+    // ripeterla ("银行存款 - 1500.00  银行存款") non aggiunge nulla.
+    if (etichetta && desc.indexOf(etichetta) === 0) desc = desc.slice(etichetta.length).trim();
+    return '- ' + fmtShareNum(Math.abs(l.a)) + (desc ? '  ' + desc : '');
+  };
+  if (uscite.length === 0) {
+    lines.push(t('day.shareUscite'));
+  } else {
+    lines.push(t('day.shareUscite') + ' ' + voce(uscite[0]));
+    uscite.slice(1).forEach(l => lines.push(voce(l)));
   }
 
-  // ━━ Uscite ━━
-  if (uscite.length > 0) {
-    lines.push('\u2501\u2501 ' + t('day.shareUscite') + ' \u2501\u2501');
-    uscite.forEach(l => {
-      lines.push('- ' + fmtEur(Math.abs(l.a)) + '\u20AC  ' + translateLogDesc(l.v));
-    });
-    lines.push('');
-  }
-
-  // ━━ Depositi in banca ━━
+  // I versamenti in banca non sono spese, ma i contanti li tolgono dal
+  // cassetto lo stesso: senza questa riga il conto in fondo non tornerebbe.
+  // Compare solo nei giorni in cui ce ne sono.
   if (depositi.length > 0) {
-    lines.push('\u2501\u2501 ' + t('day.shareDepositi') + ' \u2501\u2501');
-    depositi.forEach(l => {
-      lines.push('- ' + fmtEur(Math.abs(l.a)) + '\u20AC  ' + translateLogDesc(l.v));
-    });
-    lines.push('');
+    const etDep = t('day.shareDepositi');
+    lines.push(etDep + ' ' + voce(depositi[0], etDep));
+    depositi.slice(1).forEach(l => lines.push(voce(l, etDep)));
   }
 
-  // ━━━━━━━━━━━━━
-  lines.push('\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501');
-  totalContanti = Math.round(totalContanti * 100) / 100;
-  totalZ = Math.round(totalZ * 100) / 100;
-  totalPos = Math.round(totalPos * 100) / 100;
-  // Le tre righe si leggono insieme e nell'ordine del foglio a mano:
-  // totale battuto, quanto e' andato sul POS, quanto e' entrato in contanti.
-  lines.push(t('day.shareTotale') + ': ' + fmtEur(totalZ) + '\u20AC');
-  lines.push(t('day.sharePos') + ': ' + fmtEur(totalPos) + '\u20AC');
-  lines.push(t('day.shareTotalCash') + ': ' + fmtEur(totalContanti) + '\u20AC');
-  const rimasto = Math.round((totalIncassi + totalUscite) * 100) / 100;
-  lines.push(t('day.shareRemaining') + ': ' + (rimasto >= 0 ? '+' : '') + fmtEur(rimasto) + '\u20AC');
-  lines.push(t('day.endBalance') + ': \u20AC' + fmtEur(saldoCum));
-  lines.push(t('day.yesterdayBalance') + ': \u20AC' + fmtEur(saldoYesterday));
+  lines.push('');
+  lines.push(t('day.shareRemainingTotal') + ' ' + fmtShareNum(saldoCum));
 
   return lines.join('\n');
 }
@@ -237,7 +232,7 @@ export function shareDay() {
   const dayLogs = d.log.filter(l => l.d === dateStr);
   if (dayLogs.length === 0) return;
 
-  pendingShareText = generateDayText(dateStr, dayLogs);
+  pendingShareText = generateDayText(dayLogs);
   document.getElementById('share-preview-text').textContent = pendingShareText;
   document.getElementById('share-preview-overlay').classList.add('show');
 }
