@@ -205,7 +205,9 @@ document.body.addEventListener('click', (e) => {
     case 'shareDay': shareDay(); break;
     case 'closeSharePreview': closeSharePreview(); break;
     case 'copyShareText': copyShareText().catch(console.error); break;
-    case 'confirmShare': confirmShare().catch(console.error); break;
+    // Non e' piu' asincrona: su iPhone la condivisione deve partire dentro
+    // il tocco, e un await in mezzo la farebbe rifiutare.
+    case 'confirmShare': confirmShare(); break;
 
     // History
     case 'deleteLog': deleteLog(Number(btn.dataset.index), btn.dataset.name); break;

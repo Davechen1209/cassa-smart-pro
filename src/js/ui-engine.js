@@ -162,7 +162,7 @@ function fmtShareDate(date) {
   return date.toLocaleDateString('it-IT');
 }
 
-function generateDayText(dayLogs) {
+function generateDayRows(dayLogs) {
   const saldoCum = calcSaldoAtDate(selectedDate);
   const yesterday = new Date(selectedDate);
   yesterday.setDate(yesterday.getDate() - 1);
@@ -221,25 +221,102 @@ function generateDayText(dayLogs) {
   }
   righe.push(cella.join('\n'));
 
-  // Ogni riga dentro la sua cella, come sul foglio: una linea sopra la prima,
-  // una fra l'una e l'altra, una in fondo. Il totale e' staccato da una linea
-  // doppia — sul foglio lo stacca una riga vuota, qui si legge meglio cosi'.
-  const out = [LINEA];
-  righe.forEach(r => { out.push(r, LINEA); });
-  out[out.length - 1] = LINEA_TOT;
-  out.push(t('day.shareRemainingTotal') + ' ' + fmtShareNum(saldoCum), LINEA_TOT);
+  return { righe: righe, totale: t('day.shareRemainingTotal') + ' ' + fmtShareNum(saldoCum) };
+}
 
+/* Le stesse righe scritte come testo. Ogni riga dentro la sua cella, come sul
+   foglio: una linea sopra la prima, una fra l'una e l'altra, una in fondo. Il
+   totale e' staccato da una linea doppia — sul foglio lo stacca una riga
+   vuota, qui si legge meglio cosi'. */
+function generateDayText(tab) {
+  const out = [LINEA];
+  tab.righe.forEach(r => { out.push(r, LINEA); });
+  out[out.length - 1] = LINEA_TOT;
+  out.push(tab.totale, LINEA_TOT);
   return out.join('\n');
 }
 
+/* ─── La stessa tabella, disegnata ───
+   Mandare il testo costringe chi lo riceve a leggerlo com'e' arrivato: i
+   trattini che fanno le linee dipendono dal carattere del suo telefono, e in
+   certe chat la tabella si scompone. Un'immagine arriva uguale dappertutto e
+   si legge nella conversazione senza aprire nulla.
+   I colori si prendono dal tema vivo dell'app, cosi' l'immagine e' davvero
+   quella che si vede sullo schermo, chiara o scura che sia. */
+function disegnaTabellaGiornata(tab) {
+  const PAD = 22, INTERLINEA = 27, SPAZIO = 9, CORPO = 17, CORPO_TOT = 19;
+  const S = 3; // tre pixel per punto: resta nitida anche ingrandita
+  const FAM = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif";
+  const cs = getComputedStyle(document.body);
+  const colore = (nome, def) => ((cs.getPropertyValue(nome) || '').trim() || def);
+  const sfondo = colore('--card', '#FFFFFF');
+  const inchiostro = colore('--text', '#10131C');
+  const tratto = colore('--hairline', 'rgba(16,19,28,0.12)');
+
+  const blocchi = tab.righe.map(r => ({ linee: String(r).split('\n'), tot: false }));
+  blocchi.push({ linee: [tab.totale], tot: true });
+
+  // Prima si misura: la larghezza la decide la riga piu' lunga, non un numero
+  // deciso a tavolino che taglierebbe un nome di fornitore lungo.
+  const m = document.createElement('canvas').getContext('2d');
+  let larghezza = 0;
+  blocchi.forEach(b => {
+    m.font = (b.tot ? '700 ' + CORPO_TOT : CORPO) + 'px ' + FAM;
+    b.linee.forEach(l => { larghezza = Math.max(larghezza, m.measureText(l).width); });
+  });
+  const W = Math.ceil(larghezza) + PAD * 2;
+  const H = PAD * 2 + blocchi.reduce((s, b) => s + b.linee.length * INTERLINEA + SPAZIO * 2, 0);
+
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(W * S);
+  cv.height = Math.round(H * S);
+  const c = cv.getContext('2d');
+  c.scale(S, S);
+  c.fillStyle = sfondo;
+  c.fillRect(0, 0, W, H);
+
+  const linea = (y, doppia) => {
+    c.strokeStyle = tratto;
+    c.lineWidth = 1;
+    c.beginPath(); c.moveTo(PAD, y + 0.5); c.lineTo(W - PAD, y + 0.5); c.stroke();
+    if (doppia) { c.beginPath(); c.moveTo(PAD, y + 3.5); c.lineTo(W - PAD, y + 3.5); c.stroke(); }
+  };
+
+  let y = PAD;
+  linea(y, false);
+  blocchi.forEach((b, i) => {
+    y += SPAZIO;
+    c.fillStyle = inchiostro;
+    c.font = (b.tot ? '700 ' + CORPO_TOT : CORPO) + 'px ' + FAM;
+    b.linee.forEach(l => { y += INTERLINEA; c.fillText(l, PAD, y - 7); });
+    y += SPAZIO;
+    const prossimoEIlTotale = !!(blocchi[i + 1] && blocchi[i + 1].tot);
+    linea(y, prossimoEIlTotale || b.tot);
+  });
+  return cv;
+}
+
+/* Da immagine a file, senza passare da una promessa: su iPhone la
+   condivisione deve partire nello stesso istante del tocco, e un await in
+   mezzo la fa rifiutare. toDataURL e atob sono sincroni apposta. */
+function canvasInFile(canvas, nome) {
+  const b64 = canvas.toDataURL('image/png').split(',')[1];
+  const bin = atob(b64);
+  const byte = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) byte[i] = bin.charCodeAt(i);
+  return new File([byte], nome, { type: 'image/png' });
+}
+
 let pendingShareText = '';
+let pendingShareRows = null;
 
 export function shareDay() {
   const dateStr = selectedDate.toLocaleDateString('it-IT');
   const dayLogs = d.log.filter(l => l.d === dateStr);
   if (dayLogs.length === 0) return;
 
-  pendingShareText = generateDayText(dayLogs);
+  pendingShareRows = generateDayRows(dayLogs);
+  pendingShareText = generateDayText(pendingShareRows);
   document.getElementById('share-preview-text').textContent = pendingShareText;
   document.getElementById('share-preview-overlay').classList.add('show');
 }
@@ -247,6 +324,7 @@ export function shareDay() {
 export function closeSharePreview() {
   document.getElementById('share-preview-overlay').classList.remove('show');
   pendingShareText = '';
+  pendingShareRows = null;
 }
 
 export function closeSharePreviewOutside(e) {
@@ -261,13 +339,40 @@ export async function copyShareText() {
   closeSharePreview();
 }
 
-export async function confirmShare() {
-  if (navigator.share) {
-    navigator.share({ text: pendingShareText }).catch(() => {});
-  } else {
-    await copyShareText();
+/* Condividi manda la tabella come immagine. Niente await prima di
+   navigator.share: su iPhone la condivisione vale solo se parte dentro il
+   tocco che l'ha chiesta. */
+export function confirmShare() {
+  if (!pendingShareRows) return;
+  const nome = 'cassa-' + toISODate(selectedDate) + '.png';
+  let file = null;
+  try {
+    file = canvasInFile(disegnaTabellaGiornata(pendingShareRows), nome);
+  } catch (e) {
+    console.error('[share] immagine non riuscita:', e);
+  }
+
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file] }).catch(() => { /* annullata dall'utente */ });
+    closeSharePreview();
     return;
   }
+
+  // Dove non si puo' condividere un file (quasi tutti i browser da computer)
+  // l'immagine si scarica: da li' si allega a mano.
+  if (file) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(t('share.imageSaved'), 'check');
+    closeSharePreview();
+    return;
+  }
+
+  // Ultimo ripiego: il testo, come prima.
+  if (navigator.share) navigator.share({ text: pendingShareText }).catch(() => {});
   closeSharePreview();
 }
 
